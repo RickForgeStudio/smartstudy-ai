@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStudy-AI | AI Tutor 問答老師</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="top-nav" aria-label="主要功能導覽">
+      <a href="./index.html">筆記整理</a>
+      <a class="active" href="./tutor.html">AI Tutor</a>
+      <a href="./knowledge.html">RAG 知識庫</a>
+      <a href="./study-agent.html">讀書計畫</a>
+    </nav>
+
+    <header class="hero compact-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">AI Tutor</p>
+        <h1>根據最近一次整理結果，進行問答與教學。</h1>
+        <p class="hero-text">
+          請先在首頁完成一次筆記整理，AI Tutor 會讀取最近一次整理結果，幫你解釋觀念、出題與檢查答案。
+        </p>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-top">
+          <span class="status-dot"></span>
+          <span>使用方式</span>
+        </div>
+        <ul class="hero-list">
+          <li>先整理筆記，再切來這頁</li>
+          <li>可以直接問重點或請 AI 出題</li>
+          <li>答錯後會重新講解並再出一題</li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="single-page-layout">
+      <section class="panel tutor-page-panel">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">問答老師</p>
+            <h2>AI Tutor 問答老師</h2>
+          </div>
+          <a class="ghost-link-button" href="./index.html">回首頁整理筆記</a>
+        </div>
+
+        <div class="loaded-note-card" id="loadedTutorNoteCard">
+          <strong id="tutorLoadedTitle">讀取整理結果中...</strong>
+          <p id="tutorLoadedMeta">系統會自動讀取最近一次整理筆記。</p>
+        </div>
+
+        <article class="result-card wide tutor-card" id="tutorCard">
+          <div class="result-card-head">
+            <div>
+              <h3 id="tutorCardTitle">AI Tutor</h3>
+              <p class="tutor-card-meta" id="tutorCardMeta">根據目前整理內容進行教學問答。</p>
+            </div>
+            <span class="result-time" id="tutorStatus">正在檢查最近一次整理結果...</span>
+          </div>
+
+          <p class="tutor-description" id="tutorDescription">
+            你可以直接提問，也可以請老師出題；若答錯，AI 會指出錯在哪、重新解釋，並再出一題類似題。
+          </p>
+
+          <div class="tutor-context-preview" id="tutorContextPreview">
+            <p class="empty-state">尚未載入整理結果。</p>
+          </div>
+
+          <div class="tutor-messages" id="tutorMessages" aria-live="polite">
+            <p class="empty-state" id="tutorEmptyState">尚未開始 AI Tutor 對話。</p>
+          </div>
+
+          <div class="tutor-composer">
+            <textarea id="tutorInput" class="tutor-input" placeholder="例如：這段內容的核心概念是什麼？"></textarea>
+            <div class="tutor-actions">
+              <button class="primary-button" id="tutorAskButton" type="button">送出提問</button>
+              <button class="ghost-button" id="tutorQuizButton" type="button">老師出題</button>
+              <button class="secondary-button" id="tutorAnswerButton" type="button">送出答案</button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div class="focus-music-widget" id="focusMusicWidget">
+    <button class="focus-music-toggle" id="focusMusicToggle" type="button">
+      🎧 專注音樂
+    </button>
+
+    <div class="focus-music-panel" id="focusMusicPanel" hidden>
+      <div class="focus-music-head">
+        <div>
+          <strong>專注音樂</strong>
+          <p id="focusMusicFileName">尚未加入 MP3</p>
+        </div>
+        <button class="ghost-button" id="focusMusicCloseButton" type="button">收合</button>
+      </div>
+
+      <div class="focus-music-mode-switch" role="tablist" aria-label="專注音樂來源">
+        <button class="ghost-button focus-music-mode-button" id="focusMusicModeMp3" type="button">MP3</button>
+        <button class="ghost-button focus-music-mode-button" id="focusMusicModeSpotify" type="button">Spotify</button>
+      </div>
+
+      <div id="focusMusicMp3Section">
+      <audio id="focusMusicAudio" loop></audio>
+
+      <div class="focus-music-actions">
+        <button class="primary-button" id="focusMusicPlayButton" type="button">播放</button>
+        <label class="secondary-button focus-music-upload-label" for="focusMusicFileInput">
+          加入 MP3
+        </label>
+        <input id="focusMusicFileInput" type="file" accept="audio/mpeg,.mp3">
+        <button class="ghost-button" id="focusMusicRemoveButton" type="button">移除</button>
+      </div>
+
+      <label class="focus-volume-label" for="focusMusicVolume">
+        音量
+        <input id="focusMusicVolume" type="range" min="0" max="1" step="0.01" value="0.25">
+      </label>
+
+      <p class="focus-music-hint" id="focusMusicStatus">
+        音樂只會在你按下播放後開始。匯入的 MP3 會儲存在此瀏覽器中。
+      </p>
+      </div>
+
+      <div id="focusMusicSpotifySection" hidden>
+        <div class="focus-spotify-connect-card">
+          <div class="focus-spotify-status-row">
+            <strong id="focusSpotifyStateTitle">尚未連接 Spotify</strong>
+            <span class="focus-spotify-badge" id="focusSpotifyPremiumBadge" hidden>Premium</span>
+          </div>
+          <p class="focus-music-hint" id="focusSpotifyStatus">
+            Spotify 網頁播放需要 Premium 帳號，且是否能播放也會受帳號、地區與 Spotify 平台限制影響。
+          </p>
+
+          <div class="focus-music-actions">
+            <button class="primary-button" id="focusSpotifyConnectButton" type="button">連接 Spotify</button>
+            <button class="secondary-button" id="focusSpotifyReconnectButton" type="button" hidden>重新連接播放器</button>
+            <button class="ghost-button" id="focusSpotifyDisconnectButton" type="button" hidden>中斷 Spotify</button>
+          </div>
+
+          <div class="focus-spotify-now-playing" id="focusSpotifyNowPlaying" hidden>
+            <img id="focusSpotifyCover" class="focus-spotify-cover" alt="Spotify 專輯封面">
+            <div class="focus-spotify-track-meta">
+              <strong id="focusSpotifyTrackName">尚未播放</strong>
+              <p id="focusSpotifyArtistName">等待讀取目前播放內容</p>
+            </div>
+          </div>
+
+          <div class="focus-spotify-progress" id="focusSpotifyProgressWrap" hidden>
+            <div class="focus-spotify-progress-meta">
+              <span id="focusSpotifyProgressCurrent">0:00</span>
+              <span id="focusSpotifyProgressTotal">0:00</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="focusSpotifyProgressFill"></div>
+            </div>
+          </div>
+
+          <div class="focus-music-actions" id="focusSpotifyControls" hidden>
+            <button class="ghost-button" id="focusSpotifyPreviousButton" type="button">上一首</button>
+            <button class="primary-button" id="focusSpotifyPlayPauseButton" type="button">播放</button>
+            <button class="ghost-button" id="focusSpotifyNextButton" type="button">下一首</button>
+          </div>
+
+          <label class="focus-volume-label" for="focusSpotifyVolume">
+            Spotify 音量
+            <input id="focusSpotifyVolume" type="range" min="0" max="100" step="1" value="25">
+          </label>
+
+          <div class="focus-music-actions focus-spotify-lock-actions" id="focusSpotifyLockActions" hidden>
+            <button class="secondary-button" id="focusSpotifyLockButton" type="button">鎖定此歌單</button>
+            <button class="ghost-button" id="focusSpotifyReturnLockedButton" type="button" hidden>切回鎖定歌單</button>
+          </div>
+          <p class="focus-music-hint" id="focusSpotifyLockStatus" hidden></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script defer src="./finance-knowledge.js"></script>
+  <script defer src="./spotify-player.js"></script>
+  <script defer src="./app.js"></script>
+</body>
+</html>

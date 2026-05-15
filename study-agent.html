@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStudy-AI | AI Study Agent 讀書計畫</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="top-nav" aria-label="主要功能導覽">
+      <a href="./index.html">筆記整理</a>
+      <a href="./tutor.html">AI Tutor</a>
+      <a href="./knowledge.html">RAG 知識庫</a>
+      <a class="active" href="./study-agent.html">讀書計畫</a>
+    </nav>
+
+    <header class="hero compact-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">AI Study Agent</p>
+        <h1>把最近整理好的筆記，轉成可執行的讀書安排。</h1>
+        <p class="hero-text">
+          Study Agent 會讀取最近一次整理結果，再結合錯題、考試日期與每日可讀書時間，產生更務實的讀書計畫。
+        </p>
+        <div class="hero-pills">
+          <span>今日任務</span>
+          <span>週進度</span>
+          <span>考前衝刺</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-top">
+          <span class="status-dot"></span>
+          <span>計畫重點</span>
+        </div>
+        <ul class="hero-list">
+          <li>優先排序薄弱主題與章節</li>
+          <li>每天的任務量會貼近可用時間</li>
+          <li>接近考試會自動切成衝刺模式</li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="single-page-layout">
+      <section class="panel study-agent-panel">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker" id="studyAgentSectionKicker">步驟四</p>
+            <h2 id="studyAgentSectionTitle">AI Study Agent 讀書計畫</h2>
+          </div>
+        </div>
+        <p class="output-meta" id="studyAgentMeta">根據目前筆記、錯題、考試日期與每日可讀書時間，自動生成可調整的讀書計畫。</p>
+
+        <div class="loaded-note-card">
+          <strong id="studyAgentLoadedTitle">讀取整理結果中...</strong>
+          <p id="studyAgentLoadedMeta">系統會自動讀取最近一次整理筆記。</p>
+        </div>
+
+        <div class="knowledge-grid">
+          <div class="knowledge-column">
+            <label class="input-label" id="wrongQuestionsLabel" for="wrongQuestionsInput">錯題 / 容易卡住的觀念</label>
+            <textarea id="wrongQuestionsInput" class="tutor-input" placeholder="例如：流動比率和速動比率常常搞混、每股盈餘公式容易寫錯"></textarea>
+            <div class="mode-grid setting-grid">
+              <div>
+                <label class="input-label" id="examDateLabel" for="examDateInput">考試日期</label>
+                <input id="examDateInput" type="date">
+              </div>
+              <div>
+                <label class="input-label" id="studyHoursLabel" for="studyHoursInput">每日可讀書時間（小時）</label>
+                <input id="studyHoursInput" type="number" min="0.5" step="0.5" value="2">
+              </div>
+            </div>
+            <div class="control-row">
+              <button class="primary-button" id="generateStudyPlanButton" type="button">生成讀書計畫</button>
+            </div>
+            <div class="parse-status">
+              <strong id="studyAgentStatusTitle">尚未生成讀書計畫</strong>
+              <p id="studyAgentStatusDetail">先整理筆記，再填入錯題、考試日期與可讀書時間，AI 才能幫你排出更合理的每日計畫。</p>
+            </div>
+          </div>
+
+          <div class="knowledge-column">
+            <article class="result-card wide">
+              <div class="result-card-head">
+                <h3 id="studyPlanOverviewTitle">讀書計畫總覽</h3>
+                <span class="result-time" id="studyPlanOverviewMeta">自動調整重點</span>
+              </div>
+              <div id="studyPlanOverviewResult" class="summary-text">尚未生成讀書計畫。</div>
+            </article>
+
+            <article class="result-card wide">
+            <div class="result-card-head">
+              <h3 id="todayTasksTitle">今日任務</h3>
+              <span class="result-time" id="todayTasksMeta">今天先做什麼</span>
+            </div>
+            <ul id="todayTasksResult" class="result-list">
+              <li class="empty-state">尚未生成今日任務。</li>
+            </ul>
+          </article>
+
+            <article class="result-card wide">
+            <div class="result-card-head">
+              <h3 id="dailyPlanTitle">每日讀書計畫</h3>
+              <span class="result-time" id="dailyPlanMeta">逐日安排</span>
+            </div>
+            <ul id="dailyPlanResult" class="term-list">
+              <li class="empty-state">尚未生成每日讀書計畫。</li>
+            </ul>
+          </article>
+
+            <article class="result-card wide">
+            <div class="result-card-head">
+              <h3 id="weeklyProgressTitle">本週進度</h3>
+              <span class="result-time" id="weeklyProgressMeta">本週追蹤</span>
+            </div>
+            <ul id="weeklyProgressResult" class="term-list">
+              <li class="empty-state">尚未生成本週進度。</li>
+            </ul>
+          </article>
+
+            <article class="result-card wide">
+            <div class="result-card-head">
+              <h3 id="priorityFocusTitle">優先順序</h3>
+              <span class="result-time" id="priorityFocusMeta">科目 / 章節</span>
+            </div>
+            <ul id="priorityFocusResult" class="term-list">
+              <li class="empty-state">尚未生成優先順序。</li>
+            </ul>
+          </article>
+
+            <article class="result-card wide accent">
+            <div class="result-card-head">
+              <h3 id="riskAlertsTitle">風險提醒</h3>
+              <span class="result-time" id="riskAlertsMeta">快忘了 / 高風險</span>
+            </div>
+            <ul id="riskAlertsResult" class="result-list">
+              <li class="empty-state">尚未產生風險提醒。</li>
+            </ul>
+          </article>
+
+            <article class="result-card wide">
+            <div class="result-card-head">
+              <h3 id="sprintModeTitle">考前衝刺模式</h3>
+              <span class="result-time" id="sprintModeMeta">考前切換</span>
+            </div>
+            <div id="sprintModeResult" class="summary-text">尚未產生考前衝刺建議。</div>
+          </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="focus-music-widget" id="focusMusicWidget">
+    <button class="focus-music-toggle" id="focusMusicToggle" type="button">
+      🎧 專注音樂
+    </button>
+
+    <div class="focus-music-panel" id="focusMusicPanel" hidden>
+      <div class="focus-music-head">
+        <div>
+          <strong>專注音樂</strong>
+          <p id="focusMusicFileName">尚未加入 MP3</p>
+        </div>
+        <button class="ghost-button" id="focusMusicCloseButton" type="button">收合</button>
+      </div>
+
+      <div class="focus-music-mode-switch" role="tablist" aria-label="專注音樂來源">
+        <button class="ghost-button focus-music-mode-button" id="focusMusicModeMp3" type="button">MP3</button>
+        <button class="ghost-button focus-music-mode-button" id="focusMusicModeSpotify" type="button">Spotify</button>
+      </div>
+
+      <div id="focusMusicMp3Section">
+      <audio id="focusMusicAudio" loop></audio>
+
+      <div class="focus-music-actions">
+        <button class="primary-button" id="focusMusicPlayButton" type="button">播放</button>
+        <label class="secondary-button focus-music-upload-label" for="focusMusicFileInput">
+          加入 MP3
+        </label>
+        <input id="focusMusicFileInput" type="file" accept="audio/mpeg,.mp3">
+        <button class="ghost-button" id="focusMusicRemoveButton" type="button">移除</button>
+      </div>
+
+      <label class="focus-volume-label" for="focusMusicVolume">
+        音量
+        <input id="focusMusicVolume" type="range" min="0" max="1" step="0.01" value="0.25">
+      </label>
+
+      <p class="focus-music-hint" id="focusMusicStatus">
+        音樂只會在你按下播放後開始。匯入的 MP3 會儲存在此瀏覽器中。
+      </p>
+      </div>
+
+      <div id="focusMusicSpotifySection" hidden>
+        <div class="focus-spotify-connect-card">
+          <div class="focus-spotify-status-row">
+            <strong id="focusSpotifyStateTitle">尚未連接 Spotify</strong>
+            <span class="focus-spotify-badge" id="focusSpotifyPremiumBadge" hidden>Premium</span>
+          </div>
+          <p class="focus-music-hint" id="focusSpotifyStatus">
+            Spotify 網頁播放需要 Premium 帳號，且是否能播放也會受帳號、地區與 Spotify 平台限制影響。
+          </p>
+
+          <div class="focus-music-actions">
+            <button class="primary-button" id="focusSpotifyConnectButton" type="button">連接 Spotify</button>
+            <button class="secondary-button" id="focusSpotifyReconnectButton" type="button" hidden>重新連接播放器</button>
+            <button class="ghost-button" id="focusSpotifyDisconnectButton" type="button" hidden>中斷 Spotify</button>
+          </div>
+
+          <div class="focus-spotify-now-playing" id="focusSpotifyNowPlaying" hidden>
+            <img id="focusSpotifyCover" class="focus-spotify-cover" alt="Spotify 專輯封面">
+            <div class="focus-spotify-track-meta">
+              <strong id="focusSpotifyTrackName">尚未播放</strong>
+              <p id="focusSpotifyArtistName">等待讀取目前播放內容</p>
+            </div>
+          </div>
+
+          <div class="focus-spotify-progress" id="focusSpotifyProgressWrap" hidden>
+            <div class="focus-spotify-progress-meta">
+              <span id="focusSpotifyProgressCurrent">0:00</span>
+              <span id="focusSpotifyProgressTotal">0:00</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="focusSpotifyProgressFill"></div>
+            </div>
+          </div>
+
+          <div class="focus-music-actions" id="focusSpotifyControls" hidden>
+            <button class="ghost-button" id="focusSpotifyPreviousButton" type="button">上一首</button>
+            <button class="primary-button" id="focusSpotifyPlayPauseButton" type="button">播放</button>
+            <button class="ghost-button" id="focusSpotifyNextButton" type="button">下一首</button>
+          </div>
+
+          <label class="focus-volume-label" for="focusSpotifyVolume">
+            Spotify 音量
+            <input id="focusSpotifyVolume" type="range" min="0" max="100" step="1" value="25">
+          </label>
+
+          <div class="focus-music-actions focus-spotify-lock-actions" id="focusSpotifyLockActions" hidden>
+            <button class="secondary-button" id="focusSpotifyLockButton" type="button">鎖定此歌單</button>
+            <button class="ghost-button" id="focusSpotifyReturnLockedButton" type="button" hidden>切回鎖定歌單</button>
+          </div>
+          <p class="focus-music-hint" id="focusSpotifyLockStatus" hidden></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script defer src="./finance-knowledge.js"></script>
+  <script defer src="./spotify-player.js"></script>
+  <script defer src="./app.js"></script>
+</body>
+</html>

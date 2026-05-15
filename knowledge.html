@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStudy-AI | RAG AI 知識庫</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="top-nav" aria-label="主要功能導覽">
+      <a href="./index.html">筆記整理</a>
+      <a href="./tutor.html">AI Tutor</a>
+      <a class="active" href="./knowledge.html">RAG 知識庫</a>
+      <a href="./study-agent.html">讀書計畫</a>
+    </nav>
+
+    <header class="hero compact-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">RAG Knowledge Base</p>
+        <h1>上傳多份文件，建立可查詢的 RAG 知識庫。</h1>
+        <p class="hero-text">
+          你可以使用 GitHub Pages 可執行的展示模式，或切換到需要後端的進階 Embedding RAG 模式；若進階模式失敗，系統會自動退回展示模式。
+        </p>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-top">
+          <span class="status-dot"></span>
+          <span>RAG 流程</span>
+        </div>
+        <ul class="hero-list">
+          <li>展示模式可直接前端查詢</li>
+          <li>進階模式可建立 embedding 索引</li>
+          <li>回答時顯示檔名、段落與引用</li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="single-page-layout">
+      <section class="panel knowledge-base-panel">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker" id="knowledgeSectionKicker">知識庫</p>
+            <h2 id="knowledgeSectionTitle">RAG AI 知識庫</h2>
+          </div>
+        </div>
+        <p class="output-meta" id="knowledgeMeta">
+          可上傳 TXT、MD、CSV、JSON、HTML、XML、DOCX、PPTX、PDF，系統會抽取文字並建立可查詢段落。
+        </p>
+
+        <div class="knowledge-grid">
+          <div class="knowledge-column">
+            <div class="upload-box" id="knowledgeUploadBox">
+              <span class="mode-label">步驟一：加入資料</span>
+              <input id="knowledgeFileInput" type="file" multiple accept=".txt,.md,.csv,.json,.rtf,.html,.htm,.xml,.ppt,.pptx,.doc,.docx,.pdf,text/plain,text/markdown,text/csv,application/json,application/rtf,text/html,application/xml,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+              <span class="upload-title">上傳知識庫文件</span>
+              <span class="upload-desc" id="knowledgeUploadDescription">可一次選擇多份文件，系統會抽取文字並切成可查詢段落。</span>
+              <div class="mode-grid setting-grid">
+                <select id="ragModeSelect" aria-label="RAG 模式">
+                  <option value="local">展示模式：前端關鍵字 RAG</option>
+                  <option value="advanced">進階模式：OpenAI Embedding RAG</option>
+                </select>
+                <p class="mode-description" id="ragModeDescription">
+                  展示模式可直接在 GitHub Pages 使用；進階模式會透過後端建立 embedding 向量索引。
+                </p>
+              </div>
+              <div class="upload-actions">
+                <button class="ghost-button" id="chooseKnowledgeFilesButton" type="button">選擇多個檔案</button>
+                <button class="secondary-button" id="addLatestNoteToKnowledgeButton" type="button">加入最近一次整理結果</button>
+              </div>
+              <div class="upload-actions">
+                <span class="mode-label">步驟二：建立知識庫</span>
+                <button class="primary-button" id="buildKnowledgeBaseButton" type="button">建立知識庫</button>
+              </div>
+              <span class="upload-meta" id="knowledgeFileStatus">尚未選擇知識庫檔案</span>
+            </div>
+
+            <div class="parse-status">
+              <strong id="knowledgeStatusTitle">知識庫尚未建立</strong>
+              <p id="knowledgeStatusDetail">建立完成後，你可以直接對整個知識庫提問，系統會顯示相關段落與來源文件。</p>
+            </div>
+
+            <div class="knowledge-stats" id="knowledgeStats" hidden>
+              <strong>目前知識庫狀態</strong>
+              <p id="knowledgeStatsText">尚無資料。</p>
+              <button class="secondary-button" id="clearKnowledgeBaseButton" type="button">清空知識庫</button>
+            </div>
+          </div>
+
+          <div class="knowledge-column">
+            <div class="loaded-note-card">
+              <strong>步驟三：開始提問</strong>
+              <p>你可以直接輸入問題，或先點下方快捷問題快速開始。</p>
+            </div>
+            <div class="tutor-composer">
+              <textarea id="ragQuestionInput" class="tutor-input" placeholder="例如：這些文件最常強調哪些重點？"></textarea>
+              <div class="quick-question-grid" id="ragQuickQuestions">
+                <button class="ghost-button quick-question-button" type="button" data-question="整理這些資料的重點">整理這些資料的重點</button>
+                <button class="ghost-button quick-question-button" type="button" data-question="幫我找可能考點">幫我找可能考點</button>
+                <button class="ghost-button quick-question-button" type="button" data-question="比較不同文件的差異">比較不同文件的差異</button>
+                <button class="ghost-button quick-question-button" type="button" data-question="根據資料出 3 題考題">根據資料出 3 題考題</button>
+                <button class="ghost-button quick-question-button" type="button" data-question="找出我最容易混淆的地方">找出我最容易混淆的地方</button>
+              </div>
+              <div class="tutor-actions">
+                <button class="primary-button" id="askKnowledgeBaseButton" type="button">查詢知識庫</button>
+              </div>
+            </div>
+
+            <article class="result-card wide knowledge-answer-card">
+              <div class="result-card-head">
+                <h3 id="ragAnswerTitle">知識庫回答</h3>
+                <span class="result-time" id="ragAnswerMeta">含來源引用</span>
+              </div>
+              <div id="ragAnswerResult" class="summary-text">尚未查詢知識庫。</div>
+              <div class="summary-text" id="ragExamFocusResult" hidden></div>
+              <div class="next-step-actions knowledge-next-actions">
+                <button class="primary-button" id="sendRagToTutorButton" type="button">送去 AI Tutor 解釋</button>
+                <button class="secondary-button" id="sendRagToStudyAgentButton" type="button">加入讀書計畫</button>
+                <button class="ghost-button" id="makeRagExamFocusButton" type="button">整理成考前重點</button>
+              </div>
+            </article>
+
+            <article class="result-card wide">
+              <div class="result-card-head">
+                <h3 id="ragSourcesTitle">引用來源</h3>
+                <span class="result-time" id="ragSourcesMeta">來源文件 / 段落</span>
+              </div>
+              <div id="ragSourcesResult" class="source-citation-list">
+                <p class="empty-state">尚未顯示來源。</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="focus-music-widget" id="focusMusicWidget">
+    <button class="focus-music-toggle" id="focusMusicToggle" type="button">
+      🎧 專注音樂
+    </button>
+
+    <div class="focus-music-panel" id="focusMusicPanel" hidden>
+      <div class="focus-music-head">
+        <div>
+          <strong>專注音樂</strong>
+          <p id="focusMusicFileName">尚未加入 MP3</p>
+        </div>
+        <button class="ghost-button" id="focusMusicCloseButton" type="button">收合</button>
+      </div>
+
+      <div class="focus-music-mode-switch" role="tablist" aria-label="專注音樂來源">
+        <button class="ghost-button focus-music-mode-button" id="focusMusicModeMp3" type="button">MP3</button>
+        <button class="ghost-button focus-music-mode-button" id="focusMusicModeSpotify" type="button">Spotify</button>
+      </div>
+
+      <div id="focusMusicMp3Section">
+      <audio id="focusMusicAudio" loop></audio>
+
+      <div class="focus-music-actions">
+        <button class="primary-button" id="focusMusicPlayButton" type="button">播放</button>
+        <label class="secondary-button focus-music-upload-label" for="focusMusicFileInput">
+          加入 MP3
+        </label>
+        <input id="focusMusicFileInput" type="file" accept="audio/mpeg,.mp3">
+        <button class="ghost-button" id="focusMusicRemoveButton" type="button">移除</button>
+      </div>
+
+      <label class="focus-volume-label" for="focusMusicVolume">
+        音量
+        <input id="focusMusicVolume" type="range" min="0" max="1" step="0.01" value="0.25">
+      </label>
+
+      <p class="focus-music-hint" id="focusMusicStatus">
+        音樂只會在你按下播放後開始。匯入的 MP3 會儲存在此瀏覽器中。
+      </p>
+      </div>
+
+      <div id="focusMusicSpotifySection" hidden>
+        <div class="focus-spotify-connect-card">
+          <div class="focus-spotify-status-row">
+            <strong id="focusSpotifyStateTitle">尚未連接 Spotify</strong>
+            <span class="focus-spotify-badge" id="focusSpotifyPremiumBadge" hidden>Premium</span>
+          </div>
+          <p class="focus-music-hint" id="focusSpotifyStatus">
+            Spotify 網頁播放需要 Premium 帳號，且是否能播放也會受帳號、地區與 Spotify 平台限制影響。
+          </p>
+
+          <div class="focus-music-actions">
+            <button class="primary-button" id="focusSpotifyConnectButton" type="button">連接 Spotify</button>
+            <button class="secondary-button" id="focusSpotifyReconnectButton" type="button" hidden>重新連接播放器</button>
+            <button class="ghost-button" id="focusSpotifyDisconnectButton" type="button" hidden>中斷 Spotify</button>
+          </div>
+
+          <div class="focus-spotify-now-playing" id="focusSpotifyNowPlaying" hidden>
+            <img id="focusSpotifyCover" class="focus-spotify-cover" alt="Spotify 專輯封面">
+            <div class="focus-spotify-track-meta">
+              <strong id="focusSpotifyTrackName">尚未播放</strong>
+              <p id="focusSpotifyArtistName">等待讀取目前播放內容</p>
+            </div>
+          </div>
+
+          <div class="focus-spotify-progress" id="focusSpotifyProgressWrap" hidden>
+            <div class="focus-spotify-progress-meta">
+              <span id="focusSpotifyProgressCurrent">0:00</span>
+              <span id="focusSpotifyProgressTotal">0:00</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="focusSpotifyProgressFill"></div>
+            </div>
+          </div>
+
+          <div class="focus-music-actions" id="focusSpotifyControls" hidden>
+            <button class="ghost-button" id="focusSpotifyPreviousButton" type="button">上一首</button>
+            <button class="primary-button" id="focusSpotifyPlayPauseButton" type="button">播放</button>
+            <button class="ghost-button" id="focusSpotifyNextButton" type="button">下一首</button>
+          </div>
+
+          <label class="focus-volume-label" for="focusSpotifyVolume">
+            Spotify 音量
+            <input id="focusSpotifyVolume" type="range" min="0" max="100" step="1" value="25">
+          </label>
+
+          <div class="focus-music-actions focus-spotify-lock-actions" id="focusSpotifyLockActions" hidden>
+            <button class="secondary-button" id="focusSpotifyLockButton" type="button">鎖定此歌單</button>
+            <button class="ghost-button" id="focusSpotifyReturnLockedButton" type="button" hidden>切回鎖定歌單</button>
+          </div>
+          <p class="focus-music-hint" id="focusSpotifyLockStatus" hidden></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script defer src="./finance-knowledge.js"></script>
+  <script defer src="./spotify-player.js"></script>
+  <script defer src="./app.js"></script>
+</body>
+</html>
