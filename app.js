@@ -178,6 +178,7 @@ const studyAgentLoadedMeta = getElementByIdSafe("studyAgentLoadedMeta");
 const focusMusicWidget = getElementByIdSafe("focusMusicWidget");
 const focusMusicToggle = getElementByIdSafe("focusMusicToggle", "button");
 const focusMusicPanel = getElementByIdSafe("focusMusicPanel");
+const focusMusicModeBadge = getElementByIdSafe("focusMusicModeBadge");
 const focusMusicFileName = getElementByIdSafe("focusMusicFileName");
 const focusMusicCloseButton = getElementByIdSafe("focusMusicCloseButton", "button");
 const focusMusicModeMp3 = getElementByIdSafe("focusMusicModeMp3", "button");
@@ -205,10 +206,10 @@ const focusSpotifyProgressCurrent = getElementByIdSafe("focusSpotifyProgressCurr
 const focusSpotifyProgressTotal = getElementByIdSafe("focusSpotifyProgressTotal");
 const focusSpotifyProgressFill = getElementByIdSafe("focusSpotifyProgressFill");
 const focusSpotifyControls = getElementByIdSafe("focusSpotifyControls");
-const focusSpotifyPreviousButton = getElementByIdSafe("focusSpotifyPreviousButton", "button");
-const focusSpotifyPlayPauseButton = getElementByIdSafe("focusSpotifyPlayPauseButton", "button");
-const focusSpotifyNextButton = getElementByIdSafe("focusSpotifyNextButton", "button");
-const focusSpotifyVolume = getElementByIdSafe("focusSpotifyVolume", "input");
+const spotifyPreviousButton = getElementByIdSafe("spotifyPreviousButton", "button");
+const spotifyPlayButton = getElementByIdSafe("spotifyPlayButton", "button");
+const spotifyNextButton = getElementByIdSafe("spotifyNextButton", "button");
+const spotifyVolumeInput = getElementByIdSafe("spotifyVolumeInput", "input");
 const focusSpotifyLockActions = getElementByIdSafe("focusSpotifyLockActions");
 const focusSpotifyLockButton = getElementByIdSafe("focusSpotifyLockButton", "button");
 const focusSpotifyReturnLockedButton = getElementByIdSafe("focusSpotifyReturnLockedButton", "button");
@@ -612,6 +613,7 @@ const RAG_MODE_STORAGE_KEY = "smartstudy-rag-mode";
 const RAG_TO_TUTOR_STORAGE_KEY = "smartstudy-rag-to-tutor";
 const RAG_TO_STUDY_AGENT_STORAGE_KEY = "smartstudy-rag-to-study-agent";
 const FOCUS_MUSIC_STORAGE_KEY = "smartstudy-focus-music";
+const FOCUS_MUSIC_EXPANDED_STORAGE_KEY = "smartstudy.focusMusic.expanded";
 const FOCUS_MUSIC_DB_NAME = "smartstudy-focus-music";
 const FOCUS_MUSIC_STORE_NAME = "tracks";
 const FOCUS_MUSIC_TRACK_ID = "custom-mp3";
@@ -833,10 +835,18 @@ function normalizeFocusMusicState(value) {
   const volume = Number.isFinite(savedVolume)
     ? Math.min(1, Math.max(0, savedVolume))
     : 0.25;
+  const persistedExpanded = localStorage.getItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY);
+  const expanded = typeof value?.expanded === "boolean"
+    ? value.expanded
+    : persistedExpanded === "true"
+      ? true
+      : persistedExpanded === "false"
+        ? false
+        : false;
 
   return {
     volume,
-    expanded: Boolean(value?.expanded),
+    expanded,
     fileName: typeof value?.fileName === "string" ? value.fileName : "尚未加入 MP3",
     mode: value?.mode === "spotify" ? "spotify" : "mp3"
   };
@@ -847,7 +857,41 @@ function loadFocusMusicState() {
 }
 
 function saveFocusMusicState(state) {
-  saveJsonStorage(FOCUS_MUSIC_STORAGE_KEY, normalizeFocusMusicState(state));
+  const normalizedState = normalizeFocusMusicState(state);
+  localStorage.setItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, normalizedState.expanded ? "true" : "false");
+  saveJsonStorage(FOCUS_MUSIC_STORAGE_KEY, normalizedState);
+}
+
+function openFocusMusicWidget() {
+  if (!focusMusicPanel || !focusMusicWidget) {
+    return;
+  }
+  focusMusicPanel.hidden = false;
+  focusMusicWidget.classList.add("is-open");
+  focusMusicToggle?.setAttribute("aria-expanded", "true");
+  localStorage.setItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, "true");
+}
+
+function closeFocusMusicWidget() {
+  if (!focusMusicPanel || !focusMusicWidget) {
+    return;
+  }
+  focusMusicPanel.hidden = true;
+  focusMusicWidget.classList.remove("is-open");
+  focusMusicToggle?.setAttribute("aria-expanded", "false");
+  localStorage.setItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, "false");
+}
+
+function toggleFocusMusicWidget(event) {
+  event?.stopPropagation();
+  if (!focusMusicPanel) {
+    return;
+  }
+  if (focusMusicPanel.hidden) {
+    openFocusMusicWidget();
+  } else {
+    closeFocusMusicWidget();
+  }
 }
 
 function openFocusMusicDb() {
@@ -942,6 +986,7 @@ function initFocusMusicWidget() {
 
   let state = loadFocusMusicState();
   let currentObjectUrl = "";
+  let isDraggingFocusMusicSlider = false;
 
   function revokeCurrentObjectUrl() {
     if (currentObjectUrl) {
@@ -959,9 +1004,25 @@ function initFocusMusicWidget() {
     status.classList.toggle("is-error", Boolean(isError));
   }
 
+  function updateModeBadge() {
+    if (!focusMusicModeBadge) {
+      return;
+    }
+    if (state.mode === "spotify") {
+      focusMusicModeBadge.textContent = "Spotify";
+      return;
+    }
+    focusMusicModeBadge.textContent = state.fileName && state.fileName !== "尚未加入 MP3"
+      ? "Ready"
+      : "MP3";
+  }
+
   function setExpanded(expanded) {
-    panel.hidden = !expanded;
-    toggleButton.setAttribute("aria-expanded", expanded ? "true" : "false");
+    if (expanded) {
+      openFocusMusicWidget();
+    } else {
+      closeFocusMusicWidget();
+    }
     state = { ...state, expanded };
     persistState();
   }
@@ -974,9 +1035,14 @@ function initFocusMusicWidget() {
     }
     mp3Section.hidden = nextMode !== "mp3";
     spotifySection.hidden = nextMode !== "spotify";
+    modeMp3Button.classList.toggle("active", nextMode === "mp3");
     modeMp3Button.classList.toggle("is-active", nextMode === "mp3");
+    modeSpotifyButton.classList.toggle("active", nextMode === "spotify");
     modeSpotifyButton.classList.toggle("is-active", nextMode === "spotify");
+    modeMp3Button.setAttribute("aria-selected", nextMode === "mp3" ? "true" : "false");
+    modeSpotifyButton.setAttribute("aria-selected", nextMode === "spotify" ? "true" : "false");
     state = { ...state, mode: nextMode };
+    updateModeBadge();
     persistState();
   }
 
@@ -990,6 +1056,7 @@ function initFocusMusicWidget() {
       fileNameLabel.textContent = "尚未加入 MP3";
       playButton.textContent = "播放";
       state = { ...state, fileName: "尚未加入 MP3" };
+      updateModeBadge();
       persistState();
       return;
     }
@@ -1000,6 +1067,7 @@ function initFocusMusicWidget() {
     audio.volume = state.volume;
     fileNameLabel.textContent = record.name || "已加入 MP3";
     state = { ...state, fileName: record.name || "已加入 MP3" };
+    updateModeBadge();
     persistState();
   }
 
@@ -1018,12 +1086,54 @@ function initFocusMusicWidget() {
     }
   }
 
-  toggleButton.addEventListener("click", () => {
-    setExpanded(panel.hidden);
+  toggleButton.addEventListener("click", toggleFocusMusicWidget);
+
+  closeButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setExpanded(false);
   });
 
-  closeButton.addEventListener("click", () => {
-    setExpanded(false);
+  widget.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  widget.addEventListener("pointerdown", (event) => {
+    const target = event.target;
+    isDraggingFocusMusicSlider = target instanceof HTMLInputElement
+      && target.type === "range";
+  });
+
+  document.addEventListener("pointerup", () => {
+    window.setTimeout(() => {
+      isDraggingFocusMusicSlider = false;
+    }, 0);
+  });
+
+  document.addEventListener("pointercancel", () => {
+    isDraggingFocusMusicSlider = false;
+  });
+
+  document.addEventListener("click", (event) => {
+    const currentWidget = document.getElementById("focusMusicWidget");
+    const currentPanel = document.getElementById("focusMusicPanel");
+
+    if (!currentWidget || !currentPanel || currentPanel.hidden || isDraggingFocusMusicSlider) {
+      return;
+    }
+
+    if (!currentWidget.contains(event.target)) {
+      closeFocusMusicWidget();
+      state = { ...state, expanded: false };
+      persistState();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeFocusMusicWidget();
+      state = { ...state, expanded: false };
+      persistState();
+    }
   });
 
   modeMp3Button.addEventListener("click", () => {
@@ -1134,6 +1244,7 @@ function initFocusMusicWidget() {
   fileNameLabel.textContent = state.fileName || "尚未加入 MP3";
   setExpanded(state.expanded);
   applyFocusMusicMode(state.mode);
+  updateModeBadge();
   void hydrateFromIndexedDb();
 
   if (window.SmartStudySpotifyPlayer?.init) {
@@ -1154,10 +1265,10 @@ function initFocusMusicWidget() {
       progressTotal: document.getElementById("focusSpotifyProgressTotal"),
       progressFill: document.getElementById("focusSpotifyProgressFill"),
       controls: document.getElementById("focusSpotifyControls"),
-      previousButton: document.getElementById("focusSpotifyPreviousButton"),
-      playPauseButton: document.getElementById("focusSpotifyPlayPauseButton"),
-      nextButton: document.getElementById("focusSpotifyNextButton"),
-      volumeInput: document.getElementById("focusSpotifyVolume"),
+      previousButton: document.getElementById("spotifyPreviousButton"),
+      playPauseButton: document.getElementById("spotifyPlayButton"),
+      nextButton: document.getElementById("spotifyNextButton"),
+      volumeInput: document.getElementById("spotifyVolumeInput"),
       lockActions: document.getElementById("focusSpotifyLockActions"),
       lockButton: document.getElementById("focusSpotifyLockButton"),
       returnLockedButton: document.getElementById("focusSpotifyReturnLockedButton"),

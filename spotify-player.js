@@ -15,6 +15,9 @@ const SPOTIFY_SCOPES = [
 const SPOTIFY_AUTH_STORAGE_KEY = "smartstudy-spotify-auth";
 const SPOTIFY_LOCKED_PLAYLIST_KEY = "smartstudy-spotify-locked-playlist-uri";
 const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
+const SPOTIFY_CONTROL_TIMEOUT_MS = 3000;
+let spotifyWidgetInitialized = false;
+let spotifyControlsBound = false;
 
 (function bootstrapSpotifyFocusPlayer() {
   const state = {
@@ -24,9 +27,14 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     deviceId: "",
     playback: null,
     pollTimer: null,
-    pollIntervalMs: 4000,
+    pollIntervalMs: 5000,
     sdkReady: false,
     connecting: false,
+    toggleBusy: false,
+    previousBusy: false,
+    nextBusy: false,
+    volumeDebounceTimer: null,
+    volume: Math.max(0, Math.min(1, Number(localStorage.getItem("smartstudy.spotify.volume")) || 0.25)),
     lockedPlaylistUri: localStorage.getItem(SPOTIFY_LOCKED_PLAYLIST_KEY) || "",
     initialized: false
   };
@@ -65,6 +73,67 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     }
     if (title && state.ui?.statusTitle) {
       state.ui.statusTitle.textContent = title;
+    }
+  }
+
+  function setSpotifyStatus(message, title) {
+    setStatus(message, title);
+  }
+
+  function createSpotifyControlTimeoutError(label, timeoutMs) {
+    const error = new Error(`${label} timeout after ${timeoutMs}ms`);
+    error.name = "SpotifyControlTimeoutError";
+    error.code = "SPOTIFY_CONTROL_TIMEOUT";
+    return error;
+  }
+
+  async function withSpotifyControlTimeout(task, label, timeoutMs = SPOTIFY_CONTROL_TIMEOUT_MS) {
+    let timeoutId = null;
+    try {
+      return await Promise.race([
+        Promise.resolve().then(task),
+        new Promise((_, reject) => {
+          timeoutId = window.setTimeout(() => {
+            reject(createSpotifyControlTimeoutError(label, timeoutMs));
+          }, timeoutMs);
+        })
+      ]);
+    } finally {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  function getSpotifyControlElements() {
+    const spotifyPlayButton = document.getElementById("spotifyPlayButton");
+    const spotifyPreviousButton = document.getElementById("spotifyPreviousButton");
+    const spotifyNextButton = document.getElementById("spotifyNextButton");
+    const spotifyVolumeInput = document.getElementById("spotifyVolumeInput");
+
+    console.log("Spotify play button:", spotifyPlayButton);
+    console.log("Spotify previous button:", spotifyPreviousButton);
+    console.log("Spotify next button:", spotifyNextButton);
+    console.log("Spotify volume input:", spotifyVolumeInput);
+
+    if (!spotifyPlayButton) {
+      console.warn("[Spotify] spotifyPlayButton is null");
+    }
+    if (!spotifyVolumeInput) {
+      console.warn("[Spotify] spotifyVolumeInput is null");
+    }
+
+    return {
+      spotifyPlayButton,
+      spotifyPreviousButton,
+      spotifyNextButton,
+      spotifyVolumeInput
+    };
+  }
+
+  function warnMissingElement(label, element) {
+    if (!element) {
+      console.warn(`[Spotify] Missing element: ${label}`);
     }
   }
 
@@ -159,12 +228,13 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     const isPlaying = Boolean(playback?.is_playing);
 
     state.ui.controls.hidden = !item;
-    state.ui.nowPlaying.hidden = !item;
+    state.ui.nowPlaying.hidden = false;
     state.ui.progressWrap.hidden = !item;
 
     if (!item) {
       state.ui.trackName.textContent = "尚未播放";
-      state.ui.artistName.textContent = "Spotify 目前沒有正在播放的歌曲";
+      state.ui.artistName.textContent = "等待讀取目前播放內容";
+      state.ui.cover.hidden = true;
       state.ui.playPauseButton.textContent = "播放";
       renderLockState();
       return;
@@ -175,6 +245,9 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     state.ui.trackName.textContent = item.name || "未命名歌曲";
     state.ui.artistName.textContent = artists || "未知歌手";
     state.ui.playPauseButton.textContent = isPlaying ? "暫停" : "播放";
+    if (state.ui.volumeInput && typeof playback?.device?.volume_percent === "number") {
+      state.ui.volumeInput.value = String(Math.min(1, Math.max(0, playback.device.volume_percent / 100)));
+    }
     state.ui.cover.src = coverUrl;
     state.ui.cover.hidden = !coverUrl;
     state.ui.progressCurrent.textContent = formatMs(playback.progress_ms);
@@ -314,6 +387,10 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     return state.auth.access_token;
   }
 
+  async function getValidSpotifyAccessToken() {
+    return ensureValidAccessToken();
+  }
+
   async function spotifyFetch(path, options = {}, allowRetry = true) {
     const token = await ensureValidAccessToken();
     const response = await fetch(`https://api.spotify.com/v1${path}`, {
@@ -337,18 +414,50 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
 
     if (response.status === 403) {
       setPremiumState(false);
-      setError("Spotify 網頁播放需要 Premium 帳號", "Spotify Premium 必要");
+      setError("Spotify 網頁播放需要 Premium 或播放權限", "Spotify Premium 必要");
       throw new Error("Spotify Premium required");
     }
 
     if (response.status === 429) {
       state.pollIntervalMs = 10000;
-      restartPolling();
+      startSpotifySync();
       setError("Spotify 請求太頻繁，稍後自動重試", "Spotify 請求過多");
       throw new Error("Spotify rate limited");
     }
 
     return response;
+  }
+
+  async function fallbackSpotifyPlayPause(allowRetry = true) {
+    const token = await getValidSpotifyAccessToken();
+    const isPlaying = Boolean(state.playback && state.playback.is_playing);
+    const endpoint = isPlaying
+      ? "https://api.spotify.com/v1/me/player/pause"
+      : "https://api.spotify.com/v1/me/player/play";
+
+    const response = await fetch(`${endpoint}?device_id=${encodeURIComponent(state.deviceId)}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (response.status === 401 && allowRetry) {
+      await refreshAccessToken();
+      return fallbackSpotifyPlayPause(false);
+    }
+
+    if (!response.ok && response.status !== 204) {
+      if (response.status === 403) {
+        setError("Spotify 網頁播放需要 Premium 或播放權限", "Spotify Premium 必要");
+      } else if (response.status === 429) {
+        state.pollIntervalMs = 10000;
+        startSpotifySync();
+        setError("Spotify 請求太頻繁，稍後自動重試", "Spotify 請求過多");
+      }
+      throw new Error(`Spotify play/pause API failed: ${response.status}`);
+    }
   }
 
   function loadSpotifySdk() {
@@ -389,13 +498,39 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     return playback;
   }
 
-  function restartPolling() {
+  async function syncSpotifyPlaybackState() {
+    const playbackState = await getPlaybackState();
+    const spotifyPlayButton = document.getElementById("spotifyPlayButton");
+    if (spotifyPlayButton) {
+      spotifyPlayButton.textContent = playbackState?.is_playing ? "暫停" : "播放";
+    }
+    return playbackState;
+  }
+
+  function startSpotifySync() {
     if (state.pollTimer) {
       window.clearInterval(state.pollTimer);
     }
     state.pollTimer = window.setInterval(() => {
-      void getPlaybackState().catch(() => {});
+      void syncSpotifyPlaybackState().catch((error) => {
+        console.warn("Spotify sync failed:", error);
+      });
     }, state.pollIntervalMs);
+  }
+
+  function queueSpotifySync() {
+    window.setTimeout(() => {
+      void syncSpotifyPlaybackState().catch((error) => {
+        console.warn("Spotify sync failed:", error);
+      });
+    }, 0);
+  }
+
+  function stopSpotifySync() {
+    if (state.pollTimer) {
+      window.clearInterval(state.pollTimer);
+      state.pollTimer = null;
+    }
   }
 
   async function transferPlayback(forcePlay) {
@@ -451,7 +586,7 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
             setError("Spotify 授權已過期，請重新連接", "請重新連接 Spotify");
           }
         },
-        volume: 0.25
+        volume: state.volume
       });
 
       state.player.addListener("ready", async ({ device_id: deviceId }) => {
@@ -462,7 +597,7 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
         try {
           await transferPlayback();
           await getPlaybackState();
-          restartPolling();
+          startSpotifySync();
         } catch (error) {
           // Status already handled.
         }
@@ -507,9 +642,16 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
         setError(message || "Spotify 播放發生問題。", "播放錯誤");
       });
 
-      await state.player.connect();
+      await withSpotifyControlTimeout(
+        () => state.player.connect(),
+        "Spotify Player connect"
+      );
     } catch (error) {
-      setError("Spotify Player 初始化失敗，請稍後再試。", "初始化失敗");
+      if (error?.code === "SPOTIFY_CONTROL_TIMEOUT") {
+        setError("Spotify Player 連線逾時，請稍後再試或按重新連接。", "連線逾時");
+      } else {
+        setError("Spotify Player 初始化失敗，請稍後再試。", "初始化失敗");
+      }
     } finally {
       state.connecting = false;
       updateConnectButtons();
@@ -561,6 +703,201 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     }
   }
 
+  async function handleSpotifyTogglePlay() {
+    const spotifyPlayer = state.player;
+    const spotifyReady = state.sdkReady;
+    const spotifyDeviceId = state.deviceId;
+    const { spotifyPlayButton, spotifyVolumeInput } = getSpotifyControlElements();
+    const focusMusicAudio = document.getElementById("focusMusicAudio");
+
+    console.log("Spotify play button:", spotifyPlayButton);
+    console.log("Spotify volume input:", spotifyVolumeInput);
+    console.log("Spotify toggle clicked");
+    console.log("Spotify player ready:", !!spotifyPlayer, spotifyReady, spotifyDeviceId);
+
+    if (!spotifyPlayButton) {
+      console.warn("[Spotify] play button not found");
+      setSpotifyStatus("Spotify 播放按鈕不存在，請重新整理頁面。", "控制項遺失");
+      return;
+    }
+
+    if (!spotifyPlayer || !spotifyReady || !spotifyDeviceId) {
+      setSpotifyStatus("Spotify Player 尚未準備完成，請稍候或按重新連接", "播放器未準備");
+      console.warn("Spotify not ready:", {
+        hasPlayer: !!spotifyPlayer,
+        spotifyReady,
+        spotifyDeviceId
+      });
+      return;
+    }
+
+    if (state.toggleBusy) {
+      return;
+    }
+
+    state.toggleBusy = true;
+    spotifyPlayButton.disabled = true;
+
+    try {
+      if (focusMusicAudio && !focusMusicAudio.paused) {
+        focusMusicAudio.pause();
+      }
+
+      if (state.playback) {
+        state.playback = {
+          ...state.playback,
+          is_playing: !state.playback.is_playing
+        };
+        spotifyPlayButton.textContent = state.playback.is_playing ? "暫停" : "播放";
+      }
+
+      await withSpotifyControlTimeout(
+        () => spotifyPlayer.togglePlay(),
+        "Spotify togglePlay"
+      );
+      queueSpotifySync();
+    } catch (error) {
+      console.error("Spotify togglePlay failed:", error);
+      try {
+        await withSpotifyControlTimeout(
+          () => fallbackSpotifyPlayPause(),
+          "Spotify fallback play/pause"
+        );
+        queueSpotifySync();
+      } catch (fallbackError) {
+        console.error("Spotify fallback play/pause failed:", fallbackError);
+        setSpotifyStatus("播放 / 暫停失敗，請重新連接 Spotify Player", "播放控制失敗");
+      }
+    } finally {
+      state.toggleBusy = false;
+      spotifyPlayButton.disabled = false;
+    }
+  }
+
+  async function setSpotifyVolume(volume, allowRetry = true) {
+    const spotifyPlayer = state.player;
+    const spotifyReady = state.sdkReady;
+    const spotifyDeviceId = state.deviceId;
+    if (!spotifyPlayer || !spotifyReady) {
+      setSpotifyStatus("Spotify Player 尚未準備完成，無法調整音量", "播放器未準備");
+      return;
+    }
+
+    try {
+      await withSpotifyControlTimeout(
+        () => spotifyPlayer.setVolume(volume),
+        "Spotify setVolume"
+      );
+      console.log("Spotify SDK volume updated:", volume);
+    } catch (error) {
+      console.warn("Spotify SDK setVolume failed, fallback to Web API:", error);
+      try {
+        const token = await withSpotifyControlTimeout(
+          () => getValidSpotifyAccessToken(),
+          "Spotify volume token"
+        );
+        const volumePercent = Math.round(volume * 100);
+
+        const response = await withSpotifyControlTimeout(
+          () => fetch(
+            `https://api.spotify.com/v1/me/player/volume?volume_percent=${volumePercent}&device_id=${encodeURIComponent(spotifyDeviceId)}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          ),
+          "Spotify volume API"
+        );
+
+        if (response.status === 401 && allowRetry) {
+          await withSpotifyControlTimeout(
+            () => refreshAccessToken(),
+            "Spotify refresh token"
+          );
+          return setSpotifyVolume(volume, false);
+        }
+
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`Spotify volume API failed: ${response.status}`);
+        }
+
+        console.log("Spotify Web API volume updated:", volumePercent);
+      } catch (fallbackError) {
+        console.error("Spotify set volume failed:", fallbackError);
+        setSpotifyStatus("音量調整失敗；如果你使用 iPhone / iPad，可能需要用系統音量鍵調整。", "音量調整失敗");
+      }
+    }
+  }
+
+  function handleSpotifyVolumeInput(event) {
+    console.log("Spotify volume changed:", event.target.value);
+
+    const rawValue = Number(event.target.value);
+    const volume = Math.max(0, Math.min(1, rawValue));
+    state.volume = volume;
+
+    localStorage.setItem("smartstudy.spotify.volume", String(volume));
+
+    if (state.volumeDebounceTimer) {
+      clearTimeout(state.volumeDebounceTimer);
+    }
+
+    state.volumeDebounceTimer = setTimeout(() => {
+      state.volumeDebounceTimer = null;
+      void setSpotifyVolume(volume);
+    }, 150);
+  }
+
+  async function handleSpotifyPrevious() {
+    const { spotifyPreviousButton } = getSpotifyControlElements();
+    if (state.previousBusy) return;
+    state.previousBusy = true;
+    if (spotifyPreviousButton) {
+      spotifyPreviousButton.disabled = true;
+    }
+    try {
+      await withSpotifyControlTimeout(
+        () => callPlayerAction("previous"),
+        "Spotify previous"
+      );
+      queueSpotifySync();
+    } catch (error) {
+      console.warn("Spotify previous failed:", error);
+      setSpotifyStatus("上一首操作逾時或失敗，請再試一次。", "播放控制失敗");
+    } finally {
+      state.previousBusy = false;
+      if (spotifyPreviousButton) {
+        spotifyPreviousButton.disabled = false;
+      }
+    }
+  }
+
+  async function handleSpotifyNext() {
+    const { spotifyNextButton } = getSpotifyControlElements();
+    if (state.nextBusy) return;
+    state.nextBusy = true;
+    if (spotifyNextButton) {
+      spotifyNextButton.disabled = true;
+    }
+    try {
+      await withSpotifyControlTimeout(
+        () => callPlayerAction("next"),
+        "Spotify next"
+      );
+      queueSpotifySync();
+    } catch (error) {
+      console.warn("Spotify next failed:", error);
+      setSpotifyStatus("下一首操作逾時或失敗，請再試一次。", "播放控制失敗");
+    } finally {
+      state.nextBusy = false;
+      if (spotifyNextButton) {
+        spotifyNextButton.disabled = false;
+      }
+    }
+  }
+
   async function lockCurrentPlaylist() {
     const uri = state.playback?.context?.uri;
     if (!uri || state.playback?.context?.type !== "playlist") {
@@ -575,21 +912,24 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     if (!state.lockedPlaylistUri) {
       return;
     }
-    await spotifyFetch(`/me/player/play${state.deviceId ? `?device_id=${encodeURIComponent(state.deviceId)}` : ""}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        context_uri: state.lockedPlaylistUri
-      })
-    });
+    await withSpotifyControlTimeout(
+      () => spotifyFetch(`/me/player/play${state.deviceId ? `?device_id=${encodeURIComponent(state.deviceId)}` : ""}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          context_uri: state.lockedPlaylistUri
+        })
+      }),
+      "Spotify return locked playlist"
+    );
     setStatus("已切回鎖定歌單。", "已回到鎖定歌單");
-    await getPlaybackState();
+    await withSpotifyControlTimeout(
+      () => getPlaybackState(),
+      "Spotify refresh playback state"
+    );
   }
 
   async function disconnectSpotify() {
-    if (state.pollTimer) {
-      window.clearInterval(state.pollTimer);
-      state.pollTimer = null;
-    }
+    stopSpotifySync();
     if (state.player) {
       state.player.disconnect();
       state.player = null;
@@ -603,6 +943,46 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     renderPlayback(null);
     setStatus("Spotify 已中斷連線。", "尚未連接 Spotify");
     updateConnectButtons();
+  }
+
+  function bindSpotifyControls() {
+    if (!state.ui) {
+      return;
+    }
+
+    if (spotifyControlsBound) return;
+    spotifyControlsBound = true;
+
+    const {
+      spotifyPlayButton,
+      spotifyPreviousButton,
+      spotifyNextButton,
+      spotifyVolumeInput
+    } = getSpotifyControlElements();
+
+    if (!spotifyPlayButton || !spotifyVolumeInput) {
+      setSpotifyStatus("Spotify 控制項未完整載入，請重新整理頁面。", "控制項遺失");
+    }
+
+    if (spotifyPlayButton) {
+      spotifyPlayButton.addEventListener("click", handleSpotifyTogglePlay);
+    }
+
+    if (spotifyPreviousButton) {
+      spotifyPreviousButton.addEventListener("click", () => {
+        void handleSpotifyPrevious();
+      });
+    }
+
+    if (spotifyNextButton) {
+      spotifyNextButton.addEventListener("click", () => {
+        void handleSpotifyNext();
+      });
+    }
+
+    if (spotifyVolumeInput) {
+      spotifyVolumeInput.addEventListener("input", handleSpotifyVolumeInput);
+    }
   }
 
   function bindUiEvents() {
@@ -621,51 +1001,35 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
     state.ui.disconnectButton?.addEventListener("click", () => {
       void disconnectSpotify();
     });
-
-    state.ui.playPauseButton?.addEventListener("click", () => {
-      const nextAction = state.playback?.is_playing ? "pause" : "play";
-      if (nextAction === "play") {
-        window.dispatchEvent(new CustomEvent("smartstudy:spotify-playing"));
-      }
-      void callPlayerAction(nextAction)
-        .then(() => getPlaybackState())
-        .catch(() => {});
-    });
-
-    state.ui.previousButton?.addEventListener("click", () => {
-      void callPlayerAction("previous")
-        .then(() => getPlaybackState())
-        .catch(() => {});
-    });
-
-    state.ui.nextButton?.addEventListener("click", () => {
-      void callPlayerAction("next")
-        .then(() => getPlaybackState())
-        .catch(() => {});
-    });
-
-    state.ui.volumeInput?.addEventListener("input", () => {
-      const value = Math.min(100, Math.max(0, Number(state.ui.volumeInput.value) || 25));
-      void spotifyFetch(`/me/player/volume?volume_percent=${value}${state.deviceId ? `&device_id=${encodeURIComponent(state.deviceId)}` : ""}`, {
-        method: "PUT"
-      }).catch(() => {});
-    });
+    bindSpotifyControls();
 
     state.ui.lockButton?.addEventListener("click", () => {
       void lockCurrentPlaylist();
     });
 
     state.ui.returnLockedButton?.addEventListener("click", () => {
-      void returnToLockedPlaylist().catch(() => {});
+      void returnToLockedPlaylist().catch((error) => {
+        console.warn("Spotify return to locked playlist failed:", error);
+        setSpotifyStatus("切回鎖定歌單逾時或失敗，請再試一次。", "播放控制失敗");
+      });
     });
   }
 
   function init(ui) {
+    if (spotifyWidgetInitialized) {
+      console.warn("Spotify widget already initialized, skip binding events.");
+      return;
+    }
+    spotifyWidgetInitialized = true;
+
     if (state.initialized) {
       return;
     }
     state.initialized = true;
     state.ui = ui;
+    if (state.ui.volumeInput) {
+      state.ui.volumeInput.value = String(state.volume);
+    }
     updateConnectButtons();
     renderPlayback(null);
     renderLockState();
