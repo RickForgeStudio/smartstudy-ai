@@ -18,6 +18,11 @@ const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
 const SPOTIFY_CONTROL_TIMEOUT_MS = 3000;
 let spotifyWidgetInitialized = false;
 let spotifyControlsBound = false;
+let spotifyShouldKeepPlaying = false;
+let spotifyUserPaused = false;
+let spotifyDeviceId = null;
+let currentSpotifyPlaybackState = null;
+let spotifyBusy = false;
 
 (function bootstrapSpotifyFocusPlayer() {
   const state = {
@@ -219,6 +224,7 @@ let spotifyControlsBound = false;
 
   function renderPlayback(playback) {
     state.playback = playback;
+    currentSpotifyPlaybackState = playback;
 
     if (!state.ui) {
       return;
@@ -226,6 +232,11 @@ let spotifyControlsBound = false;
 
     const item = playback?.item || null;
     const isPlaying = Boolean(playback?.is_playing);
+
+    if (isPlaying) {
+      spotifyShouldKeepPlaying = true;
+      spotifyUserPaused = false;
+    }
 
     state.ui.controls.hidden = !item;
     state.ui.nowPlaying.hidden = false;
@@ -483,6 +494,7 @@ let spotifyControlsBound = false;
   async function getPlaybackState() {
     const response = await spotifyFetch("/me/player");
     if (response.status === 204) {
+      currentSpotifyPlaybackState = null;
       renderPlayback(null);
       setStatus("Spotify 目前沒有正在播放的歌曲", "尚未播放");
       return null;
@@ -500,10 +512,27 @@ let spotifyControlsBound = false;
 
   async function syncSpotifyPlaybackState() {
     const playbackState = await getPlaybackState();
+    currentSpotifyPlaybackState = playbackState;
     const spotifyPlayButton = document.getElementById("spotifyPlayButton");
     if (spotifyPlayButton) {
       spotifyPlayButton.textContent = playbackState?.is_playing ? "暫停" : "播放";
     }
+
+    const isPlaying = Boolean(playbackState && playbackState.is_playing);
+
+    if (
+      spotifyShouldKeepPlaying
+      && !spotifyUserPaused
+      && state.sdkReady
+      && spotifyDeviceId
+      && playbackState
+      && !isPlaying
+    ) {
+      console.log("Spotify should keep playing, resume automatically.");
+      await resumeSpotifyPlayback();
+      return getPlaybackState();
+    }
+
     return playbackState;
   }
 
@@ -530,6 +559,88 @@ let spotifyControlsBound = false;
     if (state.pollTimer) {
       window.clearInterval(state.pollTimer);
       state.pollTimer = null;
+    }
+  }
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function ensureSpotifyDeviceIsActive(allowRetry = true) {
+    if (!spotifyDeviceId) {
+      throw new Error("Missing Spotify device id");
+    }
+
+    const token = await getValidSpotifyAccessToken();
+
+    const response = await fetch("https://api.spotify.com/v1/me/player", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        device_ids: [spotifyDeviceId],
+        play: false
+      })
+    });
+
+    if (response.status === 401 && allowRetry) {
+      await refreshAccessToken();
+      return ensureSpotifyDeviceIsActive(false);
+    }
+
+    if (!response.ok && response.status !== 204) {
+      throw new Error(`Transfer playback failed: ${response.status}`);
+    }
+  }
+
+  async function resumeSpotifyPlayback(allowRetry = true) {
+    const token = await getValidSpotifyAccessToken();
+
+    await ensureSpotifyDeviceIsActive();
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(spotifyDeviceId)}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    if (response.status === 401 && allowRetry) {
+      await refreshAccessToken();
+      return resumeSpotifyPlayback(false);
+    }
+
+    if (!response.ok && response.status !== 204) {
+      throw new Error(`Spotify resume failed: ${response.status}`);
+    }
+  }
+
+  async function pauseSpotifyPlayback(allowRetry = true) {
+    const token = await getValidSpotifyAccessToken();
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/player/pause?device_id=${encodeURIComponent(spotifyDeviceId)}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    if (response.status === 401 && allowRetry) {
+      await refreshAccessToken();
+      return pauseSpotifyPlayback(false);
+    }
+
+    if (!response.ok && response.status !== 204) {
+      throw new Error(`Spotify pause failed: ${response.status}`);
     }
   }
 
@@ -591,6 +702,7 @@ let spotifyControlsBound = false;
 
       state.player.addListener("ready", async ({ device_id: deviceId }) => {
         state.deviceId = deviceId;
+        spotifyDeviceId = deviceId;
         state.sdkReady = true;
         setPremiumState(true);
         setStatus("SmartStudy-AI Player 已準備好", "播放器已就緒");
@@ -605,6 +717,7 @@ let spotifyControlsBound = false;
 
       state.player.addListener("not_ready", () => {
         state.sdkReady = false;
+        spotifyDeviceId = null;
         setError("播放器目前未就緒，請重新連接。", "播放器離線");
       });
 
@@ -627,6 +740,10 @@ let spotifyControlsBound = false;
             }
           } : null
         });
+        currentSpotifyPlaybackState = {
+          ...state.playback,
+          is_playing: !playerState.paused
+        };
       });
 
       state.player.addListener("authentication_error", () => {
@@ -685,33 +802,14 @@ let spotifyControlsBound = false;
     }
   }
 
-  async function callPlayerAction(kind) {
-    if (kind === "previous") {
-      await spotifyFetch("/me/player/previous", { method: "POST" });
-      return;
-    }
-    if (kind === "next") {
-      await spotifyFetch("/me/player/next", { method: "POST" });
-      return;
-    }
-    if (kind === "pause") {
-      await spotifyFetch(`/me/player/pause${state.deviceId ? `?device_id=${encodeURIComponent(state.deviceId)}` : ""}`, { method: "PUT" });
-      return;
-    }
-    if (kind === "play") {
-      await spotifyFetch(`/me/player/play${state.deviceId ? `?device_id=${encodeURIComponent(state.deviceId)}` : ""}`, { method: "PUT" });
-    }
-  }
-
   async function handleSpotifyTogglePlay() {
     const spotifyPlayer = state.player;
     const spotifyReady = state.sdkReady;
-    const spotifyDeviceId = state.deviceId;
-    const { spotifyPlayButton, spotifyVolumeInput } = getSpotifyControlElements();
+    spotifyDeviceId = state.deviceId || spotifyDeviceId || null;
+    const { spotifyPlayButton } = getSpotifyControlElements();
     const focusMusicAudio = document.getElementById("focusMusicAudio");
 
     console.log("Spotify play button:", spotifyPlayButton);
-    console.log("Spotify volume input:", spotifyVolumeInput);
     console.log("Spotify toggle clicked");
     console.log("Spotify player ready:", !!spotifyPlayer, spotifyReady, spotifyDeviceId);
 
@@ -731,11 +829,11 @@ let spotifyControlsBound = false;
       return;
     }
 
-    if (state.toggleBusy) {
+    if (spotifyBusy) {
       return;
     }
 
-    state.toggleBusy = true;
+    spotifyBusy = true;
     spotifyPlayButton.disabled = true;
 
     try {
@@ -743,33 +841,36 @@ let spotifyControlsBound = false;
         focusMusicAudio.pause();
       }
 
-      if (state.playback) {
-        state.playback = {
-          ...state.playback,
-          is_playing: !state.playback.is_playing
-        };
-        spotifyPlayButton.textContent = state.playback.is_playing ? "暫停" : "播放";
+      const isPlaying = Boolean(
+        currentSpotifyPlaybackState
+        && currentSpotifyPlaybackState.is_playing
+      );
+
+      if (isPlaying) {
+        spotifyShouldKeepPlaying = false;
+        spotifyUserPaused = true;
+        await withSpotifyControlTimeout(
+          () => pauseSpotifyPlayback(),
+          "Spotify pause playback"
+        );
+      } else {
+        spotifyShouldKeepPlaying = true;
+        spotifyUserPaused = false;
+        await withSpotifyControlTimeout(
+          () => resumeSpotifyPlayback(),
+          "Spotify resume playback"
+        );
       }
 
       await withSpotifyControlTimeout(
-        () => spotifyPlayer.togglePlay(),
-        "Spotify togglePlay"
+        () => syncSpotifyPlaybackState(),
+        "Spotify sync playback state"
       );
-      queueSpotifySync();
     } catch (error) {
-      console.error("Spotify togglePlay failed:", error);
-      try {
-        await withSpotifyControlTimeout(
-          () => fallbackSpotifyPlayPause(),
-          "Spotify fallback play/pause"
-        );
-        queueSpotifySync();
-      } catch (fallbackError) {
-        console.error("Spotify fallback play/pause failed:", fallbackError);
-        setSpotifyStatus("播放 / 暫停失敗，請重新連接 Spotify Player", "播放控制失敗");
-      }
+      console.error("Spotify toggle failed:", error);
+      setSpotifyStatus("Spotify 播放 / 暫停失敗，請重新連接播放器", "播放控制失敗");
     } finally {
-      state.toggleBusy = false;
+      spotifyBusy = false;
       spotifyPlayButton.disabled = false;
     }
   }
@@ -852,22 +953,61 @@ let spotifyControlsBound = false;
 
   async function handleSpotifyPrevious() {
     const { spotifyPreviousButton } = getSpotifyControlElements();
-    if (state.previousBusy) return;
-    state.previousBusy = true;
+    spotifyDeviceId = state.deviceId || spotifyDeviceId || null;
+    if (spotifyBusy) return;
+    spotifyBusy = true;
     if (spotifyPreviousButton) {
       spotifyPreviousButton.disabled = true;
     }
     try {
+      const token = await withSpotifyControlTimeout(
+        () => getValidSpotifyAccessToken(),
+        "Spotify previous token"
+      );
+
       await withSpotifyControlTimeout(
-        () => callPlayerAction("previous"),
+        () => ensureSpotifyDeviceIsActive(),
+        "Spotify ensure device active"
+      );
+
+      const response = await withSpotifyControlTimeout(
+        () => fetch(
+          `https://api.spotify.com/v1/me/player/previous?device_id=${encodeURIComponent(spotifyDeviceId)}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        ),
         "Spotify previous"
       );
-      queueSpotifySync();
+
+      if (!response.ok && response.status !== 204) {
+        throw new Error(`Spotify previous failed: ${response.status}`);
+      }
+
+      await wait(700);
+      const playbackState = await withSpotifyControlTimeout(
+        () => syncSpotifyPlaybackState(),
+        "Spotify sync after previous"
+      );
+
+      if (spotifyShouldKeepPlaying && !spotifyUserPaused && !playbackState?.is_playing) {
+        await withSpotifyControlTimeout(
+          () => resumeSpotifyPlayback(),
+          "Spotify resume after previous"
+        );
+        await withSpotifyControlTimeout(
+          () => syncSpotifyPlaybackState(),
+          "Spotify resync after previous"
+        );
+      }
     } catch (error) {
-      console.warn("Spotify previous failed:", error);
-      setSpotifyStatus("上一首操作逾時或失敗，請再試一次。", "播放控制失敗");
+      console.error("Spotify previous failed:", error);
+      setSpotifyStatus("切到上一首失敗，請重新連接 Spotify", "播放控制失敗");
     } finally {
-      state.previousBusy = false;
+      spotifyBusy = false;
       if (spotifyPreviousButton) {
         spotifyPreviousButton.disabled = false;
       }
@@ -876,22 +1016,61 @@ let spotifyControlsBound = false;
 
   async function handleSpotifyNext() {
     const { spotifyNextButton } = getSpotifyControlElements();
-    if (state.nextBusy) return;
-    state.nextBusy = true;
+    spotifyDeviceId = state.deviceId || spotifyDeviceId || null;
+    if (spotifyBusy) return;
+    spotifyBusy = true;
     if (spotifyNextButton) {
       spotifyNextButton.disabled = true;
     }
     try {
+      const token = await withSpotifyControlTimeout(
+        () => getValidSpotifyAccessToken(),
+        "Spotify next token"
+      );
+
       await withSpotifyControlTimeout(
-        () => callPlayerAction("next"),
+        () => ensureSpotifyDeviceIsActive(),
+        "Spotify ensure device active"
+      );
+
+      const response = await withSpotifyControlTimeout(
+        () => fetch(
+          `https://api.spotify.com/v1/me/player/next?device_id=${encodeURIComponent(spotifyDeviceId)}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        ),
         "Spotify next"
       );
-      queueSpotifySync();
+
+      if (!response.ok && response.status !== 204) {
+        throw new Error(`Spotify next failed: ${response.status}`);
+      }
+
+      await wait(700);
+      const playbackState = await withSpotifyControlTimeout(
+        () => syncSpotifyPlaybackState(),
+        "Spotify sync after next"
+      );
+
+      if (spotifyShouldKeepPlaying && !spotifyUserPaused && !playbackState?.is_playing) {
+        await withSpotifyControlTimeout(
+          () => resumeSpotifyPlayback(),
+          "Spotify resume after next"
+        );
+        await withSpotifyControlTimeout(
+          () => syncSpotifyPlaybackState(),
+          "Spotify resync after next"
+        );
+      }
     } catch (error) {
-      console.warn("Spotify next failed:", error);
-      setSpotifyStatus("下一首操作逾時或失敗，請再試一次。", "播放控制失敗");
+      console.error("Spotify next failed:", error);
+      setSpotifyStatus("切到下一首失敗，請重新連接 Spotify", "播放控制失敗");
     } finally {
-      state.nextBusy = false;
+      spotifyBusy = false;
       if (spotifyNextButton) {
         spotifyNextButton.disabled = false;
       }
@@ -937,6 +1116,10 @@ let spotifyControlsBound = false;
     state.sdkReady = false;
     state.deviceId = "";
     state.playback = null;
+    currentSpotifyPlaybackState = null;
+    spotifyDeviceId = null;
+    spotifyShouldKeepPlaying = false;
+    spotifyUserPaused = false;
     state.auth = null;
     persistAuth();
     setPremiumState(false);
@@ -1050,7 +1233,9 @@ let spotifyControlsBound = false;
   async function pause() {
     try {
       if (state.playback?.is_playing) {
-        await callPlayerAction("pause");
+        spotifyShouldKeepPlaying = false;
+        spotifyUserPaused = true;
+        await pauseSpotifyPlayback();
         await getPlaybackState();
       }
     } catch (error) {

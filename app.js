@@ -617,6 +617,7 @@ const FOCUS_MUSIC_EXPANDED_STORAGE_KEY = "smartstudy.focusMusic.expanded";
 const FOCUS_MUSIC_DB_NAME = "smartstudy-focus-music";
 const FOCUS_MUSIC_STORE_NAME = "tracks";
 const FOCUS_MUSIC_TRACK_ID = "custom-mp3";
+let focusMusicInitialized = false;
 
 let currentLanguage = "zh";
 
@@ -960,13 +961,20 @@ function removeFocusMusicRecord() {
 }
 
 function initFocusMusicWidget() {
-  const widget = document.getElementById("focusMusicWidget");
-  if (!widget) {
+  if (focusMusicInitialized) {
+    console.warn("Focus music widget already initialized.");
     return;
   }
 
+  const widget = document.getElementById("focusMusicWidget");
   const toggleButton = document.getElementById("focusMusicToggle");
   const panel = document.getElementById("focusMusicPanel");
+
+  if (!widget || !toggleButton || !panel) {
+    console.warn("Focus music widget elements not found.");
+    return;
+  }
+
   const fileNameLabel = document.getElementById("focusMusicFileName");
   const closeButton = document.getElementById("focusMusicCloseButton");
   const modeMp3Button = document.getElementById("focusMusicModeMp3");
@@ -981,8 +989,11 @@ function initFocusMusicWidget() {
   const audio = document.getElementById("focusMusicAudio");
 
   if (!toggleButton || !panel || !fileNameLabel || !closeButton || !modeMp3Button || !modeSpotifyButton || !mp3Section || !spotifySection || !playButton || !fileInput || !removeButton || !volumeRange || !status || !audio) {
+    console.warn("Focus music widget elements not found.");
     return;
   }
+
+  focusMusicInitialized = true;
 
   let state = loadFocusMusicState();
   let currentObjectUrl = "";
@@ -8825,4 +8836,6 @@ setStudyAgentStatus(getUiText("studyAgentStatusTitle"), getUiText("studyAgentSta
 initTutorPage();
 initKnowledgePage();
 initStudyAgentPage();
-initFocusMusicWidget();
+document.addEventListener("DOMContentLoaded", () => {
+  initFocusMusicWidget();
+});
