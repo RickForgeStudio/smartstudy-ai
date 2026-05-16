@@ -1420,6 +1420,19 @@
       margin: 0;
     }
 
+    .feature-strip-with-music {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .feature-strip-with-music p {
+      margin: 0;
+      flex: 1 1 auto;
+    }
+
     .focus-music-widget {
       position: fixed;
       right: 24px;
@@ -1474,6 +1487,34 @@
 
     .focus-music-panel[hidden] {
       display: none !important;
+    }
+
+    .inline-music-widget,
+    .feature-strip-with-music .focus-music-widget {
+      position: relative;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      z-index: 50;
+      flex: 0 0 auto;
+      width: auto;
+      max-width: none;
+    }
+
+    .feature-strip-with-music .focus-music-toggle {
+      white-space: nowrap;
+    }
+
+    .feature-strip-with-music .focus-music-panel {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 12px);
+      width: 340px;
+      max-width: calc(100vw - 32px);
+      margin-top: 0;
+      border-radius: 26px;
+      z-index: 100;
+      animation: focusPanelUp 0.22s ease both;
     }
 
     .focus-music-head {
@@ -1873,6 +1914,18 @@
       }
     }
 
+    @keyframes focusPanelUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
     @keyframes cardFloat {
       0%,
       100% {
@@ -2009,6 +2062,28 @@
       .page-shell {
         width: min(100% - 20px, 1180px);
         padding: 20px 0 34px;
+      }
+
+      .feature-strip-with-music {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .feature-strip-with-music .focus-music-widget {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .feature-strip-with-music .focus-music-toggle {
+        width: 100%;
+      }
+
+      .feature-strip-with-music .focus-music-panel {
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+        bottom: calc(100% + 12px);
       }
 
       .focus-music-widget {
