@@ -29,6 +29,7 @@ const copyButton = getElementByIdSafe("copyButton", "button");
 const downloadButton = getElementByIdSafe("downloadButton", "button");
 const modeSelect = getElementByIdSafe("modeSelect", "select");
 const analysisEnhancement = getElementByIdSafe("analysisEnhancement", "select");
+const outputLanguage = getElementByIdSafe("outputLanguage", "select");
 const analysisEnhancementDescription = getElementByIdSafe("analysisEnhancementDescription");
 const modeDescription = getElementByIdSafe("modeDescription");
 const modeBadge = getElementByIdSafe("modeBadge");
@@ -214,6 +215,38 @@ const focusSpotifyLockActions = getElementByIdSafe("focusSpotifyLockActions");
 const focusSpotifyLockButton = getElementByIdSafe("focusSpotifyLockButton", "button");
 const focusSpotifyReturnLockedButton = getElementByIdSafe("focusSpotifyReturnLockedButton", "button");
 const focusSpotifyLockStatus = getElementByIdSafe("focusSpotifyLockStatus");
+const focusMusicPlayer = getElementByIdSafe("focusMusicPlayer");
+const toggleCollapsePlayer = getElementByIdSafe("toggleCollapsePlayer", "button");
+const prevTrackBtn = getElementByIdSafe("prevTrackBtn", "button");
+const currentTrackLabel = getElementByIdSafe("currentTrackLabel");
+const nextTrackBtn = getElementByIdSafe("nextTrackBtn", "button");
+const openTrackMenuBtn = getElementByIdSafe("openTrackMenuBtn", "button");
+const volumeControl = getElementByIdSafe("volumeControl", "input");
+const playPauseBtn = getElementByIdSafe("playPauseBtn", "button");
+const spotifyBtn = getElementByIdSafe("spotifyBtn", "button");
+const trackMenu = getElementByIdSafe("trackMenu");
+const spotifyPanel = getElementByIdSafe("spotifyPanel");
+const closeSpotifyPanelBtn = getElementByIdSafe("closeSpotifyPanelBtn", "button");
+const notesResultStatus = getElementByIdSafe("notesResultStatus");
+const notesAccordionList = getElementByIdSafe("notesAccordionList");
+const notesExportTrigger = getElementByIdSafe("notesExportTrigger", "button");
+const currentTutorSourceTitle = getElementByIdSafe("currentTutorSourceTitle");
+const currentTutorSourceMeta = getElementByIdSafe("currentTutorSourceMeta");
+const chooseTutorSourceBtn = getElementByIdSafe("chooseTutorSourceBtn", "button");
+const clearTutorSourceBtn = getElementByIdSafe("clearTutorSourceBtn", "button");
+const refreshQuestionsBtn = getElementByIdSafe("refreshQuestionsBtn", "button");
+const recommendedQuestions = getElementByIdSafe("recommendedQuestions");
+const chatMessages = getElementByIdSafe("chatMessages");
+const sendTutorMessage = getElementByIdSafe("sendTutorMessage", "button");
+const knowledgeSearchInput = getElementByIdSafe("knowledgeSearchInput", "input");
+const knowledgeSearchBtn = getElementByIdSafe("knowledgeSearchBtn", "button");
+const knowledgeSubjectFilter = getElementByIdSafe("knowledgeSubjectFilter", "select");
+const knowledgeChapterFilter = getElementByIdSafe("knowledgeChapterFilter", "select");
+const knowledgeTagFilter = getElementByIdSafe("knowledgeTagFilter", "select");
+const knowledgeTypeFilter = getElementByIdSafe("knowledgeTypeFilter", "select");
+const resetKnowledgeFiltersBtn = getElementByIdSafe("resetKnowledgeFiltersBtn", "button");
+const knowledgeResultCount = getElementByIdSafe("knowledgeResultCount");
+const knowledgeResults = getElementByIdSafe("knowledgeResults");
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -618,8 +651,355 @@ const FOCUS_MUSIC_DB_NAME = "smartstudy-focus-music";
 const FOCUS_MUSIC_STORE_NAME = "tracks";
 const FOCUS_MUSIC_TRACK_ID = "custom-mp3";
 let focusMusicInitialized = false;
+const focusPlayerTracks = [
+  { id: "rain", name: "雨聲", src: "audio/rain.mp3" },
+  { id: "whiteNoise", name: "白噪音", src: "audio/white-noise.mp3" },
+  { id: "ocean", name: "海浪聲", src: "audio/ocean.mp3" },
+  { id: "cafe", name: "咖啡廳", src: "audio/cafe.mp3" },
+  { id: "library", name: "圖書館", src: "audio/library.mp3" },
+  { id: "keyboard", name: "鍵盤聲", src: "audio/keyboard.mp3" },
+  { id: "piano", name: "輕鋼琴", src: "audio/piano.mp3" },
+  { id: "lofi", name: "Lo-fi", src: "audio/lofi.mp3" }
+];
+let focusPlayerCurrentTrackIndex = 0;
+let focusPlayerIsPlaying = false;
+const focusPlayerAudio = new Audio(focusPlayerTracks[focusPlayerCurrentTrackIndex].src);
+focusPlayerAudio.loop = true;
+focusPlayerAudio.volume = 0.5;
+let focusPlayerInitialized = false;
+
+function switchPage(pageName) {
+  document.querySelectorAll(".page").forEach((page) => {
+    page.classList.remove("active");
+  });
+
+  const targetPage = document.getElementById(`${pageName}Page`);
+  if (targetPage) {
+    targetPage.classList.add("active");
+  }
+
+  document.querySelectorAll(".nav-pill").forEach((button) => {
+    button.classList.toggle("active", button.dataset.page === pageName);
+  });
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function bindPageNavigation() {
+  document.querySelectorAll("[data-page]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const pageName = button.dataset.page;
+      if (pageName) {
+        switchPage(pageName);
+      }
+    });
+  });
+}
+
+function updateTrackLabel() {
+  if (!currentTrackLabel) {
+    return;
+  }
+
+  currentTrackLabel.textContent = `目前：${focusPlayerTracks[focusPlayerCurrentTrackIndex].name}`;
+}
+
+function updatePlayButton() {
+  if (!playPauseBtn) {
+    return;
+  }
+
+  playPauseBtn.textContent = focusPlayerIsPlaying ? "暫停" : "播放";
+}
+
+function saveMusicState() {
+  const player = document.getElementById("focusMusicPlayer");
+
+  localStorage.setItem("smartstudy_music", JSON.stringify({
+    currentTrackIndex: focusPlayerCurrentTrackIndex,
+    volume: focusPlayerAudio.volume,
+    isCollapsed: player ? player.classList.contains("collapsed") : false
+  }));
+}
+
+function restoreMusicState() {
+  try {
+    const raw = localStorage.getItem("smartstudy_music");
+    if (!raw) {
+      updateTrackLabel();
+      updatePlayButton();
+      return;
+    }
+
+    const state = JSON.parse(raw);
+
+    if (typeof state.currentTrackIndex === "number" && focusPlayerTracks[state.currentTrackIndex]) {
+      focusPlayerCurrentTrackIndex = state.currentTrackIndex;
+      focusPlayerAudio.src = focusPlayerTracks[focusPlayerCurrentTrackIndex].src;
+    }
+
+    if (typeof state.volume === "number") {
+      focusPlayerAudio.volume = state.volume;
+
+      if (volumeControl) {
+        volumeControl.value = String(state.volume);
+      }
+    }
+
+    const player = document.getElementById("focusMusicPlayer");
+    if (player && state.isCollapsed) {
+      player.classList.add("collapsed");
+    }
+
+    updateTrackLabel();
+    updatePlayButton();
+  } catch (error) {
+    console.warn("Failed to restore music state:", error);
+  }
+}
+
+function loadTrack(index, shouldPlay = focusPlayerIsPlaying) {
+  if (index < 0 || index >= focusPlayerTracks.length) {
+    return;
+  }
+
+  focusPlayerCurrentTrackIndex = index;
+  focusPlayerAudio.src = focusPlayerTracks[focusPlayerCurrentTrackIndex].src;
+  focusPlayerAudio.loop = true;
+
+  updateTrackLabel();
+
+  if (shouldPlay) {
+    focusPlayerAudio.play()
+      .then(() => {
+        focusPlayerIsPlaying = true;
+        updatePlayButton();
+      })
+      .catch((error) => {
+        console.warn("Audio play failed:", error);
+      });
+  } else {
+    focusPlayerIsPlaying = false;
+    updatePlayButton();
+  }
+
+  saveMusicState();
+}
+
+function nextTrack() {
+  const nextIndex = (focusPlayerCurrentTrackIndex + 1) % focusPlayerTracks.length;
+  loadTrack(nextIndex);
+}
+
+function prevTrack() {
+  const prevIndex = (focusPlayerCurrentTrackIndex - 1 + focusPlayerTracks.length) % focusPlayerTracks.length;
+  loadTrack(prevIndex);
+}
+
+function playPause() {
+  if (focusPlayerIsPlaying) {
+    focusPlayerAudio.pause();
+    focusPlayerIsPlaying = false;
+    updatePlayButton();
+    saveMusicState();
+    return;
+  }
+
+  focusPlayerAudio.play()
+    .then(() => {
+      focusPlayerIsPlaying = true;
+      updatePlayButton();
+      saveMusicState();
+      if (window.SmartStudySpotifyPlayer?.pause) {
+        void window.SmartStudySpotifyPlayer.pause();
+      }
+    })
+    .catch((error) => {
+      console.warn("Audio play failed:", error);
+    });
+}
+
+function setVolume(value) {
+  const volume = Number(value);
+  focusPlayerAudio.volume = Math.min(1, Math.max(0, volume));
+  saveMusicState();
+}
+
+function togglePlayerCollapse() {
+  const player = document.getElementById("focusMusicPlayer");
+  if (!player) {
+    return;
+  }
+
+  player.classList.toggle("collapsed");
+  saveMusicState();
+}
+
+function toggleTrackMenu() {
+  const menu = document.getElementById("trackMenu");
+  if (!menu) {
+    return;
+  }
+
+  menu.classList.toggle("hidden");
+}
+
+function selectTrackById(trackId) {
+  const index = focusPlayerTracks.findIndex((track) => track.id === trackId);
+  if (index === -1) {
+    return;
+  }
+
+  loadTrack(index);
+
+  const menu = document.getElementById("trackMenu");
+  if (menu) {
+    menu.classList.add("hidden");
+  }
+}
+
+function openSpotifyPanel() {
+  if (!spotifyPanel) {
+    console.log("Open existing Spotify feature");
+    return;
+  }
+
+  spotifyPanel.classList.toggle("hidden");
+}
+
+function initFocusMusicPlayer() {
+  if (focusPlayerInitialized) {
+    return;
+  }
+
+  const player = document.getElementById("focusMusicPlayer");
+  if (!player) {
+    return;
+  }
+
+  focusPlayerInitialized = true;
+  restoreMusicState();
+
+  playPauseBtn?.addEventListener("click", playPause);
+  nextTrackBtn?.addEventListener("click", nextTrack);
+  prevTrackBtn?.addEventListener("click", prevTrack);
+  toggleCollapsePlayer?.addEventListener("click", togglePlayerCollapse);
+  openTrackMenuBtn?.addEventListener("click", toggleTrackMenu);
+  spotifyBtn?.addEventListener("click", openSpotifyPanel);
+  closeSpotifyPanelBtn?.addEventListener("click", () => {
+    spotifyPanel?.classList.add("hidden");
+  });
+
+  volumeControl?.addEventListener("input", (event) => {
+    setVolume(event.target.value);
+  });
+
+  document.querySelectorAll("#trackMenu [data-track]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectTrackById(button.dataset.track);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!trackMenu.classList.contains("hidden") && !trackMenu.contains(event.target) && event.target !== openTrackMenuBtn) {
+      trackMenu.classList.add("hidden");
+    }
+
+    if (!spotifyPanel.classList.contains("hidden")
+      && !spotifyPanel.contains(event.target)
+      && event.target !== spotifyBtn) {
+      spotifyPanel.classList.add("hidden");
+    }
+  });
+
+  if (window.SmartStudySpotifyPlayer?.init) {
+    window.SmartStudySpotifyPlayer.init({
+      modeButton: spotifyBtn,
+      statusTitle: document.getElementById("focusSpotifyStateTitle"),
+      premiumBadge: document.getElementById("focusSpotifyPremiumBadge"),
+      statusText: document.getElementById("focusSpotifyStatus"),
+      connectButton: document.getElementById("focusSpotifyConnectButton"),
+      reconnectButton: document.getElementById("focusSpotifyReconnectButton"),
+      disconnectButton: document.getElementById("focusSpotifyDisconnectButton"),
+      nowPlaying: document.getElementById("focusSpotifyNowPlaying"),
+      cover: document.getElementById("focusSpotifyCover"),
+      trackName: document.getElementById("focusSpotifyTrackName"),
+      artistName: document.getElementById("focusSpotifyArtistName"),
+      progressWrap: document.getElementById("focusSpotifyProgressWrap"),
+      progressCurrent: document.getElementById("focusSpotifyProgressCurrent"),
+      progressTotal: document.getElementById("focusSpotifyProgressTotal"),
+      progressFill: document.getElementById("focusSpotifyProgressFill"),
+      controls: document.getElementById("focusSpotifyControls"),
+      previousButton: document.getElementById("spotifyPreviousButton"),
+      playPauseButton: document.getElementById("spotifyPlayButton"),
+      nextButton: document.getElementById("spotifyNextButton"),
+      volumeInput: document.getElementById("spotifyVolumeInput"),
+      lockActions: document.getElementById("focusSpotifyLockActions"),
+      lockButton: document.getElementById("focusSpotifyLockButton"),
+      returnLockedButton: document.getElementById("focusSpotifyReturnLockedButton"),
+      lockStatus: document.getElementById("focusSpotifyLockStatus"),
+      onSpotifyPlaybackStart: () => {
+        if (focusPlayerIsPlaying) {
+          focusPlayerAudio.pause();
+          focusPlayerIsPlaying = false;
+          updatePlayButton();
+          saveMusicState();
+        }
+      }
+    });
+  }
+}
 
 let currentLanguage = "zh";
+let currentNoteMode = "quick";
+const NOTE_MODE_STORAGE_KEY = "smartstudy_my_notes";
+const noteModeToLegacyMode = {
+  quick: "simple",
+  deep: "report",
+  exam: "exam",
+  quiz: "exam",
+  concept: "report",
+  mistake: "exam"
+};
+const noteModeDisplayConfigs = {
+  quick: {
+    label: "快速摘要",
+    description: "快速抓出整份內容的大意與主線，適合先建立整體理解。"
+  },
+  deep: {
+    label: "深度解析",
+    description: "完整解釋觀念與脈絡，適合課後整理與強化理解。"
+  },
+  exam: {
+    label: "考前複習",
+    description: "聚焦常考方向與易混淆重點，適合考前快速統整。"
+  },
+  quiz: {
+    label: "題目生成",
+    description: "優先整理出可能考題與練習方向，方便直接做題複習。"
+  },
+  concept: {
+    label: "概念連結",
+    description: "著重觀念之間的關係與結構，幫助你把內容串成完整脈絡。"
+  },
+  mistake: {
+    label: "易錯觀念",
+    description: "優先指出最容易混淆或考錯的地方，方便釐清盲點。"
+  }
+};
+const legacyModeToNoteMode = {
+  simple: "quick",
+  report: "deep",
+  exam: "exam"
+};
+let currentTutorSource = null;
+const fallbackTutorSourceMessage = {
+  title: "尚未選擇筆記",
+  meta: "請先從「我的筆記」或「知識庫」選擇一份資料。"
+};
 
 function getCurrentLanguage() {
   return currentLanguage === "en" ? "en" : "zh";
@@ -5011,6 +5391,936 @@ function formatDateTime(value) {
   }).format(new Date(value));
 }
 
+function extractPreviewText(text, fallback = "尚無預覽內容。", maxLength = 84) {
+  const normalized = normalizeText(String(text || ""));
+  if (!normalized) {
+    return fallback;
+  }
+  const firstSentence = normalized.split(/(?<=[。！？!?\.])\s+/)[0] || normalized;
+  return firstSentence.length > maxLength ? `${firstSentence.slice(0, maxLength - 1)}…` : firstSentence;
+}
+
+function escapeAccordionHtml(value) {
+  return escapeHtml(value).replace(/\n/g, "<br>");
+}
+
+function buildParagraphHtml(text, fallback = "尚無詳細內容。") {
+  const normalized = normalizeText(String(text || ""));
+  if (!normalized) {
+    return `<p>${escapeHtml(fallback)}</p>`;
+  }
+  return normalized
+    .split(/\n{2,}/)
+    .map((part) => `<p>${escapeAccordionHtml(part)}</p>`)
+    .join("");
+}
+
+function getDisplayItemText(item) {
+  if (!item) {
+    return "";
+  }
+  if (typeof item === "string") {
+    return normalizeText(item);
+  }
+  if (typeof item === "object") {
+    return normalizeText(
+      item.question
+      || item.answer
+      || item.label
+      || item.description
+      || item.text
+      || item.title
+      || ""
+    );
+  }
+  return "";
+}
+
+function buildBulletHtml(items, fallback = "尚無詳細內容。") {
+  const normalizedItems = (Array.isArray(items) ? items : [])
+    .map((item) => getDisplayItemText(item))
+    .filter(Boolean);
+
+  if (!normalizedItems.length) {
+    return `<p>${escapeHtml(fallback)}</p>`;
+  }
+
+  return `<ul>${normalizedItems.map((item) => `<li>${escapeAccordionHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function buildQuestionHtml(items, fallback = "尚無詳細內容。") {
+  const normalizedItems = (Array.isArray(items) ? items : []).filter(Boolean);
+  if (!normalizedItems.length) {
+    return `<p>${escapeHtml(fallback)}</p>`;
+  }
+
+  return `<ol>${normalizedItems.map((item) => {
+    const question = escapeHtml(item.question || getDisplayItemText(item));
+    const answer = normalizeText(item.answer || "");
+    return `<li><strong>${question}</strong>${answer ? `<br>${escapeAccordionHtml(answer)}` : ""}</li>`;
+  }).join("")}</ol>`;
+}
+
+function stripHtmlTags(value) {
+  return normalizeText(String(value || "").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, " "));
+}
+
+function extractTutorSourceText(note) {
+  if (!note) {
+    return "";
+  }
+
+  const parts = [
+    note.title,
+    note.content,
+    note.result?.summary?.detail,
+    note.result?.keyPoints?.detail,
+    note.result?.quiz?.detail,
+    note.result?.keywords?.detail,
+    note.result?.mistakes?.detail,
+    note.result?.concepts?.detail
+  ]
+    .map((item) => stripHtmlTags(item))
+    .filter(Boolean);
+
+  return normalizeText(parts.join("\n\n"));
+}
+
+function convertTutorSourceToAnalysisResult(note) {
+  if (!note) {
+    return null;
+  }
+
+  const title = note.title || "未命名筆記";
+  const keywordPreview = stripHtmlTags(note.result?.keywords?.preview || "");
+  const keywordLabels = keywordPreview
+    .split(/[、,，]/)
+    .map((item) => normalizeText(item))
+    .filter(Boolean)
+    .slice(0, 8);
+
+  const keyPointPreview = stripHtmlTags(note.result?.keyPoints?.preview || "");
+  const quizPreview = stripHtmlTags(note.result?.quiz?.preview || "");
+  const mistakePreview = stripHtmlTags(note.result?.mistakes?.preview || "");
+  const conceptPreview = stripHtmlTags(note.result?.concepts?.preview || "");
+  const summaryText = stripHtmlTags(note.result?.summary?.detail || note.result?.summary?.preview || "");
+  const sourceText = extractTutorSourceText(note);
+
+  return {
+    analyzedAt: note.createdAt || new Date().toISOString(),
+    mode: note.mode || "exam",
+    modeLabel: note.mode || "exam",
+    cleanedText: sourceText,
+    sourceText,
+    sourceMeta: {
+      fileName: title
+    },
+    sourceSections: [
+      {
+        title,
+        text: sourceText || summaryText || title,
+        paragraphNumber: 1
+      }
+    ],
+    chinese: {
+      summary: summaryText || title,
+      importantSentences: [keyPointPreview, conceptPreview].filter(Boolean).map((text) => ({ text })),
+      possibleExamPoints: [quizPreview, mistakePreview, keyPointPreview].filter(Boolean).map((text) => ({ text })),
+      accountingTerms: keywordLabels.map((label) => ({ label, description: "來自目前選取筆記的關鍵字整理。" }))
+    }
+  };
+}
+
+function generateRecommendedQuestions(currentNote) {
+  if (!currentNote) {
+    return [];
+  }
+
+  const textSource = [
+    currentNote.title,
+    currentNote.result?.summary?.preview,
+    currentNote.result?.keyPoints?.preview,
+    currentNote.result?.quiz?.preview,
+    currentNote.result?.keywords?.preview,
+    currentNote.result?.mistakes?.preview,
+    currentNote.result?.concepts?.preview
+  ]
+    .map((item) => stripHtmlTags(item))
+    .filter(Boolean)
+    .join(" ");
+
+  const title = currentNote.title || "這份筆記";
+
+  if (!textSource.trim()) {
+    return currentLanguage === "en"
+      ? [
+          `Can you explain the core idea of "${title}"?`,
+          "What is the easiest concept in this note to confuse?",
+          "How might this note appear on an exam?"
+        ]
+      : [
+          `請解釋「${title}」的核心重點？`,
+          "這份筆記中最容易混淆的觀念是什麼？",
+          "這份筆記可能會怎麼出考題？"
+        ];
+  }
+
+  return currentLanguage === "en"
+    ? [
+        `Can you explain the core idea of "${title}" in a simple way?`,
+        "Which concept in this source is most likely to appear on the exam?",
+        "What parts of this source are easiest to confuse or answer incorrectly?"
+      ]
+    : [
+        `請用簡單方式解釋「${title}」的核心重點？`,
+        "這份資料中最可能被考的觀念是什麼？",
+        "這份資料有哪些容易混淆或容易答錯的地方？"
+      ];
+}
+
+function renderRecommendedQuestions(questions) {
+  if (!recommendedQuestions) return;
+
+  recommendedQuestions.innerHTML = "";
+
+  if (!questions || questions.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = currentLanguage === "en"
+      ? "No source is selected yet. Please choose a note before generating recommended questions."
+      : "目前尚未選擇資料，請先選擇一份筆記後再產生推薦問題。";
+    recommendedQuestions.appendChild(empty);
+    return;
+  }
+
+  questions.forEach((question) => {
+    const button = document.createElement("button");
+    button.className = "question-chip";
+    button.type = "button";
+    button.textContent = question;
+
+    button.addEventListener("click", () => {
+      if (tutorInput) {
+        tutorInput.value = question;
+        tutorInput.focus();
+      }
+    });
+
+    recommendedQuestions.appendChild(button);
+  });
+}
+
+function generateAndRenderRecommendedQuestions() {
+  const questions = generateRecommendedQuestions(currentTutorSource);
+  renderRecommendedQuestions(questions);
+}
+
+function updateTutorSourceUI() {
+  if (!currentTutorSourceTitle || !currentTutorSourceMeta) return;
+
+  if (!currentTutorSource) {
+    currentTutorSourceTitle.textContent = currentLanguage === "en"
+      ? "No note selected"
+      : fallbackTutorSourceMessage.title;
+    currentTutorSourceMeta.textContent = currentLanguage === "en"
+      ? "Please choose one source from My Notes or the Knowledge Base first."
+      : fallbackTutorSourceMessage.meta;
+    renderRecommendedQuestions([]);
+    return;
+  }
+
+  currentTutorSourceTitle.textContent = currentTutorSource.title || "未命名筆記";
+  const subject = currentTutorSource.subject || "未分類";
+  const mode = currentTutorSource.mode || "未指定模式";
+  currentTutorSourceMeta.textContent = currentLanguage === "en"
+    ? `Subject: ${subject} | Study mode: ${mode}`
+    : `科目：${subject}｜整理類型：${mode}`;
+  generateAndRenderRecommendedQuestions();
+}
+
+function chooseLatestNoteAsTutorSource() {
+  const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+
+  if (!notes.length) {
+    currentTutorSource = null;
+    updateTutorSourceUI();
+    alert(currentLanguage === "en"
+      ? "There are no available notes yet. Please generate one from the Notes page first."
+      : "目前沒有可用筆記。請先到「筆記整理」產生一份筆記。");
+    return;
+  }
+
+  currentTutorSource = notes[0];
+  updateTutorSourceUI();
+}
+
+function appendChatMessage(role, content) {
+  if (!chatMessages) return;
+
+  const message = document.createElement("div");
+  message.className = `chat-message ${role}`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = role === "user" ? "你" : "AI";
+
+  const messageContent = document.createElement("div");
+  messageContent.className = "message-content";
+
+  const name = document.createElement("strong");
+  name.textContent = role === "user" ? "你" : "AI Tutor";
+
+  const text = document.createElement("p");
+  text.textContent = content;
+
+  messageContent.appendChild(name);
+  messageContent.appendChild(text);
+  message.appendChild(avatar);
+  message.appendChild(messageContent);
+  chatMessages.appendChild(message);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function replaceLastAiThinkingMessage(answer) {
+  const messages = document.querySelectorAll(".chat-message.ai .message-content p");
+  const lastMessage = messages[messages.length - 1];
+
+  if (lastMessage && (lastMessage.textContent.includes("正在思考") || lastMessage.textContent.includes("is thinking"))) {
+    lastMessage.textContent = answer;
+  } else {
+    appendChatMessage("ai", answer);
+  }
+}
+
+function buildMockTutorAnswer(question) {
+  if (currentLanguage === "en") {
+    if (!currentTutorSource) {
+      return [
+        "Key point:",
+        "No note is selected yet, so I can only give a general answer. Please choose a source first.",
+        "",
+        "Explanation:",
+        "AI Tutor is designed to answer based on the currently selected note so that unrelated subjects or chapters do not get mixed in.",
+        "",
+        "Possible exam question:",
+        "An exam may ask you to explain the core concept based on a specific source, so it is better to choose the source first."
+      ].join("\n");
+    }
+
+    return [
+      "Key point:",
+      `You asked "${question}". Based on the currently selected "${currentTutorSource.title || "note"}", you should first focus on the core definition and differences.`,
+      "",
+      "Explanation:",
+      "Once the full AI flow is connected, this section will explain the idea in a teaching style using only the current note.",
+      "",
+      "Possible exam question:",
+      "The teacher may ask this as a comparison, definition, or scenario-based question."
+    ].join("\n");
+  }
+
+  if (!currentTutorSource) {
+    return [
+      "重點：",
+      "目前尚未選擇筆記，因此我只能做一般性回答，建議你先選擇一份資料。",
+      "",
+      "解釋：",
+      "AI Tutor 的設計目標是根據目前選取的筆記回答，這樣可以避免混入其他科目或章節的內容。",
+      "",
+      "考試可能問法：",
+      "題目可能會要求你根據指定資料說明核心觀念，因此建議先選擇資料再提問。"
+    ].join("\n");
+  }
+
+  return [
+    "重點：",
+    `你問的是「${question}」。根據目前選取的「${currentTutorSource.title || "筆記"}」，這題應先抓住核心定義與差異。`,
+    "",
+    "解釋：",
+    "正式串接 AI 後，這裡會根據目前筆記內容進行教學式說明，不會混入其他無關資料。",
+    "",
+    "考試可能問法：",
+    "老師可能會用比較題、名詞解釋或情境判斷題來考這個觀念。"
+  ].join("\n");
+}
+
+async function askTutorFromCurrentSource(question) {
+  if (!currentTutorSource) {
+    return buildMockTutorAnswer(question);
+  }
+
+  const previousAnalysisResult = currentAnalysisResult;
+  currentAnalysisResult = convertTutorSourceToAnalysisResult(currentTutorSource);
+
+  try {
+    const payload = await requestTutorAction("ask", question);
+    const reply = payload?.reply || buildMockTutorAnswer(question);
+    const followUpQuestion = payload?.followUpQuestion || "";
+
+    if (reply.includes("重點：") || reply.includes("Key point:")) {
+      return reply;
+    }
+
+    return [
+      currentLanguage === "en" ? "Key point:" : "重點：",
+      reply,
+      "",
+      currentLanguage === "en" ? "Explanation:" : "解釋：",
+      currentLanguage === "en"
+        ? "This answer is generated only from the currently selected source."
+        : "這份回答只根據目前選取的資料整理，不會混入其他無關內容。",
+      "",
+      currentLanguage === "en" ? "Possible exam question:" : "考試可能問法：",
+      followUpQuestion || (currentLanguage === "en"
+        ? "The teacher may ask you to compare the key idea, define it, or apply it in context."
+        : "老師可能會要求你比較差異、解釋定義，或放進情境題判斷。")
+    ].join("\n");
+  } catch (error) {
+    console.error("Tutor source answer failed, fallback to mock reply.", error);
+    return buildMockTutorAnswer(question);
+  } finally {
+    currentAnalysisResult = previousAnalysisResult;
+  }
+}
+
+async function handleSendTutorMessage() {
+  if (!tutorInput) return;
+
+  const question = tutorInput.value.trim();
+  if (!question) return;
+
+  appendChatMessage("user", question);
+  tutorInput.value = "";
+  appendChatMessage("ai", currentLanguage === "en" ? "AI Tutor is thinking..." : "AI Tutor 正在思考中...");
+
+  try {
+    const answer = await askTutorFromCurrentSource(question);
+    replaceLastAiThinkingMessage(answer);
+  } catch (error) {
+    console.error(error);
+    replaceLastAiThinkingMessage("回答失敗，請稍後再試。");
+  }
+}
+
+function setTutorSource(note) {
+  currentTutorSource = note || null;
+  updateTutorSourceUI();
+}
+
+function askTutorWithSource(noteOrKnowledgeItem, question = "") {
+  currentTutorSource = noteOrKnowledgeItem || null;
+  updateTutorSourceUI();
+  switchPage("tutor");
+
+  if (tutorInput && question) {
+    tutorInput.value = question;
+  }
+}
+
+function openNoteInTutor(note) {
+  currentTutorSource = note || null;
+  updateTutorSourceUI();
+  switchPage("tutor");
+}
+
+function normalizeKnowledgeSubjectValue(subject) {
+  const value = normalizeText(String(subject || "")).toLowerCase();
+  if (!value) return "other";
+  if (value.includes("會計") || value.includes("accounting")) return "accounting";
+  if (value.includes("永續") || value.includes("sustainable")) return "sustainableFinance";
+  if (value.includes("醫院") || value.includes("hospital")) return "hospitalManagement";
+  return "other";
+}
+
+function buildRagChunkSourceNote(chunk) {
+  const title = chunk.fileName || chunk.sectionTitle || "RAG 知識片段";
+  const content = normalizeText(chunk.text || chunk.content || chunk.quote || "");
+  return {
+    id: `rag_${title}_${chunk.chunkId || chunk.paragraphNumber || Date.now()}`,
+    title,
+    subject: "知識庫",
+    chapter: chunk.sectionTitle || "",
+    mode: "knowledge",
+    language: currentLanguage,
+    createdAt: chunk.createdAt || new Date().toISOString(),
+    content,
+    result: {
+      summary: {
+        preview: extractPreviewText(content, "這筆知識片段尚無摘要。"),
+        detail: content || "無"
+      },
+      keyPoints: {
+        preview: extractPreviewText(content, "這筆知識片段尚無重點。"),
+        detail: content || "無"
+      },
+      quiz: {
+        preview: "",
+        detail: ""
+      },
+      keywords: {
+        preview: "",
+        detail: ""
+      },
+      mistakes: {
+        preview: "",
+        detail: ""
+      },
+      concepts: {
+        preview: "",
+        detail: ""
+      }
+    }
+  };
+}
+
+function getKnowledgeItems() {
+  const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+  const noteItems = notes.map((note) => {
+    const result = note.result || {};
+
+    return {
+      id: note.id,
+      title: note.title || "未命名筆記",
+      subject: note.subject || "未分類",
+      chapter: note.chapter || "",
+      mode: note.mode || "",
+      createdAt: note.createdAt || "",
+      sourceNote: note,
+      summaryText: [
+        result.summary?.preview,
+        result.summary?.detail,
+        result.keyPoints?.preview,
+        result.keyPoints?.detail,
+        result.quiz?.preview,
+        result.quiz?.detail,
+        result.keywords?.preview,
+        result.keywords?.detail,
+        result.mistakes?.preview,
+        result.mistakes?.detail,
+        result.concepts?.preview,
+        result.concepts?.detail
+      ]
+        .map((item) => stripHtmlTags(item))
+        .filter(Boolean)
+        .join(" "),
+      result
+    };
+  });
+
+  const localStore = loadLocalKnowledgeStore();
+  const ragItems = (localStore.chunks || []).slice(0, 200).map((chunk, index) => {
+    const sourceNote = buildRagChunkSourceNote(chunk);
+    return {
+      id: `rag_chunk_${index}_${chunk.fileName || "source"}`,
+      title: sourceNote.title,
+      subject: sourceNote.subject,
+      chapter: sourceNote.chapter,
+      mode: sourceNote.mode,
+      createdAt: sourceNote.createdAt,
+      sourceNote,
+      summaryText: sourceNote.content || "",
+      result: sourceNote.result
+    };
+  });
+
+  return [...noteItems, ...ragItems];
+}
+
+function buildKnowledgeTags(item) {
+  const tags = [];
+
+  if (item.result?.summary?.preview) tags.push("智慧摘要");
+  if (item.result?.keyPoints?.preview) tags.push("可能重點");
+  if (item.result?.quiz?.preview) tags.push("考題預測");
+  if (item.result?.keywords?.preview) tags.push("關鍵字");
+  if (item.result?.mistakes?.preview) tags.push("易錯觀念");
+  if (item.result?.concepts?.preview) tags.push("概念連結");
+
+  return tags.slice(0, 4);
+}
+
+function syncKnowledgeChapterFilterOptions(items = getKnowledgeItems()) {
+  if (!knowledgeChapterFilter) return;
+
+  const previousValue = knowledgeChapterFilter.value || "all";
+  const chapters = [...new Set(items.map((item) => normalizeText(item.chapter)).filter(Boolean))];
+  knowledgeChapterFilter.innerHTML = '<option value="all">全部章節</option>';
+
+  chapters.forEach((chapter) => {
+    const option = document.createElement("option");
+    option.value = chapter;
+    option.textContent = chapter;
+    knowledgeChapterFilter.appendChild(option);
+  });
+
+  knowledgeChapterFilter.value = chapters.includes(previousValue) ? previousValue : "all";
+}
+
+function filterKnowledgeItems() {
+  const query = knowledgeSearchInput?.value.trim().toLowerCase() || "";
+  const subject = knowledgeSubjectFilter?.value || "all";
+  const chapter = knowledgeChapterFilter?.value || "all";
+  const tag = knowledgeTagFilter?.value || "all";
+  const type = knowledgeTypeFilter?.value || "all";
+
+  const items = getKnowledgeItems();
+
+  return items.filter((item) => {
+    const matchQuery =
+      !query ||
+      item.title.toLowerCase().includes(query) ||
+      item.summaryText.toLowerCase().includes(query) ||
+      item.subject.toLowerCase().includes(query) ||
+      item.chapter.toLowerCase().includes(query);
+
+    const matchSubject =
+      subject === "all" ||
+      normalizeKnowledgeSubjectValue(item.subject) === subject ||
+      item.subject.toLowerCase() === subject.toLowerCase();
+
+    const matchChapter =
+      chapter === "all" ||
+      item.chapter === chapter;
+
+    const matchType =
+      type === "all" ||
+      item.mode === type;
+
+    const matchTag =
+      tag === "all" ||
+      Boolean(item.result?.[tag]);
+
+    return matchQuery && matchSubject && matchChapter && matchType && matchTag;
+  });
+}
+
+function addKnowledgeItemToTodayTasks(item) {
+  const tasks = loadJsonStorage("smartstudy_tasks") || [];
+
+  const task = {
+    id: `task_${Date.now()}`,
+    type: "複習",
+    title: item.title,
+    detail: item.result?.keyPoints?.preview || item.result?.summary?.preview || "從知識庫加入的複習任務",
+    source: item.title,
+    status: "today",
+    createdAt: new Date().toISOString()
+  };
+
+  tasks.unshift(task);
+  saveJsonStorage("smartstudy_tasks", tasks);
+  alert(currentLanguage === "en" ? "Added to today's tasks." : "已加入今日待辦。");
+}
+
+function openKnowledgeDetail(item) {
+  const detail = [
+    `標題：${item.title}`,
+    "",
+    "智慧摘要：",
+    stripHtmlTags(item.result?.summary?.detail || item.result?.summary?.preview || "無"),
+    "",
+    "可能重點：",
+    stripHtmlTags(item.result?.keyPoints?.detail || item.result?.keyPoints?.preview || "無"),
+    "",
+    "考題預測：",
+    stripHtmlTags(item.result?.quiz?.detail || item.result?.quiz?.preview || "無"),
+    "",
+    "易錯觀念：",
+    stripHtmlTags(item.result?.mistakes?.detail || item.result?.mistakes?.preview || "無")
+  ].join("\n");
+
+  alert(detail);
+}
+
+async function copyKnowledgeItem(item) {
+  const text = [
+    `# ${item.title}`,
+    "",
+    "## 重點摘要",
+    stripHtmlTags(item.result?.summary?.preview || ""),
+    "",
+    "## 可能重點",
+    stripHtmlTags(item.result?.keyPoints?.detail || item.result?.keyPoints?.preview || ""),
+    "",
+    "## 考題預測",
+    stripHtmlTags(item.result?.quiz?.detail || item.result?.quiz?.preview || ""),
+    "",
+    "## 易錯觀念",
+    stripHtmlTags(item.result?.mistakes?.detail || item.result?.mistakes?.preview || "")
+  ].join("\n");
+
+  try {
+    await navigator.clipboard.writeText(text);
+    alert(currentLanguage === "en" ? "Content copied." : "已複製內容。");
+  } catch (error) {
+    console.error(error);
+    alert(currentLanguage === "en" ? "Copy failed. Please select the content manually." : "複製失敗，請手動選取內容。");
+  }
+}
+
+function renderKnowledgeResults(items) {
+  if (!knowledgeResults) return;
+
+  knowledgeResults.innerHTML = "";
+
+  if (knowledgeResultCount) {
+    knowledgeResultCount.textContent = currentLanguage === "en"
+      ? `Showing ${items.length} result(s)`
+      : `目前顯示 ${items.length} 筆結果`;
+  }
+
+  if (!items.length) {
+    knowledgeResults.innerHTML = `
+      <div class="app-card empty-state-card">
+        <h2>${currentLanguage === "en" ? "No results found" : "尚無搜尋結果"}</h2>
+        <p>${currentLanguage === "en"
+          ? "Try a different keyword, or generate a note from the Notes page first."
+          : "請嘗試更換關鍵字，或先到「筆記整理」產生一份筆記。"}</p>
+      </div>
+    `;
+    return;
+  }
+
+  items.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "app-card knowledge-result-card";
+
+    const keyPointPreview =
+      item.result?.keyPoints?.preview ||
+      item.result?.summary?.preview ||
+      "這筆資料尚無摘要預覽。";
+
+    const tags = buildKnowledgeTags(item);
+
+    card.innerHTML = `
+      <h2>${escapeHTML(item.title)}</h2>
+
+      <p class="result-summary">
+        ${escapeHTML(stripHtmlTags(keyPointPreview))}
+      </p>
+
+      <div class="meta-row">
+        ${tags.map((tag) => `<span class="soft-badge">${escapeHTML(tag)}</span>`).join("")}
+      </div>
+
+      <p class="source-text">
+        來源筆記：${escapeHTML(item.title)}
+      </p>
+
+      <div class="card-actions">
+        <button class="primary-btn ask-tutor-btn" type="button">
+          問 AI Tutor
+        </button>
+
+        <button class="secondary-btn add-task-btn" type="button">
+          加入今日待辦
+        </button>
+
+        <div class="secondary-actions">
+          <button class="link-btn view-detail-btn" type="button">查看詳細</button>
+          <button class="link-btn copy-result-btn" type="button">複製</button>
+          <button class="link-btn export-trigger" data-source="knowledge" type="button">匯出</button>
+        </div>
+      </div>
+    `;
+
+    card.querySelector(".ask-tutor-btn")?.addEventListener("click", () => {
+      askTutorWithSource(item.sourceNote, `請解釋「${item.title}」的重點`);
+    });
+
+    card.querySelector(".add-task-btn")?.addEventListener("click", () => {
+      addKnowledgeItemToTodayTasks(item);
+    });
+
+    card.querySelector(".view-detail-btn")?.addEventListener("click", () => {
+      openKnowledgeDetail(item);
+    });
+
+    card.querySelector(".copy-result-btn")?.addEventListener("click", () => {
+      copyKnowledgeItem(item);
+    });
+
+    knowledgeResults.appendChild(card);
+  });
+}
+
+function updateKnowledgeResults() {
+  const allItems = getKnowledgeItems();
+  syncKnowledgeChapterFilterOptions(allItems);
+  const filtered = filterKnowledgeItems();
+  renderKnowledgeResults(filtered);
+}
+
+function setAccordionContent(section, preview, detailHtml) {
+  const accordion = document.querySelector(`[data-result-section="${section}"]`);
+  if (!accordion) return;
+
+  const previewEl = accordion.querySelector(".preview-line");
+  const detailEl = accordion.querySelector(".detail-content");
+
+  if (previewEl) {
+    previewEl.textContent = preview || "尚無預覽內容。";
+  }
+
+  if (detailEl) {
+    detailEl.innerHTML = detailHtml || "<p>尚無詳細內容。</p>";
+  }
+}
+
+function normalizeNoteResult(rawResult) {
+  const result = rawResult?.chinese || {};
+  const summaryText = translateDisplayText(result.summary || "");
+  const keyPointItems = translateDisplayListItems(result.possibleExamPoints || result.importantSentences || []);
+  const quizItems = translateDisplayQuestions(result.questions || result.mockExamQuestions || []);
+  const keywordItems = Array.isArray(result.accountingTerms) && result.accountingTerms.length
+    ? result.accountingTerms.map((item) => `${item.label}：${item.description}`)
+    : (result.keywords || []);
+  const mistakeItems = translateDisplayInfoBlocks(result.importanceReasons || [])
+    .map((item) => `${item.label || item.text}${item.description ? `：${item.description}` : ""}`);
+  const conceptItems = [
+    ...translateDisplayInfoBlocks(result.formulas || []).map((item) => `${item.label || item.text}${item.description ? `：${item.description}` : ""}`),
+    ...translateDisplayListItems(result.generalNotes || [])
+  ].filter(Boolean);
+
+  return {
+    summary: {
+      preview: extractPreviewText(summaryText, "整理完成後，這裡會顯示本次內容的核心摘要。"),
+      detail: buildParagraphHtml(summaryText, "尚無詳細摘要。")
+    },
+    keyPoints: {
+      preview: extractPreviewText(getDisplayItemText(keyPointItems[0]), "整理完成後，這裡會顯示最重要的學習重點。"),
+      detail: buildBulletHtml(keyPointItems, "尚無重點整理。")
+    },
+    quiz: {
+      preview: extractPreviewText(quizItems[0]?.question || "", "整理完成後，這裡會顯示可能考題與出題方向。"),
+      detail: buildQuestionHtml(quizItems, "尚無考題預測。")
+    },
+    keywords: {
+      preview: extractPreviewText((keywordItems || []).slice(0, 5).map((item) => getDisplayItemText(item)).filter(Boolean).join("、"), "整理完成後，這裡會顯示關鍵字與簡短定義。"),
+      detail: buildBulletHtml(keywordItems, "尚無關鍵字整理。")
+    },
+    mistakes: {
+      preview: extractPreviewText(getDisplayItemText(mistakeItems[0] || keyPointItems[0]), "整理完成後，這裡會顯示容易混淆的觀念。"),
+      detail: buildBulletHtml(mistakeItems.length ? mistakeItems : keyPointItems, "尚無易錯觀念整理。")
+    },
+    concepts: {
+      preview: extractPreviewText(getDisplayItemText(conceptItems[0]), "整理完成後，這裡會顯示概念之間的連結。"),
+      detail: buildBulletHtml(conceptItems, "尚無概念連結整理。")
+    }
+  };
+}
+
+function renderNotesResult(result) {
+  setAccordionContent("summary", result.summary?.preview, result.summary?.detail);
+  setAccordionContent("keyPoints", result.keyPoints?.preview, result.keyPoints?.detail);
+  setAccordionContent("quiz", result.quiz?.preview, result.quiz?.detail);
+  setAccordionContent("keywords", result.keywords?.preview, result.keywords?.detail);
+  setAccordionContent("mistakes", result.mistakes?.preview, result.mistakes?.detail);
+  setAccordionContent("concepts", result.concepts?.preview, result.concepts?.detail);
+}
+
+function syncNotesAccordionResult(result = null) {
+  if (!notesResultStatus) {
+    return;
+  }
+
+  if (!result) {
+    notesResultStatus.textContent = "目前尚未產生整理結果。請先在左側放入筆記並按下「開始整理」。";
+    renderNotesResult({
+      summary: {
+        preview: "整理完成後，這裡會顯示本次內容的核心摘要。",
+        detail: "<p>詳細摘要會放在這裡。</p>"
+      },
+      keyPoints: {
+        preview: "整理完成後，這裡會顯示最重要的學習重點。",
+        detail: "<p>詳細重點會放在這裡。</p>"
+      },
+      quiz: {
+        preview: "整理完成後，這裡會顯示可能考題與出題方向。",
+        detail: "<p>考題預測會放在這裡。</p>"
+      },
+      keywords: {
+        preview: "整理完成後，這裡會顯示關鍵字與簡短定義。",
+        detail: "<p>關鍵字內容會放在這裡。</p>"
+      },
+      mistakes: {
+        preview: "整理完成後，這裡會顯示容易混淆的觀念。",
+        detail: "<p>易錯觀念會放在這裡。</p>"
+      },
+      concepts: {
+        preview: "整理完成後，這裡會顯示概念之間的連結。",
+        detail: "<p>概念連結會放在這裡。</p>"
+      }
+    });
+    return;
+  }
+
+  renderNotesResult(normalizeNoteResult(result));
+  notesResultStatus.textContent = "整理完成。你可以展開各區塊查看詳細內容，或使用匯出功能。";
+}
+
+function inferNoteTitle(result) {
+  return result?.summary?.preview
+    ? result.summary.preview.slice(0, 24)
+    : "未命名筆記";
+}
+
+function saveGeneratedNote(result) {
+  const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+
+  const note = {
+    id: `note_${Date.now()}`,
+    title: inferNoteTitle(result),
+    subject: "未分類",
+    mode: currentNoteMode,
+    language: outputLanguage?.value || currentLanguage || "zh",
+    createdAt: new Date().toISOString(),
+    result
+  };
+
+  notes.unshift(note);
+  saveJsonStorage(NOTE_MODE_STORAGE_KEY, notes);
+}
+
+function setNoteMode(mode, options = {}) {
+  const nextMode = noteModeToLegacyMode[mode] ? mode : "quick";
+  currentNoteMode = nextMode;
+
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === nextMode);
+  });
+
+  if (!options.skipLegacySync && modeSelect && noteModeToLegacyMode[nextMode]) {
+    modeSelect.value = noteModeToLegacyMode[nextMode];
+  }
+
+  updateModeUI();
+  const displayConfig = noteModeDisplayConfigs[nextMode];
+  if (displayConfig && modeBadge) {
+    modeBadge.textContent = currentLanguage === "en"
+      ? `Current mode: ${displayConfig.label}`
+      : `目前模式：${displayConfig.label}`;
+  }
+  if (displayConfig && modeDescription) {
+    modeDescription.textContent = displayConfig.description;
+  }
+}
+
+function syncVisibleNoteModeFromLegacyMode() {
+  const nextMode = legacyModeToNoteMode[modeSelect?.value] || "quick";
+  setNoteMode(nextMode, { skipLegacySync: true });
+}
+
+function toggleAccordion(accordion) {
+  const isOpen = accordion.classList.contains("open");
+  accordion.classList.toggle("open", !isOpen);
+
+  const icon = accordion.querySelector(".accordion-icon");
+  if (icon) {
+    icon.textContent = isOpen ? "＋" : "−";
+  }
+}
+
 function formatExportText(result) {
   return formatMarkdownExport(result)
     .split("\n")
@@ -6503,6 +7813,10 @@ function sendRagToTutor() {
   }
 
   saveJsonStorage(RAG_TO_TUTOR_STORAGE_KEY, currentRagAnswerPayload);
+  if (document.getElementById("tutorPage")) {
+    switchPage("tutor");
+    return;
+  }
   location.href = "./tutor.html";
 }
 
@@ -6513,6 +7827,10 @@ function sendRagToStudyAgent() {
   }
 
   saveJsonStorage(RAG_TO_STUDY_AGENT_STORAGE_KEY, currentRagAnswerPayload);
+  if (document.getElementById("plannerPage")) {
+    switchPage("planner");
+    return;
+  }
   location.href = "./study-agent.html";
 }
 
@@ -7525,6 +8843,7 @@ function renderCurrentResult(result = null) {
     }
     renderQuestions(journalQuestionsResult, [], getUiText("emptyJournal"));
     syncTutorSession(result);
+    syncNotesAccordionResult(null);
     return;
   }
 
@@ -7576,6 +8895,7 @@ function renderCurrentResult(result = null) {
   }
   renderQuestions(journalQuestionsResult, journalQuestions, getUiText("emptyJournal"));
   syncTutorSession(result);
+  syncNotesAccordionResult(result);
 }
 
 function renderLastResult() {
@@ -7746,6 +9066,8 @@ function updateLanguageView() {
   persistDisplayLanguagePreference();
   applyInterfaceLanguage();
   updateModeUI();
+  updateTutorSourceUI();
+  updateKnowledgeResults();
   syncSourceContextUI();
   updateKnowledgeSelectionUI();
   if (!ragAnswerResult.textContent.trim() || ragAnswerResult.textContent === uiTranslations.zh.ragAnswerEmpty || ragAnswerResult.textContent === uiTranslations.en.ragAnswerEmpty) {
@@ -8487,6 +9809,43 @@ async function handleFileUpload(file) {
   }
 }
 
+async function handleGenerateNotes() {
+  const text = normalizeText(sourceText.value);
+  const selectedLanguage = outputLanguage?.value || currentLanguage || "zh";
+
+  if (!text) {
+    alert(selectedLanguage === "en"
+      ? "Please paste your notes first, or upload a file that can be organized."
+      : "請先貼上筆記內容，或上傳可整理的檔案。");
+    return null;
+  }
+
+  setCurrentLanguage(selectedLanguage);
+  updateLanguageView();
+  setNoteMode(currentNoteMode, { skipLegacySync: true });
+
+  if (notesResultStatus) {
+    notesResultStatus.textContent = selectedLanguage === "en"
+      ? "AI is organizing your notes. Please wait..."
+      : "AI 正在整理中，請稍候...";
+  }
+
+  const result = await analyzeText();
+  if (!result) {
+    if (notesResultStatus) {
+      notesResultStatus.textContent = selectedLanguage === "en"
+        ? "Organization failed. Please check the content and try again."
+        : "整理失敗，請確認內容或稍後再試。";
+    }
+    return null;
+  }
+
+  const normalizedResult = normalizeNoteResult(result);
+  renderNotesResult(normalizedResult);
+  saveGeneratedNote(normalizedResult);
+  return result;
+}
+
 async function analyzeText(options = {}) {
   const { saveToHistory = true } = options;
   const text = normalizeAccountingRawText(normalizeText(sourceText.value));
@@ -8680,7 +10039,7 @@ ragQuickQuestions?.addEventListener("click", (event) => {
   updateCounts();
 });
 
-analyzeButton.addEventListener("click", analyzeText);
+analyzeButton.addEventListener("click", handleGenerateNotes);
 
 clearButton.addEventListener("click", () => {
   sourceText.value = "";
@@ -8721,6 +10080,7 @@ demoButton.addEventListener("click", () => {
 });
 
 modeSelect.addEventListener("change", () => {
+  syncVisibleNoteModeFromLegacyMode();
   updateModeUI();
   setProcessStateText("整理模式已切換");
 });
@@ -8739,10 +10099,45 @@ ragModeSelect?.addEventListener("change", () => {
 
 copyButton.addEventListener("click", copyResult);
 downloadButton.addEventListener("click", downloadResult);
+notesExportTrigger?.addEventListener("click", downloadResult);
 refreshQuestionsButton?.addEventListener("click", refreshQuestions);
 tutorAskButton?.addEventListener("click", handleTutorAsk);
 tutorQuizButton?.addEventListener("click", handleTutorQuiz);
 tutorAnswerButton?.addEventListener("click", handleTutorAnswer);
+sendTutorMessage?.addEventListener("click", handleSendTutorMessage);
+chooseTutorSourceBtn?.addEventListener("click", () => {
+  chooseLatestNoteAsTutorSource();
+});
+clearTutorSourceBtn?.addEventListener("click", () => {
+  currentTutorSource = null;
+  updateTutorSourceUI();
+});
+refreshQuestionsBtn?.addEventListener("click", () => {
+  if (!currentTutorSource) {
+    renderRecommendedQuestions([]);
+    return;
+  }
+
+  generateAndRenderRecommendedQuestions();
+});
+knowledgeSearchBtn?.addEventListener("click", updateKnowledgeResults);
+knowledgeSearchInput?.addEventListener("input", updateKnowledgeResults);
+[
+  knowledgeSubjectFilter,
+  knowledgeChapterFilter,
+  knowledgeTagFilter,
+  knowledgeTypeFilter
+].forEach((element) => {
+  element?.addEventListener("change", updateKnowledgeResults);
+});
+resetKnowledgeFiltersBtn?.addEventListener("click", () => {
+  if (knowledgeSearchInput) knowledgeSearchInput.value = "";
+  if (knowledgeSubjectFilter) knowledgeSubjectFilter.value = "all";
+  if (knowledgeChapterFilter) knowledgeChapterFilter.value = "all";
+  if (knowledgeTagFilter) knowledgeTagFilter.value = "all";
+  if (knowledgeTypeFilter) knowledgeTypeFilter.value = "all";
+  updateKnowledgeResults();
+});
 buildKnowledgeBaseButton?.addEventListener("click", buildKnowledgeBase);
 askKnowledgeBaseButton?.addEventListener("click", askKnowledgeBase);
 clearKnowledgeBaseButton?.addEventListener("click", clearFrontendKnowledgeBase);
@@ -8751,8 +10146,23 @@ sendRagToTutorButton?.addEventListener("click", sendRagToTutor);
 sendRagToStudyAgentButton?.addEventListener("click", sendRagToStudyAgent);
 makeRagExamFocusButton?.addEventListener("click", renderRagExamFocus);
 generateStudyPlanButton?.addEventListener("click", generateStudyPlan);
+if (outputLanguage) {
+  outputLanguage.addEventListener("change", () => {
+    setCurrentLanguage(outputLanguage.value);
+    updateLanguageView();
+    setNoteMode(currentNoteMode, { skipLegacySync: true });
+    if (currentAnalysisResult) {
+      renderCurrentResult(currentAnalysisResult);
+    }
+  });
+}
 if (tutorInput) {
   tutorInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSendTutorMessage();
+      return;
+    }
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
       if (tutorPendingQuestion?.question) {
@@ -8763,8 +10173,48 @@ if (tutorInput) {
     }
   });
 }
+
+function initNotesPage() {
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setNoteMode(btn.dataset.mode);
+      setProcessStateText(currentLanguage === "en" ? "Organization mode switched" : "整理模式已切換");
+    });
+  });
+
+  document.querySelectorAll(".result-accordion .accordion-header").forEach((header) => {
+    header.addEventListener("click", () => {
+      const accordion = header.closest(".result-accordion");
+      if (accordion) {
+        toggleAccordion(accordion);
+      }
+    });
+  });
+
+  if (outputLanguage) {
+    outputLanguage.value = currentLanguage;
+  }
+
+  syncVisibleNoteModeFromLegacyMode();
+  syncNotesAccordionResult(currentAnalysisResult);
+}
+
+function initTutorWorkspace() {
+  updateTutorSourceUI();
+}
+
+function initKnowledgeWorkspace() {
+  syncKnowledgeChapterFilterOptions();
+  updateKnowledgeResults();
+}
 if (resultLanguageTag) {
   resultLanguageTag.addEventListener("click", toggleResultLanguage);
+}
+
+if (typeof window !== "undefined") {
+  window.askTutorWithSource = askTutorWithSource;
+  window.openNoteInTutor = openNoteInTutor;
+  window.setTutorSource = setTutorSource;
 }
 
 historyList.addEventListener("click", (event) => {
@@ -8837,5 +10287,10 @@ initTutorPage();
 initKnowledgePage();
 initStudyAgentPage();
 document.addEventListener("DOMContentLoaded", () => {
-  initFocusMusicWidget();
+  bindPageNavigation();
+  switchPage("home");
+  initNotesPage();
+  initTutorWorkspace();
+  initKnowledgeWorkspace();
+  initFocusMusicPlayer();
 });

@@ -8,434 +8,678 @@
 </head>
 <body>
   <div class="page-shell">
-    <nav class="top-nav" aria-label="主要功能導覽">
-      <a class="active" href="./index.html">筆記整理</a>
-      <a href="./tutor.html">AI Tutor</a>
-      <a href="./knowledge.html">RAG 知識庫</a>
-      <a href="./study-agent.html">讀書計畫</a>
-    </nav>
-
-    <header class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">SmartStudy-AI</p>
-        <h1>先整理筆記，再延伸成問答、知識庫與讀書計畫。</h1>
-        <p class="hero-text">
-          首頁只保留最核心的筆記整理流程。其他功能已拆成獨立分頁，查資料與讀書規劃不用再一直往下滑。
-        </p>
-        <div class="hero-pills">
-          <span>文字貼上</span>
-          <span>文件上傳</span>
-          <span>快速整理</span>
-          <span>多頁導覽</span>
-        </div>
-      </div>
-      <div class="hero-card floating-ai-card">
-        <span class="ai-orb" aria-hidden="true"></span>
-        <div class="hero-card-top">
-          <span class="status-dot"></span>
-          <span>首頁重點</span>
-        </div>
-        <ul class="hero-list">
-          <li>輸入內容後直接整理摘要與重點</li>
-          <li>保留歷史紀錄方便回看與再編修</li>
-          <li>其他 AI 功能分流到獨立頁面</li>
-        </ul>
+    <header class="top-nav" aria-label="主要功能導覽">
+      <div class="brand">SmartStudy AI</div>
+      <nav class="nav-pills" aria-label="主要導覽">
+        <button class="nav-pill active" data-page="home" type="button">首頁</button>
+        <button class="nav-pill" data-page="notes" type="button">筆記整理</button>
+        <button class="nav-pill" data-page="tutor" type="button">AI Tutor</button>
+        <button class="nav-pill" data-page="knowledge" type="button">知識庫</button>
+        <button class="nav-pill" data-page="planner" type="button">讀書計畫</button>
+        <button class="nav-pill" data-page="myNotes" type="button">我的筆記</button>
+      </nav>
+      <div class="nav-actions">
+        <button class="ghost-button" type="button" disabled>中文</button>
+        <button class="ghost-button" type="button" disabled>🌙</button>
       </div>
     </header>
 
-    <main class="workspace">
-      <section class="panel input-panel">
-        <div class="section-head">
-          <div>
-            <p class="section-kicker">步驟一</p>
-            <h2>輸入學習內容</h2>
-          </div>
-        </div>
-
-        <div class="mode-panel">
-          <p class="mode-label">學習模式</p>
-          <div class="mode-grid">
-            <select id="modeSelect" aria-label="整理模式">
-              <option value="exam">考試複習模式</option>
-              <option value="report">報告整理模式</option>
-              <option value="simple">精簡重點模式</option>
-            </select>
-            <p class="mode-description" id="modeDescription">聚焦重點整理與複習提問，適合考前快速統整與背誦。</p>
-          </div>
-          <div class="mode-grid setting-grid">
-            <select id="analysisEnhancement" aria-label="分析方式">
-              <option value="local">智慧規則分析</option>
-              <option value="future-ai">進階 AI 模式</option>
-            </select>
-            <p class="mode-description" id="analysisEnhancementDescription">
-              本機可直接整理；若切到進階 AI 模式，會透過後端串接 OpenAI。
+    <main class="app-shell">
+      <section id="homePage" class="page active">
+        <header class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">SmartStudy-AI</p>
+            <h1>先整理筆記，再延伸成問答、知識庫與讀書計畫。</h1>
+            <p class="hero-text">
+              先建立同頁切換的學習平台骨架，之後你可以在不重新整理頁面的情況下切換功能，讓專注音樂持續播放。
             </p>
+            <div class="hero-pills">
+              <span>文字貼上</span>
+              <span>文件上傳</span>
+              <span>快速整理</span>
+              <span>SPA 切換</span>
+            </div>
+            <div class="control-row">
+              <button class="primary-button" data-page="notes" type="button">開始整理筆記</button>
+              <button class="secondary-button" data-page="knowledge" type="button">前往知識庫</button>
+            </div>
           </div>
-          <div class="mode-status">
-            <span class="mode-badge" id="modeBadge">目前模式：考試複習模式</span>
-            <span class="mode-note">切換模式後不會清空內容，下一次整理時才會套用。</span>
-          </div>
-        </div>
-
-        <div class="upload-box" id="fileUploadBox">
-          <input id="fileInput" type="file" accept=".txt,.md,.csv,.json,.rtf,.html,.htm,.xml,.ppt,.pptx,.doc,.docx,.pdf,text/plain,text/markdown,text/csv,application/json,application/rtf,text/html,application/xml,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-          <span class="upload-title">上傳筆記檔、PPTX、DOCX、PDF 或其他文件</span>
-          <span class="upload-desc">請使用下方按鈕選擇檔案，系統會先抽取文字，再帶入整理流程。</span>
-          <div class="upload-actions">
-            <button class="primary-button" id="chooseFileButton" type="button">選擇檔案</button>
-          </div>
-          <span class="upload-meta" id="fileStatus">尚未選擇檔案</span>
-          <p class="upload-help" id="uploadHelp">支援常見文字檔、DOCX、PPTX、PDF；掃描型文件會嘗試 OCR。</p>
-          <details class="support-details">
-            <summary>檔案支援狀態</summary>
-            <ul>
-              <li><strong>TXT / MD：</strong>穩定支援文字整理。</li>
-              <li><strong>DOCX / PPTX：</strong>支援文字抽取，圖片文字會嘗試 OCR。</li>
-              <li><strong>PDF：</strong>支援文字型 PDF；掃描型 PDF 會額外做影像辨識。</li>
-              <li><strong>DOC / PPT：</strong>建議先轉成 DOCX / PPTX 再上傳。</li>
+          <div class="hero-card floating-ai-card">
+            <span class="ai-orb" aria-hidden="true"></span>
+            <div class="hero-card-top">
+              <span class="status-dot"></span>
+              <span>首頁重點</span>
+            </div>
+            <ul class="hero-list">
+              <li>切換頁面時不會重新整理網站</li>
+              <li>專注音樂播放器保留在全站共用層</li>
+              <li>先穩定保留筆記整理與音樂持續播放</li>
             </ul>
-          </details>
+          </div>
+        </header>
+      </section>
+
+      <section id="notesPage" class="page">
+        <div class="page-title">
+          <h1>AI 筆記整理</h1>
+          <p>上傳或貼上課堂內容，讓 AI 幫你整理成可複習的學習筆記。</p>
         </div>
 
-        <div class="parse-status" id="parseStatusBox" aria-live="polite">
-          <strong id="parseStatusTitle">文件解析尚未開始</strong>
-          <p id="parseStatusDetail">上傳後會先抽取文字，再補抓圖片中的文字辨識內容。</p>
-          <div class="progress-shell">
-            <div class="progress-meta">
-              <span id="progressPhase">等待上傳</span>
-              <span id="progressValue">0%</span>
+        <div class="split-layout notes-layout">
+          <aside class="app-card input-panel notes-input-panel">
+            <div class="card-header">
+              <div>
+                <h2>輸入與設定</h2>
+                <p class="card-subtitle">放入你的筆記，選擇整理方式</p>
+              </div>
             </div>
-            <div class="progress-track" aria-hidden="true">
-              <div class="progress-fill" id="progressFill"></div>
+
+            <label class="form-label" for="fileInput">上傳檔案</label>
+            <input
+              type="file"
+              id="fileInput"
+              class="input-control"
+              accept=".txt,.md,.csv,.json,.rtf,.html,.htm,.xml,.ppt,.pptx,.doc,.docx,.pdf,text/plain,text/markdown,text/csv,application/json,application/rtf,text/html,application/xml,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            >
+
+            <div class="file-hint">
+              <span id="fileStatus">尚未選擇檔案</span>
+              <p id="uploadHelp">支援常見文字檔、DOCX、PPTX、PDF；掃描型文件會嘗試 OCR。</p>
             </div>
-          </div>
-        </div>
 
-        <label class="input-label" id="sourceTextLabel" for="sourceText">或直接貼上筆記 / 文章內容</label>
-        <textarea id="sourceText" placeholder="例如：輸入上課筆記、文章段落、考試範圍整理內容..."></textarea>
+            <div class="notes-inline-actions">
+              <button class="secondary-btn" id="chooseFileButton" type="button">選擇檔案</button>
+            </div>
 
-        <div class="control-row">
-          <button class="primary-button" id="analyzeButton" type="button">開始整理筆記</button>
-          <button class="secondary-button" id="clearButton" type="button">清空內容</button>
-        </div>
+            <div class="parse-status notes-parse-status" id="parseStatusBox" aria-live="polite">
+              <strong id="parseStatusTitle">文件解析尚未開始</strong>
+              <p id="parseStatusDetail">上傳後會先抽取文字，再補抓圖片中的文字辨識內容。</p>
+              <div class="progress-shell">
+                <div class="progress-meta">
+                  <span id="progressPhase">等待上傳</span>
+                  <span id="progressValue">0%</span>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                  <div class="progress-fill" id="progressFill"></div>
+                </div>
+              </div>
+            </div>
 
-        <div class="metrics">
-          <div class="metric-card">
-            <span class="metric-label" id="charCountLabel">字數</span>
-            <strong id="charCount">0</strong>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label" id="sentenceCountLabel">句子數</span>
-            <strong id="sentenceCount">0</strong>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label" id="processStateLabel">狀態</span>
-            <strong id="processState">待處理</strong>
-          </div>
+            <label class="form-label" id="sourceTextLabel" for="sourceText">貼上文字</label>
+            <textarea
+              id="sourceText"
+              class="input-control textarea"
+              placeholder="請貼上課堂筆記、講義內容、老師上課重點或你想整理的資料..."
+            ></textarea>
+
+            <label class="form-label">整理模式</label>
+            <div class="mode-grid" role="group" aria-label="整理模式">
+              <button class="mode-btn active" data-mode="quick" type="button">
+                <strong>快速摘要</strong>
+                <span>快速抓大意</span>
+              </button>
+
+              <button class="mode-btn" data-mode="deep" type="button">
+                <strong>深度解析</strong>
+                <span>完整解釋觀念</span>
+              </button>
+
+              <button class="mode-btn" data-mode="exam" type="button">
+                <strong>考前複習</strong>
+                <span>整理常考方向</span>
+              </button>
+
+              <button class="mode-btn" data-mode="quiz" type="button">
+                <strong>題目生成</strong>
+                <span>產生練習題</span>
+              </button>
+
+              <button class="mode-btn" data-mode="concept" type="button">
+                <strong>概念連結</strong>
+                <span>建立觀念關係</span>
+              </button>
+
+              <button class="mode-btn" data-mode="mistake" type="button">
+                <strong>易錯觀念</strong>
+                <span>整理混淆點</span>
+              </button>
+            </div>
+
+            <div class="soft-card notes-mode-summary">
+              <strong id="modeBadge">目前模式：考試複習模式</strong>
+              <p id="modeDescription">聚焦重點整理與複習提問，適合考前快速統整與背誦。</p>
+            </div>
+
+            <label class="form-label" for="outputLanguage">輸出語言</label>
+            <select id="outputLanguage" class="input-control">
+              <option value="zh">中文</option>
+              <option value="en">English</option>
+            </select>
+
+            <button id="analyzeButton" class="primary-btn full-width" type="button">
+              開始整理
+            </button>
+
+            <div class="notes-inline-actions notes-inline-actions-bottom">
+              <button class="secondary-btn" id="clearButton" type="button">清空內容</button>
+              <button class="secondary-btn" id="downloadButton" type="button">匯出</button>
+            </div>
+
+            <p class="helper-text">
+              生成內容會依照目前語言設定輸出，避免中英文混雜。
+            </p>
+
+            <div class="notes-metrics">
+              <div class="soft-card metric-chip">
+                <span id="charCountLabel">字數</span>
+                <strong id="charCount">0</strong>
+              </div>
+              <div class="soft-card metric-chip">
+                <span id="sentenceCountLabel">句子數</span>
+                <strong id="sentenceCount">0</strong>
+              </div>
+              <div class="soft-card metric-chip">
+                <span id="processStateLabel">狀態</span>
+                <strong id="processState">待處理</strong>
+              </div>
+            </div>
+          </aside>
+
+          <section class="app-card result-panel notes-result-panel">
+            <div class="card-header">
+              <div>
+                <h2 id="resultSectionTitle">整理結果</h2>
+                <p class="card-subtitle">先看一句重點，展開後再看詳細解析</p>
+              </div>
+
+              <button class="secondary-btn export-trigger" id="notesExportTrigger" type="button">
+                匯出
+              </button>
+            </div>
+
+            <div class="result-status" id="notesResultStatus">
+              目前尚未產生整理結果。請先在左側放入筆記並按下「開始整理」。
+            </div>
+
+            <div class="accordion-list" id="notesAccordionList">
+              <article class="result-accordion open" data-result-section="summary">
+                <button class="accordion-header" type="button">
+                  <div>
+                    <span>智慧摘要</span>
+                    <small>用 1～2 句先掌握本次內容核心</small>
+                  </div>
+                  <strong class="accordion-icon">−</strong>
+                </button>
+                <div class="accordion-body">
+                  <p class="preview-line">整理完成後，這裡會顯示本次內容的核心摘要。</p>
+                  <div class="detail-content">
+                    <p>詳細摘要會放在這裡。</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="result-accordion" data-result-section="keyPoints">
+                <button class="accordion-header" type="button">
+                  <div>
+                    <span>可能重點</span>
+                    <small>整理最可能被考或最需要理解的觀念</small>
+                  </div>
+                  <strong class="accordion-icon">＋</strong>
+                </button>
+                <div class="accordion-body">
+                  <p class="preview-line">整理完成後，這裡會顯示最重要的學習重點。</p>
+                  <div class="detail-content">
+                    <p>詳細重點會放在這裡。</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="result-accordion" data-result-section="quiz">
+                <button class="accordion-header" type="button">
+                  <div>
+                    <span>考題預測</span>
+                    <small>根據內容推測可能出現的題型</small>
+                  </div>
+                  <strong class="accordion-icon">＋</strong>
+                </button>
+                <div class="accordion-body">
+                  <p class="preview-line">整理完成後，這裡會顯示可能考題與出題方向。</p>
+                  <div class="detail-content">
+                    <p>考題預測會放在這裡。</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="result-accordion" data-result-section="keywords">
+                <button class="accordion-header" type="button">
+                  <div>
+                    <span>關鍵字整理</span>
+                    <small>整理重要名詞、核心概念與定義</small>
+                  </div>
+                  <strong class="accordion-icon">＋</strong>
+                </button>
+                <div class="accordion-body">
+                  <p class="preview-line">整理完成後，這裡會顯示關鍵字與簡短定義。</p>
+                  <div class="detail-content">
+                    <p>關鍵字內容會放在這裡。</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="result-accordion" data-result-section="mistakes">
+                <button class="accordion-header" type="button">
+                  <div>
+                    <span>易錯觀念</span>
+                    <small>整理容易混淆、容易考錯的地方</small>
+                  </div>
+                  <strong class="accordion-icon">＋</strong>
+                </button>
+                <div class="accordion-body">
+                  <p class="preview-line">整理完成後，這裡會顯示容易混淆的觀念。</p>
+                  <div class="detail-content">
+                    <p>易錯觀念會放在這裡。</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="result-accordion" data-result-section="concepts">
+                <button class="accordion-header" type="button">
+                  <div>
+                    <span>概念連結</span>
+                    <small>幫助理解不同觀念之間的關係</small>
+                  </div>
+                  <strong class="accordion-icon">＋</strong>
+                </button>
+                <div class="accordion-body">
+                  <p class="preview-line">整理完成後，這裡會顯示概念之間的連結。</p>
+                  <div class="detail-content">
+                    <p>概念連結會放在這裡。</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="legacy-notes-support" hidden aria-hidden="true">
+              <p id="resultSectionKicker">步驟二</p>
+              <p id="outputMeta">依所選模式產生摘要、重點、名詞與練習。</p>
+              <button id="copyButton" type="button">複製結果</button>
+              <button id="refreshQuestionsButton" type="button">更新題目</button>
+              <button id="demoButton" type="button">示範資料</button>
+              <button id="clearHistoryButton" type="button">清空歷史</button>
+              <button id="resultLanguageTag" type="button">切換英文</button>
+              <p id="resultLanguageTitle">中文結果</p>
+              <p id="resultLanguageDescription">中文直接整理；英文會先翻譯再整理。</p>
+              <div id="nextStepPanel"></div>
+              <div id="historyList"></div>
+              <p id="historyTitle">歷史紀錄</p>
+              <p id="historyDescription">保留最近幾次整理結果。</p>
+              <p id="historyToggleText">展開歷史紀錄</p>
+
+              <select id="modeSelect" aria-label="整理模式">
+                <option value="exam">考試複習模式</option>
+                <option value="report">報告整理模式</option>
+                <option value="simple">精簡重點模式</option>
+              </select>
+
+              <select id="analysisEnhancement" aria-label="分析方式">
+                <option value="local">智慧規則分析</option>
+                <option value="future-ai">進階 AI 模式</option>
+              </select>
+
+              <p id="analysisEnhancementDescription">本機可直接整理；若切到進階 AI 模式，會透過後端串接 OpenAI。</p>
+
+              <article id="summaryCard"><div id="summaryResult"></div></article>
+              <article id="formulasCard"><ul id="formulasResult"></ul></article>
+              <article id="importantSentencesCard"><ul id="importantSentencesResult"></ul></article>
+              <article id="importanceReasonsCard"><ul id="importanceReasonsResult"></ul></article>
+              <article id="possibleExamPointsCard"><ul id="possibleExamPointsResult"></ul></article>
+              <article id="generalNotesCard"><ul id="generalNotesResult"></ul></article>
+              <article id="accountingTermsCard"><ul id="accountingTermsResult"></ul></article>
+              <article id="englishExplainCard"><ul id="englishExplainResult"></ul></article>
+              <div id="keywordsResult"></div>
+              <ul id="highlightsResult"></ul>
+              <article id="questionsCard"><div id="questionsResult"></div></article>
+              <article id="mockExamCard"><div id="mockExamResult"></div></article>
+              <article id="journalCard"><div id="journalQuestionsResult"></div></article>
+
+              <span id="resultTimestamp">尚未整理</span>
+              <span id="summaryCardTitle">智慧摘要</span>
+              <span id="formulasCardTitle">公式 / 結構</span>
+              <span id="formulasCardMeta">重點整理</span>
+              <span id="importantSentencesCardTitle">重要句子</span>
+              <span id="importantSentencesCardMeta">優先閱讀</span>
+              <span id="importanceReasonsCardTitle">重要度原因</span>
+              <span id="importanceReasonsCardMeta">重點原因</span>
+              <span id="generalNotesCardTitle">一般整理</span>
+              <span id="generalNotesCardMeta">段落整理</span>
+              <span id="possibleExamPointsCardTitle">可能重點</span>
+              <span id="possibleExamPointsCardMeta">快速提醒</span>
+              <span id="accountingTermsCardTitle">關鍵名詞</span>
+              <span id="accountingTermsCardMeta">中英對照</span>
+              <span id="englishExplainCardTitle">原文句子解釋</span>
+              <span id="englishExplainCardMeta">對照理解</span>
+              <span id="questionsCardTitle">理解問題</span>
+              <span id="questionsCardMeta">快速思考</span>
+              <span id="mockExamCardTitle">延伸練習</span>
+              <span id="mockExamCardMeta">延伸思考</span>
+              <span id="journalCardTitle">會計分錄題</span>
+              <span id="journalCardMeta">分錄單獨整理</span>
+            </div>
+          </section>
         </div>
       </section>
 
-      <section class="panel output-panel">
-        <div class="section-head">
-          <div>
-            <p class="section-kicker" id="resultSectionKicker">步驟二</p>
-            <h2 id="resultSectionTitle">整理結果</h2>
-          </div>
+      <section id="tutorPage" class="page">
+        <div class="page-title">
+          <h1>AI Tutor 問答老師</h1>
+          <p>根據你目前選取的筆記內容回答問題，並用教學方式幫你理解觀念。</p>
         </div>
 
-        <div class="next-step-panel" id="nextStepPanel" hidden>
-          <strong>下一步可以做什麼？</strong>
-          <p>已儲存最近一次整理結果，你可以切換到 AI Tutor 問答老師繼續提問，或前往讀書計畫產生複習安排。</p>
-          <div class="next-step-actions">
-            <a class="primary-link-button" href="./tutor.html">前往 AI Tutor</a>
-            <a class="secondary-link-button" href="./study-agent.html">生成讀書計畫</a>
-          </div>
-        </div>
-
-        <p class="output-meta" id="outputMeta">依所選模式產生摘要、重點、名詞與練習。</p>
-
-        <div class="result-stack">
-          <section class="language-block" id="chineseBlock">
-            <div class="language-head">
+        <div class="split-layout tutor-layout">
+          <aside class="app-card tutor-sidebar">
+            <div class="card-header">
               <div>
-                <h3 id="resultLanguageTitle">中文結果</h3>
-                <p id="resultLanguageDescription">中文直接整理；英文會先翻譯再整理。</p>
-              </div>
-
-              <div class="language-head-actions">
-                <button
-                  class="language-tag language-toggle-pill"
-                  id="resultLanguageTag"
-                  type="button"
-                  aria-label="切換整理結果語言"
-                >
-                  切換英文
-                </button>
+                <h2>目前使用資料</h2>
+                <p class="card-subtitle">AI Tutor 會優先根據這份資料回答</p>
               </div>
             </div>
 
-            <div class="result-grid">
-              <article class="result-card" id="summaryCard">
-                <div class="result-card-head">
-                  <h3 id="summaryCardTitle">智慧摘要</h3>
-                  <span class="result-time" id="resultTimestamp">尚未整理</span>
-                </div>
-                <div id="summaryResult" class="summary-text">尚未產生摘要。</div>
-              </article>
-
-              <article class="result-card accent wide" id="importantSentencesCard">
-                <div class="result-card-head">
-                  <h3 id="importantSentencesCardTitle">重要句子</h3>
-                  <span class="result-time" id="importantSentencesCardMeta">優先閱讀</span>
-                </div>
-                <ul id="importantSentencesResult" class="result-list">
-                  <li class="empty-state">尚未產生重要句子。</li>
-                </ul>
-              </article>
-
-              <article class="result-card wide" id="importanceReasonsCard" hidden>
-                <div class="result-card-head">
-                  <h3 id="importanceReasonsCardTitle">重要度原因</h3>
-                  <span class="result-time" id="importanceReasonsCardMeta">重點原因</span>
-                </div>
-                <ul id="importanceReasonsResult" class="term-list">
-                  <li class="empty-state">尚未產生重要度原因。</li>
-                </ul>
-              </article>
-
-              <article class="result-card wide" id="possibleExamPointsCard">
-                <div class="result-card-head">
-                  <h3 id="possibleExamPointsCardTitle">可能重點</h3>
-                  <span class="result-time" id="possibleExamPointsCardMeta">快速提醒</span>
-                </div>
-                <ul id="possibleExamPointsResult" class="result-list">
-                  <li class="empty-state">尚未產生可能重點。</li>
-                </ul>
-              </article>
-
-              <article class="result-card" hidden>
-                <div class="result-card-head">
-                  <h3>重點整理原始列表</h3>
-                  <span class="result-time">內部判定</span>
-                </div>
-                <ul id="highlightsResult" class="result-list">
-                  <li class="empty-state">尚未產生重點。</li>
-                </ul>
-              </article>
+            <div id="currentSourceBox" class="soft-card current-source-box">
+              <span class="source-label">目前筆記</span>
+              <strong id="currentTutorSourceTitle">尚未選擇筆記</strong>
+              <p id="currentTutorSourceMeta">
+                請先從「我的筆記」或「知識庫」選擇一份資料。
+              </p>
             </div>
 
-            <details class="result-disclosure">
-              <summary>查看更多整理結果</summary>
-              <div class="result-grid disclosure-grid">
-                <article class="result-card wide" id="formulasCard">
-                  <div class="result-card-head">
-                    <h3 id="formulasCardTitle">公式 / 結構</h3>
-                    <span class="result-time" id="formulasCardMeta">重點整理</span>
-                  </div>
-                  <ul id="formulasResult" class="term-list">
-                    <li class="empty-state">尚未產生關鍵公式或結構整理。</li>
-                  </ul>
-                </article>
+            <div class="tutor-source-actions">
+              <button id="chooseTutorSourceBtn" class="secondary-btn" type="button">
+                選擇筆記
+              </button>
+              <button id="clearTutorSourceBtn" class="secondary-btn" type="button">
+                清除資料
+              </button>
+            </div>
 
-                <article class="result-card wide" id="generalNotesCard">
-                  <div class="result-card-head">
-                    <h3 id="generalNotesCardTitle">一般整理</h3>
-                    <span class="result-time" id="generalNotesCardMeta">段落整理</span>
-                  </div>
-                  <ul id="generalNotesResult" class="result-list">
-                    <li class="empty-state">尚未產生一般整理。</li>
-                  </ul>
-                </article>
-
-                <article class="result-card wide" id="accountingTermsCard">
-                  <div class="result-card-head">
-                    <h3 id="accountingTermsCardTitle">關鍵名詞</h3>
-                    <span class="result-time" id="accountingTermsCardMeta">中英對照</span>
-                  </div>
-                  <ul id="accountingTermsResult" class="term-list">
-                    <li class="empty-state">尚未偵測到關鍵名詞或專有名詞。</li>
-                  </ul>
-                </article>
-
-                <article class="result-card wide" id="englishExplainCard">
-                  <div class="result-card-head">
-                    <h3 id="englishExplainCardTitle">原文句子解釋</h3>
-                    <span class="result-time" id="englishExplainCardMeta">對照理解</span>
-                  </div>
-                  <ul id="englishExplainResult" class="term-list">
-                    <li class="empty-state">尚未產生原文句子解釋。</li>
-                  </ul>
-                </article>
-
-                <article class="result-card" id="questionsCard">
-                  <div class="result-card-head">
-                    <h3 id="questionsCardTitle">理解問題</h3>
-                    <span class="result-time" id="questionsCardMeta">快速思考</span>
-                  </div>
-                  <div id="questionsResult" class="quiz-list">
-                    <p class="empty-state">尚未產生題目。</p>
-                  </div>
-                </article>
-
-                <article class="result-card" id="mockExamCard">
-                  <div class="result-card-head">
-                    <h3 id="mockExamCardTitle">延伸練習</h3>
-                    <span class="result-time" id="mockExamCardMeta">延伸思考</span>
-                  </div>
-                  <div id="mockExamResult" class="quiz-list">
-                    <p class="empty-state">尚未產生延伸練習。</p>
-                  </div>
-                </article>
-
-                <article class="result-card" id="journalCard">
-                  <div class="result-card-head">
-                    <h3 id="journalCardTitle">會計分錄題</h3>
-                    <span class="result-time" id="journalCardMeta">分錄單獨整理</span>
-                  </div>
-                  <div id="journalQuestionsResult" class="quiz-list">
-                    <p class="empty-state">尚未偵測到分錄相關內容。若資料包含 Debit、Credit、Journal Entry 或交易敘述，系統會產生分錄練習。</p>
-                  </div>
-                </article>
+            <div class="card-header small-header">
+              <div>
+                <h2>推薦問題</h2>
+                <p class="card-subtitle">只根據目前選取資料產生</p>
               </div>
-            </details>
-          </section>
+              <button id="refreshQuestionsBtn" class="secondary-btn" type="button">
+                刷新推薦
+              </button>
+            </div>
 
-          <section class="history-panel" aria-labelledby="historyTitle">
-            <details>
-              <summary>
-                <div class="history-panel-head">
-                  <div>
-                    <h3 id="historyTitle">歷史紀錄</h3>
-                    <p id="historyDescription">保留最近幾次整理結果，可以快速回看或載回重新編修。</p>
-                  </div>
-                  <span class="history-toggle" id="historyToggleText">展開歷史紀錄</span>
+            <div id="recommendedQuestions" class="question-list">
+              <div class="empty-state">
+                目前尚未選擇資料，請先選擇一份筆記後再產生推薦問題。
+              </div>
+            </div>
+          </aside>
+
+          <section class="app-card chat-panel">
+            <div class="card-header">
+              <div>
+                <h2>對話區</h2>
+                <p class="card-subtitle">回答會採用「重點 → 解釋 → 考試可能問法」的教學格式</p>
+              </div>
+            </div>
+
+            <div id="chatMessages" class="chat-messages">
+              <div class="chat-message ai">
+                <div class="message-avatar">AI</div>
+                <div class="message-content">
+                  <strong>AI Tutor</strong>
+                  <p>
+                    請先選擇一份筆記，或直接輸入你想問的問題。
+                    如果有選取資料，我會根據該資料回答，避免混入無關內容。
+                  </p>
                 </div>
-              </summary>
-              <div class="action-group">
-                <button class="ghost-button" id="clearHistoryButton" type="button">清空歷史</button>
               </div>
-              <div id="historyList" class="history-list">
-                <p class="empty-state">尚未有歷史紀錄。</p>
-              </div>
-            </details>
+            </div>
+
+            <div class="chat-input-row">
+              <input
+                id="tutorInput"
+                class="input-control"
+                placeholder="輸入你的問題，例如：FVTPL 和 FVOCI 差在哪？"
+              >
+              <button id="sendTutorMessage" class="primary-btn" type="button">
+                送出
+              </button>
+            </div>
           </section>
         </div>
+      </section>
+
+      <section id="knowledgePage" class="page">
+        <div class="page-title">
+          <h1>我的知識庫</h1>
+          <p>搜尋你整理過的筆記、摘要與重點，快速找到相關考點。</p>
+        </div>
+
+        <section class="app-card knowledge-search-card">
+          <div class="knowledge-search-row">
+            <input
+              id="knowledgeSearchInput"
+              class="input-control"
+              placeholder="輸入關鍵字、問題或考點，例如：FVTPL、OCI、公允價值..."
+            >
+            <button id="knowledgeSearchBtn" class="primary-btn" type="button">
+              搜尋
+            </button>
+          </div>
+
+          <p class="helper-text">
+            可以搜尋筆記標題、智慧摘要、可能重點、關鍵字、易錯觀念與考題預測。
+          </p>
+        </section>
+
+        <div class="knowledge-layout">
+          <aside class="app-card filter-panel">
+            <div class="card-header">
+              <div>
+                <h2>篩選</h2>
+                <p class="card-subtitle">縮小搜尋範圍</p>
+              </div>
+            </div>
+
+            <label class="form-label" for="knowledgeSubjectFilter">科目</label>
+            <select id="knowledgeSubjectFilter" class="input-control">
+              <option value="all">全部科目</option>
+              <option value="accounting">會計</option>
+              <option value="sustainableFinance">永續金融</option>
+              <option value="hospitalManagement">醫院管理</option>
+              <option value="other">其他</option>
+            </select>
+
+            <label class="form-label" for="knowledgeChapterFilter">章節</label>
+            <select id="knowledgeChapterFilter" class="input-control">
+              <option value="all">全部章節</option>
+            </select>
+
+            <label class="form-label" for="knowledgeTagFilter">標籤</label>
+            <select id="knowledgeTagFilter" class="input-control">
+              <option value="all">全部標籤</option>
+              <option value="summary">智慧摘要</option>
+              <option value="keyPoints">可能重點</option>
+              <option value="quiz">考題預測</option>
+              <option value="keywords">關鍵字</option>
+              <option value="mistakes">易錯觀念</option>
+              <option value="concepts">概念連結</option>
+            </select>
+
+            <label class="form-label" for="knowledgeTypeFilter">類型</label>
+            <select id="knowledgeTypeFilter" class="input-control">
+              <option value="all">全部類型</option>
+              <option value="quick">快速摘要</option>
+              <option value="deep">深度解析</option>
+              <option value="exam">考前複習</option>
+              <option value="quiz">題目生成</option>
+              <option value="concept">概念連結</option>
+              <option value="mistake">易錯觀念</option>
+            </select>
+
+            <button id="resetKnowledgeFiltersBtn" class="secondary-btn full-width" type="button">
+              清除篩選
+            </button>
+          </aside>
+
+          <section class="knowledge-results-wrap">
+            <div class="knowledge-results-header">
+              <div>
+                <h2>搜尋結果</h2>
+                <p id="knowledgeResultCount" class="card-subtitle">
+                  目前顯示 0 筆結果
+                </p>
+              </div>
+            </div>
+
+            <div id="knowledgeResults" class="knowledge-results">
+              <div class="app-card empty-state-card">
+                <h2>尚無搜尋結果</h2>
+                <p>請先到「筆記整理」產生筆記，或在上方輸入關鍵字搜尋。</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="plannerPage" class="page">
+        <section class="panel single-page-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">讀書計畫</p>
+              <h2>讀書計畫功能將接到 SPA 主頁</h2>
+            </div>
+          </div>
+          <p class="output-meta">這一階段先把切頁與全站共用播放器穩定下來，後面再把既有計畫表單搬進來。</p>
+        </section>
+      </section>
+
+      <section id="myNotesPage" class="page">
+        <section class="panel single-page-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">我的筆記</p>
+              <h2>我的筆記區將承接歷史內容與整理結果</h2>
+            </div>
+          </div>
+          <p class="output-meta">目前先保留骨架，之後會把歷史紀錄與儲存筆記整合成這個 section。</p>
+        </section>
       </section>
     </main>
 
-    <section class="feature-strip compact-strip feature-strip-with-music">
+    <section class="feature-strip compact-strip global-music-strip">
       <p>想延伸問答、查詢知識庫或安排讀書計畫，可以使用上方導覽列切換功能。</p>
+    </section>
+  </div>
 
-      <div class="focus-music-widget inline-music-widget" id="focusMusicWidget">
-        <button class="focus-music-toggle" id="focusMusicToggle" type="button">
-          🎧 專注音樂
-        </button>
+  <div id="focusMusicPlayer" class="focus-player collapsed" aria-label="專注音樂播放器">
+    <button id="toggleCollapsePlayer" class="icon-btn player-toggle" type="button" aria-label="展開或收合播放器">
+      🎵
+    </button>
 
-        <div class="focus-music-panel" id="focusMusicPanel" hidden>
-          <div class="focus-music-head">
-            <div class="focus-music-head-copy">
-              <strong>專注音樂</strong>
-              <p>讓你進入讀書狀態</p>
-            </div>
-            <div class="focus-music-head-side">
-              <span class="focus-music-badge" id="focusMusicModeBadge">MP3</span>
-              <button class="focus-music-close" id="focusMusicCloseButton" type="button" aria-label="收合專注音樂播放器">×</button>
-            </div>
-          </div>
+    <div class="focus-player-content">
+      <strong class="player-title">專注音樂</strong>
 
-          <div class="focus-music-tabs" role="tablist" aria-label="專注音樂來源">
-            <button class="focus-music-tab" id="focusMusicModeMp3" type="button" role="tab" aria-selected="true">我的 MP3</button>
-            <button class="focus-music-tab" id="focusMusicModeSpotify" type="button" role="tab" aria-selected="false">Spotify</button>
-          </div>
+      <button id="prevTrackBtn" class="secondary-btn player-control" type="button">
+        上一首
+      </button>
 
-          <div class="focus-music-tab-panel" id="focusMusicMp3Section">
-            <audio id="focusMusicAudio" loop></audio>
+      <span id="currentTrackLabel" class="current-track">
+        目前：雨聲
+      </span>
 
-            <div class="focus-track-card">
-              <div class="focus-cover focus-cover-mp3" aria-hidden="true">MP3</div>
-              <div class="focus-track-body">
-                <p class="focus-track-title" id="focusMusicFileName">尚未加入 MP3</p>
-                <p class="focus-track-meta">你的自訂讀書背景音</p>
-              </div>
-            </div>
+      <button id="nextTrackBtn" class="secondary-btn player-control" type="button">
+        下一首
+      </button>
 
-            <div class="focus-player-controls focus-player-controls-single">
-              <button class="focus-control-button primary" id="focusMusicPlayButton" type="button">播放</button>
-            </div>
+      <button id="openTrackMenuBtn" class="secondary-btn" type="button">
+        更多音樂
+      </button>
 
-            <div class="focus-secondary-actions">
-              <label class="secondary-button focus-music-upload-label" for="focusMusicFileInput">
-                加入 MP3
-              </label>
-              <input id="focusMusicFileInput" type="file" accept="audio/mpeg,.mp3">
-              <button class="ghost-button" id="focusMusicRemoveButton" type="button">移除</button>
-            </div>
+      <label class="volume-wrap" aria-label="音量控制">
+        <span>音量</span>
+        <input id="volumeControl" type="range" min="0" max="1" step="0.05" value="0.5">
+      </label>
 
-            <label class="focus-volume-row" for="focusMusicVolume">
-              <span>音量</span>
-              <input id="focusMusicVolume" type="range" min="0" max="1" step="0.01" value="0.25">
-            </label>
+      <button id="playPauseBtn" class="primary-btn" type="button">
+        播放
+      </button>
 
-            <p class="focus-music-hint" id="focusMusicStatus">
-              音樂只會在你按下播放後開始。匯入的 MP3 會儲存在此瀏覽器中。
-            </p>
-          </div>
+      <button id="spotifyBtn" class="secondary-btn" type="button">
+        Spotify
+      </button>
+    </div>
 
-          <div class="focus-music-tab-panel" id="focusMusicSpotifySection" hidden>
-            <div class="focus-spotify-connect-card">
-              <div class="focus-spotify-status-row">
-                <strong id="focusSpotifyStateTitle">尚未連接 Spotify</strong>
-                <span class="focus-spotify-badge" id="focusSpotifyPremiumBadge" hidden>Premium</span>
-              </div>
-              <p class="focus-music-hint" id="focusSpotifyStatus">
-                Spotify 網頁播放需要 Premium 帳號，且是否能播放也會受帳號、地區與 Spotify 平台限制影響。
-              </p>
+    <div id="trackMenu" class="track-menu hidden" aria-label="音樂選單">
+      <button data-track="rain" type="button">雨聲</button>
+      <button data-track="whiteNoise" type="button">白噪音</button>
+      <button data-track="ocean" type="button">海浪聲</button>
+      <button data-track="cafe" type="button">咖啡廳</button>
+      <button data-track="library" type="button">圖書館</button>
+      <button data-track="keyboard" type="button">鍵盤聲</button>
+      <button data-track="piano" type="button">輕鋼琴</button>
+      <button data-track="lofi" type="button">Lo-fi</button>
+    </div>
+  </div>
 
-              <div class="focus-secondary-actions">
-                <button class="primary-button" id="focusSpotifyConnectButton" type="button">連接 Spotify</button>
-                <button class="secondary-button" id="focusSpotifyReconnectButton" type="button" hidden>重新連接播放器</button>
-                <button class="ghost-button" id="focusSpotifyDisconnectButton" type="button" hidden>中斷 Spotify</button>
-              </div>
-
-              <div class="focus-track-card focus-spotify-now-playing" id="focusSpotifyNowPlaying">
-                <img id="focusSpotifyCover" class="focus-cover focus-spotify-cover" alt="Spotify 專輯封面" hidden>
-                <div class="focus-track-body focus-spotify-track-meta">
-                  <p class="focus-track-title" id="focusSpotifyTrackName">尚未播放</p>
-                  <p id="focusSpotifyArtistName">等待讀取目前播放內容</p>
-                </div>
-              </div>
-
-              <div class="focus-spotify-progress" id="focusSpotifyProgressWrap" hidden>
-                <div class="focus-spotify-progress-meta">
-                  <span id="focusSpotifyProgressCurrent">0:00</span>
-                  <span id="focusSpotifyProgressTotal">0:00</span>
-                </div>
-                <div class="progress-track" aria-hidden="true">
-                  <div class="progress-fill" id="focusSpotifyProgressFill"></div>
-                </div>
-              </div>
-
-              <div class="focus-player-controls" id="focusSpotifyControls" hidden>
-                <button class="focus-control-button" id="spotifyPreviousButton" type="button" aria-label="上一首">‹</button>
-                <button class="focus-control-button primary" id="spotifyPlayButton" type="button">播放</button>
-                <button class="focus-control-button" id="spotifyNextButton" type="button" aria-label="下一首">›</button>
-              </div>
-
-              <label class="focus-volume-row" for="spotifyVolumeInput">
-                <span>音量</span>
-                <input id="spotifyVolumeInput" type="range" min="0" max="1" step="0.01" value="0.25">
-              </label>
-
-              <div class="focus-secondary-actions focus-spotify-lock-actions" id="focusSpotifyLockActions" hidden>
-                <button class="secondary-button" id="focusSpotifyLockButton" type="button">鎖定此歌單</button>
-                <button class="ghost-button" id="focusSpotifyReturnLockedButton" type="button" hidden>切回鎖定歌單</button>
-              </div>
-              <p class="focus-music-hint" id="focusSpotifyLockStatus" hidden></p>
-            </div>
-          </div>
+  <div id="spotifyPanel" class="spotify-panel hidden" aria-label="Spotify 控制面板">
+    <div class="spotify-panel-shell">
+      <div class="spotify-panel-head">
+        <div>
+          <strong id="focusSpotifyStateTitle">尚未連接 Spotify</strong>
+          <p id="focusSpotifyStatus">Spotify 網頁播放需要 Premium 帳號，且是否能播放也會受帳號、地區與 Spotify 平台限制影響。</p>
+        </div>
+        <div class="spotify-panel-head-actions">
+          <span class="focus-spotify-badge" id="focusSpotifyPremiumBadge" hidden>Premium</span>
+          <button id="closeSpotifyPanelBtn" class="ghost-button" type="button">關閉</button>
         </div>
       </div>
-    </section>
+
+      <div class="focus-secondary-actions">
+        <button class="primary-button" id="focusSpotifyConnectButton" type="button">連接 Spotify</button>
+        <button class="secondary-button" id="focusSpotifyReconnectButton" type="button" hidden>重新連接播放器</button>
+        <button class="ghost-button" id="focusSpotifyDisconnectButton" type="button" hidden>中斷 Spotify</button>
+      </div>
+
+      <div class="focus-track-card focus-spotify-now-playing" id="focusSpotifyNowPlaying">
+        <img id="focusSpotifyCover" class="focus-cover focus-spotify-cover" alt="Spotify 專輯封面" hidden>
+        <div class="focus-track-body focus-spotify-track-meta">
+          <p class="focus-track-title" id="focusSpotifyTrackName">尚未播放</p>
+          <p id="focusSpotifyArtistName">等待讀取目前播放內容</p>
+        </div>
+      </div>
+
+      <div class="focus-spotify-progress" id="focusSpotifyProgressWrap" hidden>
+        <div class="focus-spotify-progress-meta">
+          <span id="focusSpotifyProgressCurrent">0:00</span>
+          <span id="focusSpotifyProgressTotal">0:00</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" id="focusSpotifyProgressFill"></div>
+        </div>
+      </div>
+
+      <div class="focus-player-controls" id="focusSpotifyControls" hidden>
+        <button class="focus-control-button" id="spotifyPreviousButton" type="button" aria-label="上一首">‹</button>
+        <button class="focus-control-button primary" id="spotifyPlayButton" type="button">播放</button>
+        <button class="focus-control-button" id="spotifyNextButton" type="button" aria-label="下一首">›</button>
+      </div>
+
+      <label class="focus-volume-row" for="spotifyVolumeInput">
+        <span>音量</span>
+        <input id="spotifyVolumeInput" type="range" min="0" max="1" step="0.01" value="0.25">
+      </label>
+
+      <div class="focus-secondary-actions focus-spotify-lock-actions" id="focusSpotifyLockActions" hidden>
+        <button class="secondary-button" id="focusSpotifyLockButton" type="button">鎖定此歌單</button>
+        <button class="ghost-button" id="focusSpotifyReturnLockedButton" type="button" hidden>切回鎖定歌單</button>
+      </div>
+      <p class="focus-music-hint" id="focusSpotifyLockStatus" hidden></p>
+    </div>
   </div>
 
   <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
