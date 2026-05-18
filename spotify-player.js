@@ -193,15 +193,17 @@ let spotifyAutoResumeUntil = 0;
 
     const hasAuth = hasUsableSpotifyAuth();
     const tokenValid = !isSpotifyTokenExpired();
+    const hasPlayerInstance = Boolean(state.player);
     const playerReady = Boolean(state.sdkReady && state.deviceId);
-    const canControlPlayback = Boolean(hasAuth && tokenValid && playerReady);
-    const canAdjustVolume = Boolean(canControlPlayback && state.ui.volumeInput);
-    const canLockPlaylist = Boolean(canControlPlayback && state.playback?.context?.type === "playlist");
-    const canReturnLocked = Boolean(canControlPlayback && state.lockedPlaylistUri);
+    const canPlayPause = Boolean(hasAuth && tokenValid && (playerReady || hasPlayerInstance));
+    const canSkipTrack = Boolean(hasAuth && tokenValid && playerReady);
+    const canAdjustVolume = Boolean(canSkipTrack && state.ui.volumeInput);
+    const canLockPlaylist = Boolean(canSkipTrack && state.playback?.context?.type === "playlist");
+    const canReturnLocked = Boolean(canSkipTrack && state.lockedPlaylistUri);
 
-    if (state.ui.playPauseButton) state.ui.playPauseButton.disabled = !canControlPlayback;
-    if (state.ui.previousButton) state.ui.previousButton.disabled = !canControlPlayback;
-    if (state.ui.nextButton) state.ui.nextButton.disabled = !canControlPlayback;
+    if (state.ui.playPauseButton) state.ui.playPauseButton.disabled = !canPlayPause;
+    if (state.ui.previousButton) state.ui.previousButton.disabled = !canSkipTrack;
+    if (state.ui.nextButton) state.ui.nextButton.disabled = !canSkipTrack;
     if (state.ui.volumeInput) state.ui.volumeInput.disabled = !canAdjustVolume;
     if (state.ui.lockButton) state.ui.lockButton.disabled = !canLockPlaylist;
     if (state.ui.returnLockedButton) state.ui.returnLockedButton.disabled = !canReturnLocked;
@@ -384,7 +386,7 @@ let spotifyAutoResumeUntil = 0;
     const item = playback?.item || null;
     const isPlaying = Boolean(playback?.is_playing);
 
-    state.ui.controls.hidden = !(state.sdkReady && state.deviceId);
+    state.ui.controls.hidden = !(state.player || (state.sdkReady && state.deviceId));
     state.ui.nowPlaying.hidden = false;
     state.ui.progressWrap.hidden = !item;
 
@@ -963,14 +965,30 @@ let spotifyAutoResumeUntil = 0;
       return;
     }
 
-    if (!spotifyPlayer || !spotifyReady || !spotifyDeviceId) {
-      setSpotifyStatus("Spotify Player 尚未準備完成。請先按重新連接播放器，確認 SmartStudy-AI Player 已成為 active device。", "播放器未準備");
+    if (!spotifyPlayer) {
+      if (hasUsableSpotifyAuth() && !state.connecting) {
+        void connectPlayer();
+      }
+      setSpotifyStatus("Spotify Player 尚未建立，正在重新準備播放器。請稍候再按一次播放。", "播放器未準備");
       console.warn("Spotify not ready:", {
         hasPlayer: !!spotifyPlayer,
         spotifyReady,
         spotifyDeviceId
       });
       return;
+    }
+
+    if (!spotifyReady || !spotifyDeviceId) {
+      try {
+        await withSpotifyControlTimeout(
+          () => connectPlayer(),
+          "Spotify reconnect before play"
+        );
+      } catch (error) {
+        setSpotifyStatus("Spotify Player 尚未準備完成。請先按重新連接播放器，確認 SmartStudy-AI Player 已成為 active device。", "播放器未準備");
+        return;
+      }
+      spotifyDeviceId = state.deviceId || spotifyDeviceId || null;
     }
 
     if (spotifyBusy) {
@@ -1008,16 +1026,23 @@ let spotifyAutoResumeUntil = 0;
       } else {
         spotifyShouldKeepPlaying = true;
         spotifyUserPaused = false;
-        try {
-          await withSpotifyControlTimeout(
-            () => spotifyPlayer.togglePlay(),
-            "Spotify SDK toggle play"
-          );
-        } catch (sdkError) {
+        if (!currentSpotifyPlaybackState?.item) {
           await withSpotifyControlTimeout(
             () => resumeSpotifyPlayback(),
             "Spotify resume playback"
           );
+        } else {
+          try {
+            await withSpotifyControlTimeout(
+              () => spotifyPlayer.togglePlay(),
+              "Spotify SDK toggle play"
+            );
+          } catch (sdkError) {
+            await withSpotifyControlTimeout(
+              () => resumeSpotifyPlayback(),
+              "Spotify resume playback"
+            );
+          }
         }
       }
 
