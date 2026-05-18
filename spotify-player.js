@@ -1,7 +1,24 @@
 const SPOTIFY_CLIENT_ID = "930d6d20806249f1828734389e5c9173";
-const SPOTIFY_REDIRECT_URI = "https://rickforgestudio.github.io/smartstudy-ai/";
+const SPOTIFY_REDIRECT_URI = (() => {
+  const fallback = "https://rickforgestudio.github.io/smartstudy-ai/";
+  if (typeof window === "undefined" || !window.location) {
+    return fallback;
+  }
 
-console.log("Spotify redirect URI:", SPOTIFY_REDIRECT_URI);
+  try {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.search = "";
+    currentUrl.hash = "";
+
+    if (currentUrl.hostname.endsWith("github.io")) {
+      return fallback;
+    }
+
+    return currentUrl.toString();
+  } catch (error) {
+    return fallback;
+  }
+})();
 
 const SPOTIFY_SCOPES = [
   "streaming",
@@ -15,7 +32,8 @@ const SPOTIFY_SCOPES = [
 const SPOTIFY_AUTH_STORAGE_KEY = "smartstudy-spotify-auth";
 const SPOTIFY_LOCKED_PLAYLIST_KEY = "smartstudy-spotify-locked-playlist-uri";
 const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
-const SPOTIFY_CONTROL_TIMEOUT_MS = 3000;
+const SPOTIFY_CONTROL_TIMEOUT_MS = 7000;
+const SPOTIFY_AUTO_RESUME_GRACE_MS = 8000;
 let spotifyWidgetInitialized = false;
 let spotifyControlsBound = false;
 let spotifyShouldKeepPlaying = false;
@@ -23,6 +41,7 @@ let spotifyUserPaused = false;
 let spotifyDeviceId = null;
 let currentSpotifyPlaybackState = null;
 let spotifyBusy = false;
+let spotifyAutoResumeUntil = 0;
 
 (function bootstrapSpotifyFocusPlayer() {
   const state = {
@@ -85,6 +104,14 @@ let spotifyBusy = false;
     setStatus(message, title);
   }
 
+  function armSpotifyAutoResume(durationMs = SPOTIFY_AUTO_RESUME_GRACE_MS) {
+    spotifyAutoResumeUntil = Date.now() + durationMs;
+  }
+
+  function clearSpotifyAutoResume() {
+    spotifyAutoResumeUntil = 0;
+  }
+
   function createSpotifyControlTimeoutError(label, timeoutMs) {
     const error = new Error(`${label} timeout after ${timeoutMs}ms`);
     error.name = "SpotifyControlTimeoutError";
@@ -115,11 +142,6 @@ let spotifyBusy = false;
     const spotifyPreviousButton = document.getElementById("spotifyPreviousButton");
     const spotifyNextButton = document.getElementById("spotifyNextButton");
     const spotifyVolumeInput = document.getElementById("spotifyVolumeInput");
-
-    console.log("Spotify play button:", spotifyPlayButton);
-    console.log("Spotify previous button:", spotifyPreviousButton);
-    console.log("Spotify next button:", spotifyNextButton);
-    console.log("Spotify volume input:", spotifyVolumeInput);
 
     if (!spotifyPlayButton) {
       console.warn("[Spotify] spotifyPlayButton is null");
@@ -236,6 +258,7 @@ let spotifyBusy = false;
     if (isPlaying) {
       spotifyShouldKeepPlaying = true;
       spotifyUserPaused = false;
+      armSpotifyAutoResume();
     }
 
     state.ui.controls.hidden = !item;
@@ -527,8 +550,8 @@ let spotifyBusy = false;
       && spotifyDeviceId
       && playbackState
       && !isPlaying
+      && Date.now() < spotifyAutoResumeUntil
     ) {
-      console.log("Spotify should keep playing, resume automatically.");
       await resumeSpotifyPlayback();
       return getPlaybackState();
     }
@@ -809,10 +832,6 @@ let spotifyBusy = false;
     const { spotifyPlayButton } = getSpotifyControlElements();
     const focusMusicAudio = document.getElementById("focusMusicAudio");
 
-    console.log("Spotify play button:", spotifyPlayButton);
-    console.log("Spotify toggle clicked");
-    console.log("Spotify player ready:", !!spotifyPlayer, spotifyReady, spotifyDeviceId);
-
     if (!spotifyPlayButton) {
       console.warn("[Spotify] play button not found");
       setSpotifyStatus("Spotify 播放按鈕不存在，請重新整理頁面。", "控制項遺失");
@@ -849,6 +868,7 @@ let spotifyBusy = false;
       if (isPlaying) {
         spotifyShouldKeepPlaying = false;
         spotifyUserPaused = true;
+        clearSpotifyAutoResume();
         await withSpotifyControlTimeout(
           () => pauseSpotifyPlayback(),
           "Spotify pause playback"
@@ -856,6 +876,7 @@ let spotifyBusy = false;
       } else {
         spotifyShouldKeepPlaying = true;
         spotifyUserPaused = false;
+        armSpotifyAutoResume();
         await withSpotifyControlTimeout(
           () => resumeSpotifyPlayback(),
           "Spotify resume playback"
@@ -889,7 +910,6 @@ let spotifyBusy = false;
         () => spotifyPlayer.setVolume(volume),
         "Spotify setVolume"
       );
-      console.log("Spotify SDK volume updated:", volume);
     } catch (error) {
       console.warn("Spotify SDK setVolume failed, fallback to Web API:", error);
       try {
@@ -923,8 +943,6 @@ let spotifyBusy = false;
         if (!response.ok && response.status !== 204) {
           throw new Error(`Spotify volume API failed: ${response.status}`);
         }
-
-        console.log("Spotify Web API volume updated:", volumePercent);
       } catch (fallbackError) {
         console.error("Spotify set volume failed:", fallbackError);
         setSpotifyStatus("音量調整失敗；如果你使用 iPhone / iPad，可能需要用系統音量鍵調整。", "音量調整失敗");
@@ -933,8 +951,6 @@ let spotifyBusy = false;
   }
 
   function handleSpotifyVolumeInput(event) {
-    console.log("Spotify volume changed:", event.target.value);
-
     const rawValue = Number(event.target.value);
     const volume = Math.max(0, Math.min(1, rawValue));
     state.volume = volume;
@@ -960,6 +976,10 @@ let spotifyBusy = false;
       spotifyPreviousButton.disabled = true;
     }
     try {
+      if (spotifyShouldKeepPlaying && !spotifyUserPaused) {
+        armSpotifyAutoResume(10000);
+      }
+
       const token = await withSpotifyControlTimeout(
         () => getValidSpotifyAccessToken(),
         "Spotify previous token"
@@ -1023,6 +1043,10 @@ let spotifyBusy = false;
       spotifyNextButton.disabled = true;
     }
     try {
+      if (spotifyShouldKeepPlaying && !spotifyUserPaused) {
+        armSpotifyAutoResume(10000);
+      }
+
       const token = await withSpotifyControlTimeout(
         () => getValidSpotifyAccessToken(),
         "Spotify next token"
@@ -1120,6 +1144,7 @@ let spotifyBusy = false;
     spotifyDeviceId = null;
     spotifyShouldKeepPlaying = false;
     spotifyUserPaused = false;
+    clearSpotifyAutoResume();
     state.auth = null;
     persistAuth();
     setPremiumState(false);
@@ -1199,15 +1224,20 @@ let spotifyBusy = false;
   }
 
   function init(ui) {
-    if (spotifyWidgetInitialized) {
-      console.warn("Spotify widget already initialized, skip binding events.");
-      return;
-    }
-    spotifyWidgetInitialized = true;
-
     if (state.initialized) {
+      if (ui) {
+        state.ui = {
+          ...(state.ui || {}),
+          ...ui
+        };
+      }
+      updateConnectButtons();
+      renderPlayback(state.playback);
+      renderLockState();
       return;
     }
+
+    spotifyWidgetInitialized = true;
     state.initialized = true;
     state.ui = ui;
     if (state.ui.volumeInput) {
@@ -1235,6 +1265,7 @@ let spotifyBusy = false;
       if (state.playback?.is_playing) {
         spotifyShouldKeepPlaying = false;
         spotifyUserPaused = true;
+        clearSpotifyAutoResume();
         await pauseSpotifyPlayback();
         await getPlaybackState();
       }

@@ -663,22 +663,28 @@ const STORAGE_KEYS = {
   language: "smartstudy_language",
   theme: "smartstudy_theme",
   music: "smartstudy_music",
-  tutorSource: "smartstudy_tutor_source"
+  tutorSource: "smartstudy_tutor_source",
+  history: "smartstudy-analysis-history",
+  latestResult: "smartstudy_latest_result",
+  latestAnalysis: "smartstudy-latest-analysis",
+  knowledgeChunks: "smartstudy_knowledge_chunks",
+  ragMode: "smartstudy-rag-mode",
+  musicExpanded: "smartstudy.focusMusic.expanded"
 };
 
-const HISTORY_STORAGE_KEY = "smartstudy-analysis-history";
+const HISTORY_STORAGE_KEY = STORAGE_KEYS.history;
 const HISTORY_LIMIT = 8;
 const ANALYSIS_ENHANCEMENT_STORAGE_KEY = "smartstudy-analysis-enhancement";
 const DISPLAY_LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
-const SMARTSTUDY_LATEST_RESULT_KEY = "smartstudy_latest_result";
-const LATEST_ANALYSIS_STORAGE_KEY = "smartstudy-latest-analysis";
-const KNOWLEDGE_CHUNKS_KEY = "smartstudy_knowledge_chunks";
+const SMARTSTUDY_LATEST_RESULT_KEY = STORAGE_KEYS.latestResult;
+const LATEST_ANALYSIS_STORAGE_KEY = STORAGE_KEYS.latestAnalysis;
+const KNOWLEDGE_CHUNKS_KEY = STORAGE_KEYS.knowledgeChunks;
 const LOCAL_RAG_STORAGE_KEY = STORAGE_KEYS.knowledge;
-const RAG_MODE_STORAGE_KEY = "smartstudy-rag-mode";
+const RAG_MODE_STORAGE_KEY = STORAGE_KEYS.ragMode;
 const RAG_TO_TUTOR_STORAGE_KEY = "smartstudy-rag-to-tutor";
 const RAG_TO_STUDY_AGENT_STORAGE_KEY = "smartstudy-rag-to-study-agent";
 const FOCUS_MUSIC_STORAGE_KEY = STORAGE_KEYS.music;
-const FOCUS_MUSIC_EXPANDED_STORAGE_KEY = "smartstudy.focusMusic.expanded";
+const FOCUS_MUSIC_EXPANDED_STORAGE_KEY = STORAGE_KEYS.musicExpanded;
 const FOCUS_MUSIC_DB_NAME = "smartstudy-focus-music";
 const FOCUS_MUSIC_STORE_NAME = "tracks";
 const FOCUS_MUSIC_TRACK_ID = "custom-mp3";
@@ -775,6 +781,12 @@ function setLanguage(lang) {
 
   updateInterfaceLanguage();
   updateLanguageView();
+  updatePlayButton();
+  updateTutorSourceUI();
+  renderHomeTasks();
+  renderStudyPlanner();
+  renderMyNotes();
+  updateKnowledgeResults();
   updateExportPreview();
 }
 
@@ -836,7 +848,9 @@ function updatePlayButton() {
     return;
   }
 
-  playPauseBtn.textContent = focusPlayerIsPlaying ? "暫停" : "播放";
+  playPauseBtn.textContent = focusPlayerIsPlaying
+    ? getI18nText("pauseLabel", "暫停")
+    : getI18nText("playLabel", "播放");
 }
 
 function saveMusicState() {
@@ -985,7 +999,6 @@ function selectTrackById(trackId) {
 
 function openSpotifyPanel() {
   if (!spotifyPanel) {
-    console.log("Open existing Spotify feature");
     return;
   }
 
@@ -1117,10 +1130,114 @@ const i18n = {
     confirm: "確認",
     delete: "刪除",
     notesTitle: "AI 筆記整理",
+    notesSubtitle: "上傳或貼上課堂內容，讓 AI 幫你整理成可複習的學習筆記。",
+    notesInputSettingsTitle: "輸入與設定",
+    notesInputSettingsSubtitle: "放入你的筆記，選擇整理方式",
+    uploadFileLabel: "上傳檔案",
+    chooseFile: "選擇檔案",
+    pasteTextLabel: "貼上文字",
+    noteModesLabel: "整理模式（可複選）",
+    outputLanguageLabel: "輸出語言",
+    notesResultTitle: "整理結果",
+    notesResultSubtitle: "先看一句重點，展開後再看詳細解析",
     tutorTitle: "AI Tutor 問答老師",
     knowledgeTitle: "我的知識庫",
     plannerTitle: "讀書計畫",
     myNotesTitle: "我的筆記",
+    tutorSubtitle: "根據你目前選取的筆記內容回答問題，並用教學方式幫你理解觀念。",
+    tutorCurrentSourceTitle: "目前使用資料",
+    tutorCurrentSourceSubtitle: "AI Tutor 會優先根據這份資料回答",
+    tutorCurrentNoteLabel: "目前筆記",
+    chooseNote: "選擇筆記",
+    clearSource: "清除資料",
+    recommendedQuestionsTitle: "推薦問題",
+    recommendedQuestionsSubtitle: "只根據目前選取資料產生",
+    recommendedQuestionsEmpty: "目前尚未選擇資料，請先選擇一份筆記後再產生推薦問題。",
+    refreshRecommendations: "刷新推薦",
+    chatAreaTitle: "對話區",
+    chatAreaSubtitle: "回答會採用「重點 → 解釋 → 考試可能問法」的教學格式",
+    knowledgeSubtitle: "搜尋你整理過的筆記、摘要與重點，快速找到相關考點。",
+    knowledgeHelperText: "可以搜尋筆記標題、智慧摘要、可能重點、關鍵字、易錯觀念與考題預測。",
+    filtersTitle: "篩選",
+    filtersSubtitle: "縮小搜尋範圍",
+    subjectLabel: "科目",
+    chapterLabel: "章節",
+    tagLabel: "標籤",
+    typeLabel: "類型",
+    allSubjects: "全部科目",
+    allChapters: "全部章節",
+    allTags: "全部標籤",
+    allTypes: "全部類型",
+    tagSummary: "智慧摘要",
+    tagKeyPoints: "可能重點",
+    tagQuiz: "考題預測",
+    tagKeywords: "關鍵字",
+    tagMistakes: "易錯觀念",
+    tagConcepts: "概念連結",
+    clearFilters: "清除篩選",
+    searchResultsTitle: "搜尋結果",
+    plannerSubtitle: "根據考試日期、讀書時間與筆記內容，建立可追蹤的複習任務。",
+    plannerFormTitle: "建立讀書計畫",
+    plannerFormSubtitle: "輸入考試資訊，讓 AI 幫你拆成可執行任務",
+    examDateLabel: "考試日期",
+    studyHoursLabel: "每天可讀時間",
+    studyHoursPlaceholder: "例如：1.5 小時、90 分鐘",
+    examScopeLabel: "考試範圍",
+    examScopePlaceholder: "例如：第 50-66 頁、Chapter 13",
+    plannerNoteSelectLabel: "選擇科目 / 筆記",
+    pleaseChooseNote: "請選擇筆記",
+    generatePlan: "產生計畫",
+    clearInput: "清除輸入",
+    plannerHelperText: "產生的任務會加入下方看板，並同步到首頁今日待辦。",
+    todayTasksColumnTitle: "今日任務",
+    weekTasksColumnTitle: "本週任務",
+    doneTasksColumnTitle: "已完成",
+    emptyTodayTasks: "目前沒有今日任務。",
+    emptyWeekTasks: "目前沒有本週任務。",
+    emptyDoneTasks: "目前尚無已完成任務。",
+    myNotesSubtitle: "管理、查看、重新開啟、匯出或刪除你整理過的筆記。",
+    searchNotesLabel: "搜尋筆記",
+    myNotesSearchPlaceholder: "搜尋標題、科目、摘要或關鍵字...",
+    dateSortLabel: "日期排序",
+    sortNewest: "日期：新到舊",
+    sortOldest: "日期：舊到新",
+    allNotesCount: "全部筆記",
+    latestOrganized: "最近整理",
+    currentFilteredResults: "目前篩選結果",
+    noDataYet: "尚無資料",
+    noNotesYetTitle: "目前沒有筆記",
+    noNotesYetDetail: "請先到「筆記整理」頁產生一份筆記，整理完成後會出現在這裡。",
+    globalMusicStripText: "想延伸問答、查詢知識庫或安排讀書計畫，可以使用上方導覽列切換功能。",
+    exportModalTitle: "匯出設定",
+    exportModalSubtitle: "選擇格式、模板與要包含的內容",
+    exportFormatLabel: "格式",
+    exportFormatMarkdown: "Markdown 筆記 .md",
+    exportFormatWord: "Word 文件 .docx",
+    exportFormatPdf: "PDF 講義 .pdf",
+    exportFormatPpt: "PowerPoint 簡報 .pptx",
+    exportTemplateLabel: "模板",
+    templateStudyNote: "讀書筆記模板",
+    templateFormalReport: "正式報告模板",
+    templateExamReview: "考前複習模板",
+    templateAutoPresentation: "自動報告簡報模板",
+    exportIncludeLabel: "包含內容",
+    exportIncludeKeyPoints: "重要重點",
+    referencesLabel: "參考資料",
+    exportPreviewTitle: "目前匯出內容",
+    startExport: "開始匯出",
+    focusMusicTitle: "專注音樂",
+    previousTrack: "上一首",
+    nextTrack: "下一首",
+    moreMusic: "更多音樂",
+    volumeLabel: "音量",
+    playLabel: "播放",
+    pauseLabel: "暫停",
+    modeQuick: "快速摘要",
+    modeDeep: "深度解析",
+    modeExam: "考前複習",
+    modeQuiz: "題目生成",
+    modeConcept: "概念連結",
+    modeMistake: "易錯觀念",
     knowledgeSearchPlaceholder: "輸入關鍵字、問題或考點，例如：FVTPL、OCI、公允價值...",
     notesSourcePlaceholder: "請貼上課堂筆記、講義內容、老師上課重點或你想整理的資料...",
     tutorInputPlaceholderSimple: "輸入你的問題，例如：FVTPL 和 FVOCI 差在哪？"
@@ -1166,10 +1283,114 @@ const i18n = {
     confirm: "Confirm",
     delete: "Delete",
     notesTitle: "AI Note Organizer",
+    notesSubtitle: "Upload or paste class content and let AI turn it into review-ready study notes.",
+    notesInputSettingsTitle: "Input & Settings",
+    notesInputSettingsSubtitle: "Add your notes and choose how to organize them.",
+    uploadFileLabel: "Upload File",
+    chooseFile: "Choose File",
+    pasteTextLabel: "Paste Text",
+    noteModesLabel: "Organization Modes (Multi-select)",
+    outputLanguageLabel: "Output Language",
+    notesResultTitle: "Results",
+    notesResultSubtitle: "Start with one key idea, then expand for full details.",
     tutorTitle: "AI Tutor",
     knowledgeTitle: "Knowledge Base",
     plannerTitle: "Study Planner",
     myNotesTitle: "My Notes",
+    tutorSubtitle: "Answer questions based on your currently selected notes and explain concepts in a teaching style.",
+    tutorCurrentSourceTitle: "Current Source",
+    tutorCurrentSourceSubtitle: "AI Tutor will answer based on this selected source first.",
+    tutorCurrentNoteLabel: "Current note",
+    chooseNote: "Choose Note",
+    clearSource: "Clear Source",
+    recommendedQuestionsTitle: "Recommended Questions",
+    recommendedQuestionsSubtitle: "Generated only from the currently selected source",
+    recommendedQuestionsEmpty: "No source is selected yet. Please choose a note before generating recommended questions.",
+    refreshRecommendations: "Refresh",
+    chatAreaTitle: "Chat",
+    chatAreaSubtitle: "Answers follow a teaching structure: key point, explanation, and possible exam question.",
+    knowledgeSubtitle: "Search your organized notes, summaries, and key points to quickly find relevant exam topics.",
+    knowledgeHelperText: "You can search note titles, summaries, key points, keywords, common mistakes, and predicted questions.",
+    filtersTitle: "Filters",
+    filtersSubtitle: "Narrow the search scope",
+    subjectLabel: "Subject",
+    chapterLabel: "Chapter",
+    tagLabel: "Tag",
+    typeLabel: "Type",
+    allSubjects: "All subjects",
+    allChapters: "All chapters",
+    allTags: "All tags",
+    allTypes: "All types",
+    tagSummary: "Summary",
+    tagKeyPoints: "Key Points",
+    tagQuiz: "Predicted Questions",
+    tagKeywords: "Keywords",
+    tagMistakes: "Common Mistakes",
+    tagConcepts: "Concept Links",
+    clearFilters: "Clear Filters",
+    searchResultsTitle: "Search Results",
+    plannerSubtitle: "Create trackable review tasks based on your exam date, study time, and notes.",
+    plannerFormTitle: "Create Study Plan",
+    plannerFormSubtitle: "Enter exam details and let AI break them into actionable tasks.",
+    examDateLabel: "Exam Date",
+    studyHoursLabel: "Daily Study Time",
+    studyHoursPlaceholder: "For example: 1.5 hours, 90 minutes",
+    examScopeLabel: "Exam Scope",
+    examScopePlaceholder: "For example: pages 50-66, Chapter 13",
+    plannerNoteSelectLabel: "Choose Subject / Note",
+    pleaseChooseNote: "Please choose a note",
+    generatePlan: "Generate Plan",
+    clearInput: "Clear",
+    plannerHelperText: "Generated tasks will be added to the board below and synced to the home dashboard.",
+    todayTasksColumnTitle: "Today's Tasks",
+    weekTasksColumnTitle: "This Week",
+    doneTasksColumnTitle: "Done",
+    emptyTodayTasks: "There are no tasks for today yet.",
+    emptyWeekTasks: "There are no tasks for this week yet.",
+    emptyDoneTasks: "There are no completed tasks yet.",
+    myNotesSubtitle: "Manage, review, reopen, export, or delete the notes you have organized.",
+    searchNotesLabel: "Search Notes",
+    myNotesSearchPlaceholder: "Search titles, subjects, summaries, or keywords...",
+    dateSortLabel: "Sort by Date",
+    sortNewest: "Date: Newest First",
+    sortOldest: "Date: Oldest First",
+    allNotesCount: "All Notes",
+    latestOrganized: "Latest Organized",
+    currentFilteredResults: "Current Results",
+    noDataYet: "No data yet",
+    noNotesYetTitle: "No Notes Yet",
+    noNotesYetDetail: "Generate a note from the Notes page first, and it will appear here.",
+    globalMusicStripText: "Use the navigation above if you want to continue with AI Tutor, the knowledge base, or the study planner.",
+    exportModalTitle: "Export Settings",
+    exportModalSubtitle: "Choose the format, template, and content to include.",
+    exportFormatLabel: "Format",
+    exportFormatMarkdown: "Markdown Notes .md",
+    exportFormatWord: "Word Document .docx",
+    exportFormatPdf: "PDF Handout .pdf",
+    exportFormatPpt: "PowerPoint Slides .pptx",
+    exportTemplateLabel: "Template",
+    templateStudyNote: "Study Note Template",
+    templateFormalReport: "Formal Report Template",
+    templateExamReview: "Exam Review Template",
+    templateAutoPresentation: "Auto Presentation Template",
+    exportIncludeLabel: "Include",
+    exportIncludeKeyPoints: "Key Points",
+    referencesLabel: "References",
+    exportPreviewTitle: "Current Export Content",
+    startExport: "Start Export",
+    focusMusicTitle: "Focus Music",
+    previousTrack: "Previous",
+    nextTrack: "Next",
+    moreMusic: "More Music",
+    volumeLabel: "Volume",
+    playLabel: "Play",
+    pauseLabel: "Pause",
+    modeQuick: "Quick Summary",
+    modeDeep: "Deep Analysis",
+    modeExam: "Exam Review",
+    modeQuiz: "Question Generation",
+    modeConcept: "Concept Links",
+    modeMistake: "Common Mistakes",
     knowledgeSearchPlaceholder: "Search keywords, questions, or exam points, such as FVTPL, OCI, or fair value...",
     notesSourcePlaceholder: "Paste your notes, lecture content, teacher highlights, or any material you want to organize...",
     tutorInputPlaceholderSimple: "Ask a question, for example: What is the difference between FVTPL and FVOCI?"
@@ -1214,6 +1435,33 @@ const noteModeDisplayConfigs = {
     description: "優先指出最容易混淆或考錯的地方，方便釐清盲點。"
   }
 };
+
+const noteModeDescriptions = {
+  quick: {
+    zh: "快速抓出整份內容的大意與主線，適合先建立整體理解。",
+    en: "Quickly capture the main idea and structure of the content for an overall understanding."
+  },
+  deep: {
+    zh: "完整解釋觀念與脈絡，適合課後整理與強化理解。",
+    en: "Explain ideas and context in depth for stronger post-class understanding."
+  },
+  exam: {
+    zh: "聚焦常考方向與易混淆重點，適合考前快速統整。",
+    en: "Focus on common exam directions and confusing points for fast pre-exam review."
+  },
+  quiz: {
+    zh: "優先整理出可能考題與練習方向，方便直接做題複習。",
+    en: "Prioritize likely questions and practice directions so you can review through problems."
+  },
+  concept: {
+    zh: "著重觀念之間的關係與結構，幫助你把內容串成完整脈絡。",
+    en: "Highlight relationships and structure between concepts so the topic feels connected."
+  },
+  mistake: {
+    zh: "優先指出最容易混淆或考錯的地方，方便釐清盲點。",
+    en: "Highlight the most confusing and error-prone ideas first to clear up blind spots."
+  }
+};
 const legacyModeToNoteMode = {
   simple: "quick",
   report: "deep",
@@ -1233,6 +1481,11 @@ const fallbackTutorSourceMessage = {
 
 function getCurrentLanguage() {
   return currentLanguage === "en" ? "en" : "zh";
+}
+
+function getI18nText(key, fallback = "") {
+  const dict = i18n[getCurrentLanguage()] || i18n.zh;
+  return dict[key] || fallback;
 }
 
 function normalizePlainList(items = []) {
@@ -1882,42 +2135,6 @@ function initFocusMusicWidget() {
   updateModeBadge();
   void hydrateFromIndexedDb();
 
-  if (window.SmartStudySpotifyPlayer?.init) {
-    window.SmartStudySpotifyPlayer.init({
-      modeButton: modeSpotifyButton,
-      statusTitle: document.getElementById("focusSpotifyStateTitle"),
-      premiumBadge: document.getElementById("focusSpotifyPremiumBadge"),
-      statusText: document.getElementById("focusSpotifyStatus"),
-      connectButton: document.getElementById("focusSpotifyConnectButton"),
-      reconnectButton: document.getElementById("focusSpotifyReconnectButton"),
-      disconnectButton: document.getElementById("focusSpotifyDisconnectButton"),
-      nowPlaying: document.getElementById("focusSpotifyNowPlaying"),
-      cover: document.getElementById("focusSpotifyCover"),
-      trackName: document.getElementById("focusSpotifyTrackName"),
-      artistName: document.getElementById("focusSpotifyArtistName"),
-      progressWrap: document.getElementById("focusSpotifyProgressWrap"),
-      progressCurrent: document.getElementById("focusSpotifyProgressCurrent"),
-      progressTotal: document.getElementById("focusSpotifyProgressTotal"),
-      progressFill: document.getElementById("focusSpotifyProgressFill"),
-      controls: document.getElementById("focusSpotifyControls"),
-      previousButton: document.getElementById("spotifyPreviousButton"),
-      playPauseButton: document.getElementById("spotifyPlayButton"),
-      nextButton: document.getElementById("spotifyNextButton"),
-      volumeInput: document.getElementById("spotifyVolumeInput"),
-      lockActions: document.getElementById("focusSpotifyLockActions"),
-      lockButton: document.getElementById("focusSpotifyLockButton"),
-      returnLockedButton: document.getElementById("focusSpotifyReturnLockedButton"),
-      lockStatus: document.getElementById("focusSpotifyLockStatus"),
-      onModeChange: applyFocusMusicMode,
-      getCurrentMode: () => state.mode,
-      onSpotifyPlaybackStart: () => {
-        if (!audio.paused) {
-          audio.pause();
-          playButton.textContent = "播放";
-        }
-      }
-    });
-  }
 }
 
 function loadRagTutorTransfer() {
@@ -5876,9 +6093,10 @@ function renderRecommendedQuestions(questions) {
   if (!questions || questions.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = currentLanguage === "en"
-      ? "No source is selected yet. Please choose a note before generating recommended questions."
-      : "目前尚未選擇資料，請先選擇一份筆記後再產生推薦問題。";
+    empty.textContent = getI18nText(
+      "recommendedQuestionsEmpty",
+      "目前尚未選擇資料，請先選擇一份筆記後再產生推薦問題。"
+    );
     recommendedQuestions.appendChild(empty);
     return;
   }
@@ -5924,7 +6142,7 @@ function updateTutorSourceUI() {
   const modes = Array.isArray(currentTutorSource.modes) && currentTutorSource.modes.length
     ? currentTutorSource.modes
     : [currentTutorSource.mode || "未指定模式"];
-  const mode = modes.map((item) => noteModeDisplayConfigs[item]?.label || item).join(currentLanguage === "en" ? ", " : "、");
+  const mode = modes.map((item) => getMyNoteModeLabel(item) || item).join(currentLanguage === "en" ? ", " : "、");
   currentTutorSourceMeta.textContent = currentLanguage === "en"
     ? `Subject: ${subject} | Study modes: ${mode}`
     : `科目：${subject}｜整理類型：${mode}`;
@@ -6283,7 +6501,7 @@ function renderTaskColumn(containerId, tasks) {
   if (!tasks.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state small-empty";
-    empty.textContent = "目前沒有任務。";
+    empty.textContent = currentLanguage === "en" ? "No tasks yet." : "目前沒有任務。";
     container.appendChild(empty);
     return;
   }
@@ -6295,15 +6513,15 @@ function renderTaskColumn(containerId, tasks) {
     card.dataset.taskId = task.id;
 
     card.innerHTML = `
-      <span class="task-tag">${escapeHTML(task.type || "任務")}</span>
-      <h3>${escapeHTML(task.title || "未命名任務")}</h3>
+      <span class="task-tag">${escapeHTML(task.type || (currentLanguage === "en" ? "Task" : "任務"))}</span>
+      <h3>${escapeHTML(task.title || (currentLanguage === "en" ? "Untitled task" : "未命名任務"))}</h3>
       <p>${escapeHTML(task.detail || "")}</p>
-      <p>來源：${escapeHTML(task.source || "未指定")}</p>
+      <p>${currentLanguage === "en" ? "Source:" : "來源："}${escapeHTML(task.source || (currentLanguage === "en" ? "Unspecified" : "未指定"))}</p>
 
       <div class="task-card-actions">
-        ${task.status !== "today" ? '<button class="secondary-btn move-today-btn" type="button">移到今日</button>' : ""}
-        ${task.status !== "week" ? '<button class="secondary-btn move-week-btn" type="button">移到本週</button>' : ""}
-        ${task.status !== "done" ? '<button class="primary-btn complete-task-btn" type="button">標記完成</button>' : ""}
+        ${task.status !== "today" ? `<button class="secondary-btn move-today-btn" type="button">${currentLanguage === "en" ? "Move to Today" : "移到今日"}</button>` : ""}
+        ${task.status !== "week" ? `<button class="secondary-btn move-week-btn" type="button">${currentLanguage === "en" ? "Move to Week" : "移到本週"}</button>` : ""}
+        ${task.status !== "done" ? `<button class="primary-btn complete-task-btn" type="button">${currentLanguage === "en" ? "Mark Done" : "標記完成"}</button>` : ""}
       </div>
     `;
 
@@ -6358,9 +6576,9 @@ function renderHomeTasks() {
   if (!tasks.length) {
     container.innerHTML = `
       <div class="soft-card task-card">
-        <span class="task-tag">提示</span>
-        <strong>目前沒有今日任務</strong>
-        <p>可以到讀書計畫頁建立任務。</p>
+        <span class="task-tag">${currentLanguage === "en" ? "Tip" : "提示"}</span>
+        <strong>${currentLanguage === "en" ? "No tasks for today" : "目前沒有今日任務"}</strong>
+        <p>${currentLanguage === "en" ? "Create tasks from the Study Planner page." : "可以到讀書計畫頁建立任務。"}</p>
       </div>
     `;
     return;
@@ -6368,20 +6586,20 @@ function renderHomeTasks() {
 
   container.innerHTML = tasks.map((task) => `
     <div class="soft-card task-card">
-      <span class="task-tag">${escapeHTML(task.type || "任務")}</span>
-      <strong>${escapeHTML(task.title || "未命名任務")}</strong>
+      <span class="task-tag">${escapeHTML(task.type || (currentLanguage === "en" ? "Task" : "任務"))}</span>
+      <strong>${escapeHTML(task.title || (currentLanguage === "en" ? "Untitled task" : "未命名任務"))}</strong>
       <p>${escapeHTML(task.detail || "")}</p>
     </div>
   `).join("");
 }
 
 function formatNoteDate(dateString) {
-  if (!dateString) return "未知時間";
+  if (!dateString) return currentLanguage === "en" ? "Unknown date" : "未知時間";
 
   const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "未知時間";
+  if (Number.isNaN(date.getTime())) return currentLanguage === "en" ? "Unknown date" : "未知時間";
 
-  return date.toLocaleDateString("zh-TW", {
+  return date.toLocaleDateString(currentLanguage === "en" ? "en-US" : "zh-TW", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit"
@@ -6390,27 +6608,27 @@ function formatNoteDate(dateString) {
 
 function getMyNoteModeLabel(mode) {
   const map = {
-    quick: "快速摘要",
-    deep: "深度解析",
-    exam: "考前複習",
-    quiz: "題目生成",
-    concept: "概念連結",
-    mistake: "易錯觀念"
+    quick: getI18nText("modeQuick", "快速摘要"),
+    deep: getI18nText("modeDeep", "深度解析"),
+    exam: getI18nText("modeExam", "考前複習"),
+    quiz: getI18nText("modeQuiz", "題目生成"),
+    concept: getI18nText("modeConcept", "概念連結"),
+    mistake: getI18nText("modeMistake", "易錯觀念")
   };
 
-  return map[mode] || "未指定";
+  return map[mode] || (currentLanguage === "en" ? "Unspecified" : "未指定");
 }
 
 function buildMyNoteTags(note) {
   const result = note.result || {};
   const tags = [];
 
-  if (result.summary?.preview) tags.push("智慧摘要");
-  if (result.keyPoints?.preview) tags.push("可能重點");
-  if (result.quiz?.preview) tags.push("考題預測");
-  if (result.keywords?.preview) tags.push("關鍵字");
-  if (result.mistakes?.preview) tags.push("易錯觀念");
-  if (result.concepts?.preview) tags.push("概念連結");
+  if (result.summary?.preview) tags.push(getI18nText("tagSummary", "智慧摘要"));
+  if (result.keyPoints?.preview) tags.push(getI18nText("tagKeyPoints", "可能重點"));
+  if (result.quiz?.preview) tags.push(getI18nText("tagQuiz", "考題預測"));
+  if (result.keywords?.preview) tags.push(getI18nText("tagKeywords", "關鍵字"));
+  if (result.mistakes?.preview) tags.push(getI18nText("tagMistakes", "易錯觀念"));
+  if (result.concepts?.preview) tags.push(getI18nText("tagConcepts", "概念連結"));
 
   return tags.slice(0, 4);
 }
@@ -6507,7 +6725,9 @@ function openMyNote(note) {
 }
 
 function deleteMyNote(noteId) {
-  const confirmed = confirm("確定要刪除這份筆記嗎？此操作無法復原。");
+  const confirmed = confirm(currentLanguage === "en"
+    ? "Are you sure you want to delete this note? This action cannot be undone."
+    : "確定要刪除這份筆記嗎？此操作無法復原。");
   if (!confirmed) return;
 
   const notes = getMyNotes();
@@ -6555,8 +6775,10 @@ function renderMyNotes() {
   if (!notes.length) {
     myNotesGrid.innerHTML = `
       <div class="app-card empty-state-card">
-        <h2>目前沒有符合條件的筆記</h2>
-        <p>請調整搜尋或篩選條件，或先到「筆記整理」頁產生一份筆記。</p>
+        <h2>${currentLanguage === "en" ? "No matching notes" : "目前沒有符合條件的筆記"}</h2>
+        <p>${currentLanguage === "en"
+          ? "Adjust your search or filters, or generate a note from the Notes page first."
+          : "請調整搜尋或篩選條件，或先到「筆記整理」頁產生一份筆記。"}</p>
       </div>
     `;
     return;
@@ -6569,20 +6791,20 @@ function renderMyNotes() {
     const preview =
       note.result?.summary?.preview ||
       note.result?.keyPoints?.preview ||
-      "這份筆記尚無摘要預覽。";
+      (currentLanguage === "en" ? "This note does not have a preview yet." : "這份筆記尚無摘要預覽。");
 
     const tags = buildMyNoteTags(note);
 
     card.innerHTML = `
       <div>
-        <h2>${escapeHTML(note.title || "未命名筆記")}</h2>
+        <h2>${escapeHTML(note.title || (currentLanguage === "en" ? "Untitled note" : "未命名筆記"))}</h2>
         <p class="note-preview">${escapeHTML(stripHtmlTags(preview))}</p>
       </div>
 
       <div class="note-meta-list">
-        <p>科目：${escapeHTML(note.subject || "未分類")}</p>
-        <p>最後整理：${escapeHTML(formatNoteDate(note.createdAt))}</p>
-        <p>整理類型：${escapeHTML(getMyNoteModeLabel(note.mode))}</p>
+        <p>${currentLanguage === "en" ? "Subject:" : "科目："}${escapeHTML(note.subject || (currentLanguage === "en" ? "Uncategorized" : "未分類"))}</p>
+        <p>${currentLanguage === "en" ? "Last organized:" : "最後整理："}${escapeHTML(formatNoteDate(note.createdAt))}</p>
+        <p>${currentLanguage === "en" ? "Mode:" : "整理類型："}${escapeHTML(getMyNoteModeLabel(note.mode))}</p>
       </div>
 
       <div class="meta-row">
@@ -6590,9 +6812,9 @@ function renderMyNotes() {
       </div>
 
       <div class="note-card-actions">
-        <button class="primary-btn open-note-btn" type="button">開啟</button>
-        <button class="secondary-btn export-trigger" data-source="myNotes" type="button">匯出</button>
-        <button class="secondary-btn danger-btn delete-note-btn" type="button">刪除</button>
+        <button class="primary-btn open-note-btn" type="button">${currentLanguage === "en" ? "Open" : "開啟"}</button>
+        <button class="secondary-btn export-trigger" data-source="myNotes" type="button">${getI18nText("export", "匯出")}</button>
+        <button class="secondary-btn danger-btn delete-note-btn" type="button">${getI18nText("delete", "刪除")}</button>
       </div>
     `;
 
@@ -6618,12 +6840,12 @@ function renderMyNotes() {
 function buildKnowledgeTags(item) {
   const tags = [];
 
-  if (item.result?.summary?.preview) tags.push("智慧摘要");
-  if (item.result?.keyPoints?.preview) tags.push("可能重點");
-  if (item.result?.quiz?.preview) tags.push("考題預測");
-  if (item.result?.keywords?.preview) tags.push("關鍵字");
-  if (item.result?.mistakes?.preview) tags.push("易錯觀念");
-  if (item.result?.concepts?.preview) tags.push("概念連結");
+  if (item.result?.summary?.preview) tags.push(getI18nText("tagSummary", "智慧摘要"));
+  if (item.result?.keyPoints?.preview) tags.push(getI18nText("tagKeyPoints", "可能重點"));
+  if (item.result?.quiz?.preview) tags.push(getI18nText("tagQuiz", "考題預測"));
+  if (item.result?.keywords?.preview) tags.push(getI18nText("tagKeywords", "關鍵字"));
+  if (item.result?.mistakes?.preview) tags.push(getI18nText("tagMistakes", "易錯觀念"));
+  if (item.result?.concepts?.preview) tags.push(getI18nText("tagConcepts", "概念連結"));
 
   return tags.slice(0, 4);
 }
@@ -6633,7 +6855,7 @@ function syncKnowledgeChapterFilterOptions(items = getKnowledgeItems()) {
 
   const previousValue = knowledgeChapterFilter.value || "all";
   const chapters = [...new Set(items.map((item) => normalizeText(item.chapter)).filter(Boolean))];
-  knowledgeChapterFilter.innerHTML = '<option value="all">全部章節</option>';
+  knowledgeChapterFilter.innerHTML = `<option value="all">${getI18nText("allChapters", "全部章節")}</option>`;
 
   chapters.forEach((chapter) => {
     const option = document.createElement("option");
@@ -6705,19 +6927,19 @@ function addKnowledgeItemToTodayTasks(item) {
 
 function openKnowledgeDetail(item) {
   const detail = [
-    `標題：${item.title}`,
+    `${currentLanguage === "en" ? "Title" : "標題"}：${item.title}`,
     "",
-    "智慧摘要：",
-    stripHtmlTags(item.result?.summary?.detail || item.result?.summary?.preview || "無"),
+    `${getI18nText("tagSummary", "智慧摘要")}：`,
+    stripHtmlTags(item.result?.summary?.detail || item.result?.summary?.preview || (currentLanguage === "en" ? "None" : "無")),
     "",
-    "可能重點：",
-    stripHtmlTags(item.result?.keyPoints?.detail || item.result?.keyPoints?.preview || "無"),
+    `${getI18nText("tagKeyPoints", "可能重點")}：`,
+    stripHtmlTags(item.result?.keyPoints?.detail || item.result?.keyPoints?.preview || (currentLanguage === "en" ? "None" : "無")),
     "",
-    "考題預測：",
-    stripHtmlTags(item.result?.quiz?.detail || item.result?.quiz?.preview || "無"),
+    `${getI18nText("tagQuiz", "考題預測")}：`,
+    stripHtmlTags(item.result?.quiz?.detail || item.result?.quiz?.preview || (currentLanguage === "en" ? "None" : "無")),
     "",
-    "易錯觀念：",
-    stripHtmlTags(item.result?.mistakes?.detail || item.result?.mistakes?.preview || "無")
+    `${getI18nText("tagMistakes", "易錯觀念")}：`,
+    stripHtmlTags(item.result?.mistakes?.detail || item.result?.mistakes?.preview || (currentLanguage === "en" ? "None" : "無"))
   ].join("\n");
 
   alert(detail);
@@ -6779,7 +7001,7 @@ function renderKnowledgeResults(items) {
     const keyPointPreview =
       item.result?.keyPoints?.preview ||
       item.result?.summary?.preview ||
-      "這筆資料尚無摘要預覽。";
+      (currentLanguage === "en" ? "This item does not have a preview yet." : "這筆資料尚無摘要預覽。");
 
     const tags = buildKnowledgeTags(item);
 
@@ -6795,28 +7017,33 @@ function renderKnowledgeResults(items) {
       </div>
 
       <p class="source-text">
-        來源筆記：${escapeHTML(item.title)}
+        ${currentLanguage === "en" ? "Source note:" : "來源筆記："}${escapeHTML(item.title)}
       </p>
 
       <div class="card-actions">
         <button class="primary-btn ask-tutor-btn" type="button">
-          問 AI Tutor
+          ${currentLanguage === "en" ? "Ask AI Tutor" : "問 AI Tutor"}
         </button>
 
         <button class="secondary-btn add-task-btn" type="button">
-          加入今日待辦
+          ${currentLanguage === "en" ? "Add to Today" : "加入今日待辦"}
         </button>
 
         <div class="secondary-actions">
-          <button class="link-btn view-detail-btn" type="button">查看詳細</button>
-          <button class="link-btn copy-result-btn" type="button">複製</button>
-          <button class="link-btn export-trigger" data-source="knowledge" type="button">匯出</button>
+          <button class="link-btn view-detail-btn" type="button">${currentLanguage === "en" ? "View Details" : "查看詳細"}</button>
+          <button class="link-btn copy-result-btn" type="button">${currentLanguage === "en" ? "Copy" : "複製"}</button>
+          <button class="link-btn export-trigger" data-source="knowledge" type="button">${getI18nText("export", "匯出")}</button>
         </div>
       </div>
     `;
 
     card.querySelector(".ask-tutor-btn")?.addEventListener("click", () => {
-      askTutorWithSource(item.sourceNote, `請解釋「${item.title}」的重點`);
+      askTutorWithSource(
+        item.sourceNote,
+        currentLanguage === "en"
+          ? `Please explain the key idea of "${item.title}".`
+          : `請解釋「${item.title}」的重點`
+      );
     });
 
     card.querySelector(".add-task-btn")?.addEventListener("click", () => {
@@ -6856,28 +7083,36 @@ function generateBasicStudyTasks({ examDate, dailyTime, scope, noteTitle }) {
   return [
     {
       id: `task_${Date.now()}_1`,
-      type: "複習",
-      title: `複習 ${scope || noteTitle || "考試範圍"}`,
-      detail: `預估時間：${dailyTime || "30 分鐘"}`,
-      source: noteTitle || "未指定筆記",
+      type: currentLanguage === "en" ? "Review" : "複習",
+      title: currentLanguage === "en"
+        ? `Review ${scope || noteTitle || "exam scope"}`
+        : `複習 ${scope || noteTitle || "考試範圍"}`,
+      detail: currentLanguage === "en"
+        ? `Estimated time: ${dailyTime || "30 minutes"}`
+        : `預估時間：${dailyTime || "30 分鐘"}`,
+      source: noteTitle || (currentLanguage === "en" ? "Unspecified note" : "未指定筆記"),
       status: "today",
       createdAt: new Date().toISOString()
     },
     {
       id: `task_${Date.now()}_2`,
-      type: "練習",
-      title: "完成 3 題練習題",
-      detail: "先做題目，再回頭整理錯誤觀念。",
-      source: noteTitle || "未指定筆記",
+      type: currentLanguage === "en" ? "Practice" : "練習",
+      title: currentLanguage === "en" ? "Finish 3 practice questions" : "完成 3 題練習題",
+      detail: currentLanguage === "en"
+        ? "Do the questions first, then review the mistakes."
+        : "先做題目，再回頭整理錯誤觀念。",
+      source: noteTitle || (currentLanguage === "en" ? "Unspecified note" : "未指定筆記"),
       status: "today",
       createdAt: new Date().toISOString()
     },
     {
       id: `task_${Date.now()}_3`,
-      type: "整理",
-      title: "整理易錯觀念與關鍵字",
-      detail: "把容易混淆的地方整理成複習卡。",
-      source: noteTitle || "未指定筆記",
+      type: currentLanguage === "en" ? "Organize" : "整理",
+      title: currentLanguage === "en" ? "Organize mistakes and keywords" : "整理易錯觀念與關鍵字",
+      detail: currentLanguage === "en"
+        ? "Turn confusing points into quick review cards."
+        : "把容易混淆的地方整理成複習卡。",
+      source: noteTitle || (currentLanguage === "en" ? "Unspecified note" : "未指定筆記"),
       status: "week",
       createdAt: new Date().toISOString()
     }
@@ -6901,7 +7136,7 @@ function populatePlannerNoteSelect() {
   if (!plannerNoteSelect) return;
 
   const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
-  plannerNoteSelect.innerHTML = '<option value="">請選擇筆記</option>';
+  plannerNoteSelect.innerHTML = `<option value="">${getI18nText("pleaseChooseNote", "請選擇筆記")}</option>`;
 
   notes.forEach((note) => {
     const option = document.createElement("option");
@@ -6942,7 +7177,9 @@ function handleGenerateStudyPlan() {
   const noteTitle = getSelectedPlannerNoteTitle();
 
   if (!examDate && !dailyTime && !scope && !noteTitle) {
-    alert("請至少填寫一個考試資訊或選擇一份筆記。");
+    alert(currentLanguage === "en"
+      ? "Please enter at least one exam detail or choose a note."
+      : "請至少填寫一個考試資訊或選擇一份筆記。");
     return;
   }
 
@@ -6956,7 +7193,7 @@ function handleGenerateStudyPlan() {
   const tasks = getStudyTasks();
   saveStudyTasks([...newTasks, ...tasks]);
   refreshAfterTasksChanged();
-  alert("已產生讀書計畫任務。");
+  alert(currentLanguage === "en" ? "Study plan tasks created." : "已產生讀書計畫任務。");
 }
 
 function setAccordionContent(section, preview, detailHtml) {
@@ -7098,7 +7335,7 @@ function getLegacyModeFromSelectedNoteModes(selectedModes = getSelectedNoteModes
 function updateNoteModeSummary() {
   const selectedModes = getSelectedNoteModes();
   const labels = selectedModes
-    .map((mode) => noteModeDisplayConfigs[mode]?.label)
+    .map((mode) => getMyNoteModeLabel(mode))
     .filter(Boolean);
 
   if (modeBadge) {
@@ -7109,7 +7346,8 @@ function updateNoteModeSummary() {
 
   if (modeDescription) {
     if (selectedModes.length === 1) {
-      modeDescription.textContent = noteModeDisplayConfigs[selectedModes[0]]?.description || "";
+      const config = noteModeDescriptions[selectedModes[0]];
+      modeDescription.textContent = config?.[currentLanguage] || config?.zh || "";
     } else {
       modeDescription.textContent = currentLanguage === "en"
         ? `Selected ${selectedModes.length} organization modes. SmartStudy AI will combine these directions in one result while keeping a compatible primary mode underneath.`
@@ -7298,20 +7536,22 @@ function updateExportPreview() {
   const sections = getSelectedExportSections();
 
   const formatLabel = {
-    md: "Markdown 筆記",
-    docx: "Word 文件",
-    pdf: "PDF 講義",
-    pptx: "PowerPoint 簡報"
-  }[format] || "檔案";
+    md: getI18nText("exportFormatMarkdown", "Markdown 筆記 .md"),
+    docx: getI18nText("exportFormatWord", "Word 文件 .docx"),
+    pdf: getI18nText("exportFormatPdf", "PDF 講義 .pdf"),
+    pptx: getI18nText("exportFormatPpt", "PowerPoint 簡報 .pptx")
+  }[format] || (currentLanguage === "en" ? "File" : "檔案");
 
   const templateLabel = {
-    studyNote: "讀書筆記模板",
-    formalReport: "正式報告模板",
-    examReview: "考前複習模板",
-    autoPresentation: "自動報告簡報模板"
-  }[template] || "預設模板";
+    studyNote: getI18nText("templateStudyNote", "讀書筆記模板"),
+    formalReport: getI18nText("templateFormalReport", "正式報告模板"),
+    examReview: getI18nText("templateExamReview", "考前複習模板"),
+    autoPresentation: getI18nText("templateAutoPresentation", "自動報告簡報模板")
+  }[template] || (currentLanguage === "en" ? "Default template" : "預設模板");
 
-  exportPreviewText.textContent = `將匯出為 ${formatLabel}，使用 ${templateLabel}，包含 ${sections.length} 個內容區塊。`;
+  exportPreviewText.textContent = currentLanguage === "en"
+    ? `This will export as ${formatLabel}, using ${templateLabel}, and include ${sections.length} content section(s).`
+    : `將匯出為 ${formatLabel}，使用 ${templateLabel}，包含 ${sections.length} 個內容區塊。`;
 }
 
 function openExportModal(context = {}) {
