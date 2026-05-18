@@ -690,14 +690,14 @@ const FOCUS_MUSIC_STORE_NAME = "tracks";
 const FOCUS_MUSIC_TRACK_ID = "custom-mp3";
 let focusMusicInitialized = false;
 const focusPlayerTracks = [
-  { id: "rain", name: "雨聲", src: "audio/rain.mp3" },
-  { id: "whiteNoise", name: "白噪音", src: "audio/white-noise.mp3" },
-  { id: "ocean", name: "海浪聲", src: "audio/ocean.mp3" },
-  { id: "cafe", name: "咖啡廳", src: "audio/cafe.mp3" },
-  { id: "library", name: "圖書館", src: "audio/library.mp3" },
-  { id: "keyboard", name: "鍵盤聲", src: "audio/keyboard.mp3" },
-  { id: "piano", name: "輕鋼琴", src: "audio/piano.mp3" },
-  { id: "lofi", name: "Lo-fi", src: "audio/lofi.mp3" }
+  { id: "rain", name: "雨聲", src: "audio/rain.wav" },
+  { id: "whiteNoise", name: "白噪音", src: "audio/white-noise.wav" },
+  { id: "ocean", name: "海浪聲", src: "audio/ocean.wav" },
+  { id: "cafe", name: "咖啡廳", src: "audio/cafe.wav" },
+  { id: "library", name: "圖書館", src: "audio/library.wav" },
+  { id: "keyboard", name: "鍵盤聲", src: "audio/keyboard.wav" },
+  { id: "piano", name: "輕鋼琴", src: "audio/piano.wav" },
+  { id: "lofi", name: "Lo-fi", src: "audio/lofi.wav" }
 ];
 let focusPlayerCurrentTrackIndex = 0;
 let focusPlayerIsPlaying = false;
@@ -705,10 +705,7 @@ const focusPlayerAudio = new Audio(focusPlayerTracks[focusPlayerCurrentTrackInde
 focusPlayerAudio.loop = true;
 focusPlayerAudio.volume = 0.5;
 let focusPlayerInitialized = false;
-// The repo currently does not bundle /audio assets, so default to generated
-// ambient playback. If real audio files are added later, this can be switched
-// back to false to prefer bundled files first.
-let focusPlayerBuiltInAudioUnavailable = true;
+let focusPlayerBuiltInAudioUnavailable = false;
 let focusPlayerGeneratedMode = false;
 let focusPlayerAudioContext = null;
 let focusPlayerGeneratedNodes = [];
