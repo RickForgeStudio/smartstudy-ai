@@ -46,7 +46,7 @@ const SPOTIFY_AUTH_STORAGE_KEY = "smartstudy-spotify-auth";
 const SPOTIFY_LOCKED_PLAYLIST_KEY = "smartstudy-spotify-locked-playlist-uri";
 const SPOTIFY_PKCE_VERIFIER_KEY = "smartstudy-spotify-pkce-verifier";
 const SPOTIFY_CONTROL_TIMEOUT_MS = 7000;
-const SPOTIFY_AUTO_RESUME_GRACE_MS = 8000;
+const SPOTIFY_AUTO_RESUME_GRACE_MS = 3000;
 const SPOTIFY_TOKEN_EXPIRING_SOON_MS = 5 * 60 * 1000;
 let spotifyWidgetInitialized = false;
 let spotifyControlsBound = false;
@@ -65,7 +65,7 @@ let spotifyAutoResumeUntil = 0;
     deviceId: "",
     playback: null,
     pollTimer: null,
-    pollIntervalMs: 5000,
+    pollIntervalMs: 12000,
     sdkReady: false,
     connecting: false,
     toggleBusy: false,
@@ -384,12 +384,6 @@ let spotifyAutoResumeUntil = 0;
     const item = playback?.item || null;
     const isPlaying = Boolean(playback?.is_playing);
 
-    if (isPlaying) {
-      spotifyShouldKeepPlaying = true;
-      spotifyUserPaused = false;
-      armSpotifyAutoResume();
-    }
-
     state.ui.controls.hidden = !(state.sdkReady && state.deviceId);
     state.ui.nowPlaying.hidden = false;
     state.ui.progressWrap.hidden = !item;
@@ -680,21 +674,6 @@ let spotifyAutoResumeUntil = 0;
     const spotifyPlayButton = document.getElementById("spotifyPlayButton");
     if (spotifyPlayButton) {
       spotifyPlayButton.textContent = playbackState?.is_playing ? "暫停" : "播放";
-    }
-
-    const isPlaying = Boolean(playbackState && playbackState.is_playing);
-
-    if (
-      spotifyShouldKeepPlaying
-      && !spotifyUserPaused
-      && state.sdkReady
-      && spotifyDeviceId
-      && playbackState
-      && !isPlaying
-      && Date.now() < spotifyAutoResumeUntil
-    ) {
-      await resumeSpotifyPlayback();
-      return getPlaybackState();
     }
 
     return playbackState;
@@ -1029,7 +1008,6 @@ let spotifyAutoResumeUntil = 0;
       } else {
         spotifyShouldKeepPlaying = true;
         spotifyUserPaused = false;
-        armSpotifyAutoResume();
         try {
           await withSpotifyControlTimeout(
             () => spotifyPlayer.togglePlay(),
@@ -1138,10 +1116,6 @@ let spotifyAutoResumeUntil = 0;
       spotifyPreviousButton.disabled = true;
     }
     try {
-      if (spotifyShouldKeepPlaying && !spotifyUserPaused) {
-        armSpotifyAutoResume(10000);
-      }
-
       try {
         await withSpotifyControlTimeout(
           () => spotifyPlayer.previousTrack(),
@@ -1182,16 +1156,6 @@ let spotifyAutoResumeUntil = 0;
         "Spotify sync after previous"
       );
 
-      if (spotifyShouldKeepPlaying && !spotifyUserPaused && !playbackState?.is_playing) {
-        await withSpotifyControlTimeout(
-          () => resumeSpotifyPlayback(),
-          "Spotify resume after previous"
-        );
-        await withSpotifyControlTimeout(
-          () => syncSpotifyPlaybackState(),
-          "Spotify resync after previous"
-        );
-      }
     } catch (error) {
       console.error("Spotify previous failed:", error);
       setSpotifyStatus("切到上一首失敗，請重新連接 Spotify", "播放控制失敗");
@@ -1213,10 +1177,6 @@ let spotifyAutoResumeUntil = 0;
       spotifyNextButton.disabled = true;
     }
     try {
-      if (spotifyShouldKeepPlaying && !spotifyUserPaused) {
-        armSpotifyAutoResume(10000);
-      }
-
       try {
         await withSpotifyControlTimeout(
           () => spotifyPlayer.nextTrack(),
@@ -1257,16 +1217,6 @@ let spotifyAutoResumeUntil = 0;
         "Spotify sync after next"
       );
 
-      if (spotifyShouldKeepPlaying && !spotifyUserPaused && !playbackState?.is_playing) {
-        await withSpotifyControlTimeout(
-          () => resumeSpotifyPlayback(),
-          "Spotify resume after next"
-        );
-        await withSpotifyControlTimeout(
-          () => syncSpotifyPlaybackState(),
-          "Spotify resync after next"
-        );
-      }
     } catch (error) {
       console.error("Spotify next failed:", error);
       setSpotifyStatus("切到下一首失敗，請重新連接 Spotify", "播放控制失敗");
