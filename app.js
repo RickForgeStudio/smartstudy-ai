@@ -705,6 +705,14 @@ const focusPlayerAudio = new Audio(focusPlayerTracks[focusPlayerCurrentTrackInde
 focusPlayerAudio.loop = true;
 focusPlayerAudio.volume = 0.5;
 let focusPlayerInitialized = false;
+// The repo currently does not bundle /audio assets, so default to generated
+// ambient playback. If real audio files are added later, this can be switched
+// back to false to prefer bundled files first.
+let focusPlayerBuiltInAudioUnavailable = true;
+let focusPlayerGeneratedMode = false;
+let focusPlayerAudioContext = null;
+let focusPlayerGeneratedNodes = [];
+let focusPlayerGeneratedIntervals = [];
 
 function switchPage(pageName) {
   document.querySelectorAll(".page").forEach((page) => {
@@ -843,6 +851,269 @@ function updateTrackLabel() {
   currentTrackLabel.textContent = `目前：${focusPlayerTracks[focusPlayerCurrentTrackIndex].name}`;
 }
 
+function clearGeneratedIntervals() {
+  focusPlayerGeneratedIntervals.forEach((intervalId) => {
+    window.clearInterval(intervalId);
+  });
+  focusPlayerGeneratedIntervals = [];
+}
+
+function stopGeneratedAmbient() {
+  clearGeneratedIntervals();
+  focusPlayerGeneratedNodes.forEach((node) => {
+    try {
+      if (typeof node.stop === "function") {
+        node.stop();
+      }
+    } catch (error) {
+      // Ignore stop errors from already-stopped nodes.
+    }
+
+    try {
+      if (typeof node.disconnect === "function") {
+        node.disconnect();
+      }
+    } catch (error) {
+      // Ignore disconnect errors.
+    }
+  });
+  focusPlayerGeneratedNodes = [];
+  focusPlayerGeneratedMode = false;
+}
+
+function stopFocusPlayerPlayback({ keepPlayingState = false } = {}) {
+  focusPlayerAudio.pause();
+  stopGeneratedAmbient();
+  if (!keepPlayingState) {
+    focusPlayerIsPlaying = false;
+    updatePlayButton();
+    saveMusicState();
+  }
+}
+
+function ensureFocusPlayerAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  if (!focusPlayerAudioContext) {
+    focusPlayerAudioContext = new AudioContextClass();
+  }
+
+  if (focusPlayerAudioContext.state === "suspended") {
+    return focusPlayerAudioContext.resume().then(() => focusPlayerAudioContext);
+  }
+
+  return Promise.resolve(focusPlayerAudioContext);
+}
+
+function createNoiseBuffer(audioContext, color = "white") {
+  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 2, audioContext.sampleRate);
+  const data = buffer.getChannelData(0);
+  let lastOut = 0;
+
+  for (let i = 0; i < data.length; i += 1) {
+    const white = Math.random() * 2 - 1;
+    if (color === "brown") {
+      lastOut = (lastOut + (0.02 * white)) / 1.02;
+      data[i] = lastOut * 3.5;
+    } else if (color === "pink") {
+      lastOut = (0.98 * lastOut) + (0.02 * white);
+      data[i] = lastOut * 1.8;
+    } else {
+      data[i] = white;
+    }
+  }
+
+  return buffer;
+}
+
+function registerGeneratedNode(node) {
+  focusPlayerGeneratedNodes.push(node);
+  return node;
+}
+
+function scheduleKeyboardClicks(audioContext, outputGain) {
+  const triggerClick = () => {
+    const clickOsc = audioContext.createOscillator();
+    const clickGain = audioContext.createGain();
+    clickOsc.type = "square";
+    clickOsc.frequency.value = 900 + Math.random() * 500;
+    clickGain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    clickGain.gain.exponentialRampToValueAtTime(0.025, audioContext.currentTime + 0.005);
+    clickGain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.07);
+    clickOsc.connect(clickGain);
+    clickGain.connect(outputGain);
+    clickOsc.start();
+    clickOsc.stop(audioContext.currentTime + 0.08);
+    registerGeneratedNode(clickOsc);
+    registerGeneratedNode(clickGain);
+  };
+
+  triggerClick();
+  focusPlayerGeneratedIntervals.push(window.setInterval(triggerClick, 380 + Math.random() * 280));
+}
+
+function scheduleLofiPulse(audioContext, outputGain) {
+  const playChord = () => {
+    const root = 220;
+    [1, 1.25, 1.5].forEach((ratio, index) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      osc.type = index === 0 ? "triangle" : "sine";
+      osc.frequency.value = root * ratio;
+      filter.type = "lowpass";
+      filter.frequency.value = 900;
+      gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+      gain.gain.linearRampToValueAtTime(0.022 / (index + 1), audioContext.currentTime + 0.4);
+      gain.gain.linearRampToValueAtTime(0.0001, audioContext.currentTime + 2.4);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(outputGain);
+      osc.start();
+      osc.stop(audioContext.currentTime + 2.5);
+      registerGeneratedNode(osc);
+      registerGeneratedNode(gain);
+      registerGeneratedNode(filter);
+    });
+  };
+
+  playChord();
+  focusPlayerGeneratedIntervals.push(window.setInterval(playChord, 2400));
+}
+
+async function startGeneratedAmbient(track) {
+  const audioContext = await ensureFocusPlayerAudioContext();
+  if (!audioContext) {
+    throw new Error("Web Audio API unavailable");
+  }
+
+  stopGeneratedAmbient();
+
+  const outputGain = registerGeneratedNode(audioContext.createGain());
+  outputGain.gain.value = focusPlayerAudio.volume * 0.22;
+  outputGain.connect(audioContext.destination);
+
+  const noiseSource = registerGeneratedNode(audioContext.createBufferSource());
+  const noiseFilter = registerGeneratedNode(audioContext.createBiquadFilter());
+  const noiseGain = registerGeneratedNode(audioContext.createGain());
+
+  noiseSource.loop = true;
+  noiseGain.gain.value = 1;
+
+  switch (track.id) {
+    case "rain":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "pink");
+      noiseFilter.type = "bandpass";
+      noiseFilter.frequency.value = 3200;
+      noiseFilter.Q.value = 0.8;
+      noiseGain.gain.value = 0.9;
+      break;
+    case "whiteNoise":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "white");
+      noiseFilter.type = "highpass";
+      noiseFilter.frequency.value = 500;
+      noiseGain.gain.value = 0.55;
+      break;
+    case "ocean":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "pink");
+      noiseFilter.type = "lowpass";
+      noiseFilter.frequency.value = 900;
+      noiseGain.gain.value = 1;
+      {
+        const wave = registerGeneratedNode(audioContext.createOscillator());
+        const waveGain = registerGeneratedNode(audioContext.createGain());
+        wave.type = "sine";
+        wave.frequency.value = 0.12;
+        waveGain.gain.value = 450;
+        wave.connect(waveGain);
+        waveGain.connect(noiseFilter.frequency);
+        wave.start();
+      }
+      break;
+    case "cafe":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "pink");
+      noiseFilter.type = "bandpass";
+      noiseFilter.frequency.value = 1400;
+      noiseFilter.Q.value = 0.6;
+      noiseGain.gain.value = 0.32;
+      scheduleKeyboardClicks(audioContext, outputGain);
+      break;
+    case "library":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "brown");
+      noiseFilter.type = "lowpass";
+      noiseFilter.frequency.value = 700;
+      noiseGain.gain.value = 0.22;
+      break;
+    case "keyboard":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "white");
+      noiseFilter.type = "highpass";
+      noiseFilter.frequency.value = 1400;
+      noiseGain.gain.value = 0.08;
+      scheduleKeyboardClicks(audioContext, outputGain);
+      break;
+    case "piano":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "pink");
+      noiseFilter.type = "lowpass";
+      noiseFilter.frequency.value = 500;
+      noiseGain.gain.value = 0.06;
+      scheduleLofiPulse(audioContext, outputGain);
+      break;
+    case "lofi":
+      noiseSource.buffer = createNoiseBuffer(audioContext, "pink");
+      noiseFilter.type = "lowpass";
+      noiseFilter.frequency.value = 1100;
+      noiseGain.gain.value = 0.12;
+      scheduleLofiPulse(audioContext, outputGain);
+      break;
+    default:
+      noiseSource.buffer = createNoiseBuffer(audioContext, "pink");
+      noiseFilter.type = "lowpass";
+      noiseFilter.frequency.value = 1800;
+      noiseGain.gain.value = 0.4;
+      break;
+  }
+
+  noiseSource.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(outputGain);
+  noiseSource.start();
+  focusPlayerGeneratedMode = true;
+}
+
+async function playCurrentFocusTrack() {
+  const track = focusPlayerTracks[focusPlayerCurrentTrackIndex];
+  stopGeneratedAmbient();
+  focusPlayerAudio.pause();
+
+  if (focusPlayerBuiltInAudioUnavailable) {
+    await startGeneratedAmbient(track);
+    focusPlayerIsPlaying = true;
+    updatePlayButton();
+    saveMusicState();
+    return;
+  }
+
+  focusPlayerAudio.src = track.src;
+  focusPlayerAudio.loop = true;
+
+  try {
+    await focusPlayerAudio.play();
+    focusPlayerGeneratedMode = false;
+    focusPlayerIsPlaying = true;
+    updatePlayButton();
+    saveMusicState();
+  } catch (error) {
+    focusPlayerBuiltInAudioUnavailable = true;
+    await startGeneratedAmbient(track);
+    focusPlayerIsPlaying = true;
+    updatePlayButton();
+    saveMusicState();
+  }
+}
+
 function updatePlayButton() {
   if (!playPauseBtn) {
     return;
@@ -905,19 +1176,14 @@ function loadTrack(index, shouldPlay = focusPlayerIsPlaying) {
   focusPlayerCurrentTrackIndex = index;
   focusPlayerAudio.src = focusPlayerTracks[focusPlayerCurrentTrackIndex].src;
   focusPlayerAudio.loop = true;
+  stopGeneratedAmbient();
 
   updateTrackLabel();
 
   if (shouldPlay) {
-    focusPlayerAudio.play()
-      .then(() => {
-        focusPlayerIsPlaying = true;
-        updatePlayButton();
-      })
-      .catch((error) => {
-        console.warn("Audio play failed:", error);
-      });
+    void playCurrentFocusTrack();
   } else {
+    focusPlayerAudio.pause();
     focusPlayerIsPlaying = false;
     updatePlayButton();
   }
@@ -937,30 +1203,28 @@ function prevTrack() {
 
 function playPause() {
   if (focusPlayerIsPlaying) {
-    focusPlayerAudio.pause();
-    focusPlayerIsPlaying = false;
-    updatePlayButton();
-    saveMusicState();
+    stopFocusPlayerPlayback();
     return;
   }
 
-  focusPlayerAudio.play()
+  void playCurrentFocusTrack()
     .then(() => {
-      focusPlayerIsPlaying = true;
-      updatePlayButton();
-      saveMusicState();
       if (window.SmartStudySpotifyPlayer?.pause) {
         void window.SmartStudySpotifyPlayer.pause();
       }
     })
-    .catch((error) => {
-      console.warn("Audio play failed:", error);
+    .catch(() => {
+      focusPlayerIsPlaying = false;
+      updatePlayButton();
     });
 }
 
 function setVolume(value) {
   const volume = Number(value);
   focusPlayerAudio.volume = Math.min(1, Math.max(0, volume));
+  if (focusPlayerGeneratedMode && focusPlayerGeneratedNodes[0]?.gain) {
+    focusPlayerGeneratedNodes[0].gain.value = focusPlayerAudio.volume * 0.22;
+  }
   saveMusicState();
 }
 
@@ -1017,6 +1281,17 @@ function initFocusMusicPlayer() {
 
   focusPlayerInitialized = true;
   restoreMusicState();
+  focusPlayerAudio.addEventListener("error", () => {
+    focusPlayerBuiltInAudioUnavailable = true;
+    if (focusPlayerIsPlaying) {
+      void startGeneratedAmbient(focusPlayerTracks[focusPlayerCurrentTrackIndex]).then(() => {
+        focusPlayerGeneratedMode = true;
+      }).catch(() => {
+        focusPlayerIsPlaying = false;
+        updatePlayButton();
+      });
+    }
+  });
 
   playPauseBtn?.addEventListener("click", playPause);
   nextTrackBtn?.addEventListener("click", nextTrack);
@@ -1079,10 +1354,7 @@ function initFocusMusicPlayer() {
       lockStatus: document.getElementById("focusSpotifyLockStatus"),
       onSpotifyPlaybackStart: () => {
         if (focusPlayerIsPlaying) {
-          focusPlayerAudio.pause();
-          focusPlayerIsPlaying = false;
-          updatePlayButton();
-          saveMusicState();
+          stopFocusPlayerPlayback();
         }
       }
     });

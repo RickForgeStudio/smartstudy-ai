@@ -390,7 +390,7 @@ let spotifyAutoResumeUntil = 0;
       armSpotifyAutoResume();
     }
 
-    state.ui.controls.hidden = !item;
+    state.ui.controls.hidden = !(state.sdkReady && state.deviceId);
     state.ui.nowPlaying.hidden = false;
     state.ui.progressWrap.hidden = !item;
 
@@ -1015,20 +1015,35 @@ let spotifyAutoResumeUntil = 0;
         spotifyShouldKeepPlaying = false;
         spotifyUserPaused = true;
         clearSpotifyAutoResume();
-        await withSpotifyControlTimeout(
-          () => pauseSpotifyPlayback(),
-          "Spotify pause playback"
-        );
+        try {
+          await withSpotifyControlTimeout(
+            () => spotifyPlayer.togglePlay(),
+            "Spotify SDK toggle pause"
+          );
+        } catch (sdkError) {
+          await withSpotifyControlTimeout(
+            () => pauseSpotifyPlayback(),
+            "Spotify pause playback"
+          );
+        }
       } else {
         spotifyShouldKeepPlaying = true;
         spotifyUserPaused = false;
         armSpotifyAutoResume();
-        await withSpotifyControlTimeout(
-          () => resumeSpotifyPlayback(),
-          "Spotify resume playback"
-        );
+        try {
+          await withSpotifyControlTimeout(
+            () => spotifyPlayer.togglePlay(),
+            "Spotify SDK toggle play"
+          );
+        } catch (sdkError) {
+          await withSpotifyControlTimeout(
+            () => resumeSpotifyPlayback(),
+            "Spotify resume playback"
+          );
+        }
       }
 
+      await wait(250);
       await withSpotifyControlTimeout(
         () => syncSpotifyPlaybackState(),
         "Spotify sync playback state"
@@ -1115,6 +1130,7 @@ let spotifyAutoResumeUntil = 0;
 
   async function handleSpotifyPrevious() {
     const { spotifyPreviousButton } = getSpotifyControlElements();
+    const spotifyPlayer = state.player;
     spotifyDeviceId = state.deviceId || spotifyDeviceId || null;
     if (spotifyBusy) return;
     spotifyBusy = true;
@@ -1126,34 +1142,41 @@ let spotifyAutoResumeUntil = 0;
         armSpotifyAutoResume(10000);
       }
 
-      const token = await withSpotifyControlTimeout(
-        () => getValidSpotifyAccessToken(),
-        "Spotify previous token"
-      );
+      try {
+        await withSpotifyControlTimeout(
+          () => spotifyPlayer.previousTrack(),
+          "Spotify SDK previous"
+        );
+      } catch (sdkError) {
+        const token = await withSpotifyControlTimeout(
+          () => getValidSpotifyAccessToken(),
+          "Spotify previous token"
+        );
 
-      await withSpotifyControlTimeout(
-        () => ensureSpotifyDeviceIsActive(),
-        "Spotify ensure device active"
-      );
+        await withSpotifyControlTimeout(
+          () => ensureSpotifyDeviceIsActive(),
+          "Spotify ensure device active"
+        );
 
-      const response = await withSpotifyControlTimeout(
-        () => fetch(
-          `https://api.spotify.com/v1/me/player/previous?device_id=${encodeURIComponent(spotifyDeviceId)}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`
+        const response = await withSpotifyControlTimeout(
+          () => fetch(
+            `https://api.spotify.com/v1/me/player/previous?device_id=${encodeURIComponent(spotifyDeviceId)}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
             }
-          }
-        ),
-        "Spotify previous"
-      );
+          ),
+          "Spotify previous"
+        );
 
-      if (!response.ok && response.status !== 204) {
-        throw new Error(`Spotify previous failed: ${response.status}`);
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`Spotify previous failed: ${response.status}`);
+        }
       }
 
-      await wait(700);
+      await wait(250);
       const playbackState = await withSpotifyControlTimeout(
         () => syncSpotifyPlaybackState(),
         "Spotify sync after previous"
@@ -1182,6 +1205,7 @@ let spotifyAutoResumeUntil = 0;
 
   async function handleSpotifyNext() {
     const { spotifyNextButton } = getSpotifyControlElements();
+    const spotifyPlayer = state.player;
     spotifyDeviceId = state.deviceId || spotifyDeviceId || null;
     if (spotifyBusy) return;
     spotifyBusy = true;
@@ -1193,34 +1217,41 @@ let spotifyAutoResumeUntil = 0;
         armSpotifyAutoResume(10000);
       }
 
-      const token = await withSpotifyControlTimeout(
-        () => getValidSpotifyAccessToken(),
-        "Spotify next token"
-      );
+      try {
+        await withSpotifyControlTimeout(
+          () => spotifyPlayer.nextTrack(),
+          "Spotify SDK next"
+        );
+      } catch (sdkError) {
+        const token = await withSpotifyControlTimeout(
+          () => getValidSpotifyAccessToken(),
+          "Spotify next token"
+        );
 
-      await withSpotifyControlTimeout(
-        () => ensureSpotifyDeviceIsActive(),
-        "Spotify ensure device active"
-      );
+        await withSpotifyControlTimeout(
+          () => ensureSpotifyDeviceIsActive(),
+          "Spotify ensure device active"
+        );
 
-      const response = await withSpotifyControlTimeout(
-        () => fetch(
-          `https://api.spotify.com/v1/me/player/next?device_id=${encodeURIComponent(spotifyDeviceId)}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`
+        const response = await withSpotifyControlTimeout(
+          () => fetch(
+            `https://api.spotify.com/v1/me/player/next?device_id=${encodeURIComponent(spotifyDeviceId)}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
             }
-          }
-        ),
-        "Spotify next"
-      );
+          ),
+          "Spotify next"
+        );
 
-      if (!response.ok && response.status !== 204) {
-        throw new Error(`Spotify next failed: ${response.status}`);
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`Spotify next failed: ${response.status}`);
+        }
       }
 
-      await wait(700);
+      await wait(250);
       const playbackState = await withSpotifyControlTimeout(
         () => syncSpotifyPlaybackState(),
         "Spotify sync after next"
