@@ -247,6 +247,26 @@ const knowledgeTypeFilter = getElementByIdSafe("knowledgeTypeFilter", "select");
 const resetKnowledgeFiltersBtn = getElementByIdSafe("resetKnowledgeFiltersBtn", "button");
 const knowledgeResultCount = getElementByIdSafe("knowledgeResultCount");
 const knowledgeResults = getElementByIdSafe("knowledgeResults");
+const examScopeInput = getElementByIdSafe("examScopeInput", "input");
+const plannerNoteSelect = getElementByIdSafe("plannerNoteSelect", "select");
+const generateStudyPlanBtn = getElementByIdSafe("generateStudyPlanBtn", "button");
+const clearPlannerFormBtn = getElementByIdSafe("clearPlannerFormBtn", "button");
+const myNotesSearch = getElementByIdSafe("myNotesSearch", "input");
+const myNotesSubjectFilter = getElementByIdSafe("myNotesSubjectFilter", "select");
+const myNotesSort = getElementByIdSafe("myNotesSort", "select");
+const myNotesTypeFilter = getElementByIdSafe("myNotesTypeFilter", "select");
+const myNotesGrid = getElementByIdSafe("myNotesGrid");
+const myNotesTotalCount = getElementByIdSafe("myNotesTotalCount");
+const myNotesLatestDate = getElementByIdSafe("myNotesLatestDate");
+const myNotesFilteredCount = getElementByIdSafe("myNotesFilteredCount");
+const exportModal = getElementByIdSafe("exportModal");
+const exportModalBackdrop = getElementByIdSafe("exportModalBackdrop");
+const closeExportModalButton = getElementByIdSafe("closeExportModal", "button");
+const exportFormat = getElementByIdSafe("exportFormat", "select");
+const exportTemplate = getElementByIdSafe("exportTemplate", "select");
+const exportPreviewText = getElementByIdSafe("exportPreviewText");
+const cancelExportBtn = getElementByIdSafe("cancelExportBtn", "button");
+const startExportBtn = getElementByIdSafe("startExportBtn", "button");
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -634,18 +654,30 @@ let currentRagAnswerPayload = null;
 let currentRagTutorContext = null;
 let currentRagStudyAgentContext = null;
 
+const STORAGE_KEYS = {
+  notes: "smartstudy_notes",
+  myNotes: "smartstudy_my_notes",
+  knowledge: "smartstudy_knowledge",
+  tasks: "smartstudy_tasks",
+  planner: "smartstudy_planner",
+  language: "smartstudy_language",
+  theme: "smartstudy_theme",
+  music: "smartstudy_music",
+  tutorSource: "smartstudy_tutor_source"
+};
+
 const HISTORY_STORAGE_KEY = "smartstudy-analysis-history";
 const HISTORY_LIMIT = 8;
 const ANALYSIS_ENHANCEMENT_STORAGE_KEY = "smartstudy-analysis-enhancement";
-const DISPLAY_LANGUAGE_STORAGE_KEY = "smartstudy-display-language";
+const DISPLAY_LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
 const SMARTSTUDY_LATEST_RESULT_KEY = "smartstudy_latest_result";
 const LATEST_ANALYSIS_STORAGE_KEY = "smartstudy-latest-analysis";
 const KNOWLEDGE_CHUNKS_KEY = "smartstudy_knowledge_chunks";
-const LOCAL_RAG_STORAGE_KEY = "smartstudy-local-rag-store";
+const LOCAL_RAG_STORAGE_KEY = STORAGE_KEYS.knowledge;
 const RAG_MODE_STORAGE_KEY = "smartstudy-rag-mode";
 const RAG_TO_TUTOR_STORAGE_KEY = "smartstudy-rag-to-tutor";
 const RAG_TO_STUDY_AGENT_STORAGE_KEY = "smartstudy-rag-to-study-agent";
-const FOCUS_MUSIC_STORAGE_KEY = "smartstudy-focus-music";
+const FOCUS_MUSIC_STORAGE_KEY = STORAGE_KEYS.music;
 const FOCUS_MUSIC_EXPANDED_STORAGE_KEY = "smartstudy.focusMusic.expanded";
 const FOCUS_MUSIC_DB_NAME = "smartstudy-focus-music";
 const FOCUS_MUSIC_STORE_NAME = "tracks";
@@ -690,6 +722,10 @@ function switchPage(pageName) {
 
 function bindPageNavigation() {
   document.querySelectorAll("[data-page]").forEach((button) => {
+    if (button.dataset.navBound === "true") {
+      return;
+    }
+    button.dataset.navBound = "true";
     button.addEventListener("click", () => {
       const pageName = button.dataset.page;
       if (pageName) {
@@ -697,6 +733,94 @@ function bindPageNavigation() {
       }
     });
   });
+}
+
+function initNavigation() {
+  bindPageNavigation();
+}
+
+function updateInterfaceLanguage() {
+  const dict = i18n[currentLanguage] || i18n.zh;
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    const key = element.dataset.i18n;
+    if (!key || !dict[key]) return;
+    element.textContent = dict[key];
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    const key = element.dataset.i18nPlaceholder;
+    if (!key || !dict[key]) return;
+    element.setAttribute("placeholder", dict[key]);
+  });
+
+  document.documentElement.lang = currentLanguage === "en" ? "en" : "zh-Hant";
+}
+
+function setLanguage(lang) {
+  if (!["zh", "en"].includes(lang)) {
+    return;
+  }
+
+  setCurrentLanguage(lang);
+  saveToStorage(STORAGE_KEYS.language, currentLanguage);
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.lang === currentLanguage);
+  });
+
+  if (outputLanguage) {
+    outputLanguage.value = currentLanguage;
+  }
+
+  updateInterfaceLanguage();
+  updateLanguageView();
+  updateExportPreview();
+}
+
+function initLanguageToggle() {
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    if (btn.dataset.bound === "true") {
+      return;
+    }
+    btn.dataset.bound = "true";
+    btn.addEventListener("click", () => {
+      setLanguage(btn.dataset.lang);
+    });
+  });
+
+  setLanguage(currentLanguage);
+}
+
+function setTheme(theme) {
+  currentTheme = theme === "dark" ? "dark" : "light";
+
+  if (currentTheme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+    themeToggle.setAttribute("aria-label", currentTheme === "dark" ? "切換亮色模式" : "切換深色模式");
+  }
+
+  saveToStorage(STORAGE_KEYS.theme, currentTheme);
+}
+
+function toggleTheme() {
+  setTheme(currentTheme === "dark" ? "light" : "dark");
+}
+
+function initThemeToggle() {
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle && themeToggle.dataset.bound !== "true") {
+    themeToggle.dataset.bound = "true";
+    themeToggle.addEventListener("click", toggleTheme);
+  }
+  setTheme(currentTheme);
 }
 
 function updateTrackLabel() {
@@ -718,23 +842,21 @@ function updatePlayButton() {
 function saveMusicState() {
   const player = document.getElementById("focusMusicPlayer");
 
-  localStorage.setItem("smartstudy_music", JSON.stringify({
+  saveToStorage(STORAGE_KEYS.music, {
     currentTrackIndex: focusPlayerCurrentTrackIndex,
     volume: focusPlayerAudio.volume,
     isCollapsed: player ? player.classList.contains("collapsed") : false
-  }));
+  });
 }
 
 function restoreMusicState() {
   try {
-    const raw = localStorage.getItem("smartstudy_music");
-    if (!raw) {
+    const state = loadFromStorage(STORAGE_KEYS.music, null);
+    if (!state) {
       updateTrackLabel();
       updatePlayButton();
       return;
     }
-
-    const state = JSON.parse(raw);
 
     if (typeof state.currentTrackIndex === "number" && focusPlayerTracks[state.currentTrackIndex]) {
       focusPlayerCurrentTrackIndex = state.currentTrackIndex;
@@ -953,9 +1075,111 @@ function initFocusMusicPlayer() {
   }
 }
 
-let currentLanguage = "zh";
-let currentNoteMode = "quick";
-const NOTE_MODE_STORAGE_KEY = "smartstudy_my_notes";
+const i18n = {
+  zh: {
+    navHome: "首頁",
+    navNotes: "筆記整理",
+    navTutor: "AI Tutor",
+    navKnowledge: "知識庫",
+    navPlanner: "讀書計畫",
+    navMyNotes: "我的筆記",
+    homeTitle: "讓 AI 成為你的學習助教",
+    homeSubtitle: "今天要整理筆記、複習重點，還是問 AI 老師？",
+    aiTodaySuggestion: "AI 今日建議",
+    aiTodaySuggestionSubtitle: "根據你的筆記與待辦，提供今日複習方向",
+    todayRecommended: "今日推薦",
+    suggestReviewLabel: "今天建議先複習",
+    possibleQuestionLabel: "可能考題",
+    todayTaskLabel: "今日任務",
+    quickStart: "快速開始",
+    quickStartSubtitle: "依照你現在的需求選擇功能",
+    startLearning: "開始學習",
+    quickNewNote: "我有新筆記",
+    quickOrganizeNotes: "整理筆記",
+    quickOrganizeNotesDesc: "上傳或貼上內容，產生摘要、重點與考題。",
+    quickAskQuestion: "我想問問題",
+    quickAITutor: "AI Tutor",
+    quickAITutorDesc: "根據目前筆記，用教學方式回答你的問題。",
+    quickFindData: "我想找資料",
+    quickKnowledge: "知識庫",
+    quickKnowledgeDesc: "搜尋整理過的筆記、關鍵字與相關考點。",
+    quickPrepareExam: "我想準備考試",
+    quickPlanner: "讀書計畫",
+    quickPlannerDesc: "建立今日、本週與已完成任務看板。",
+    todayTodo: "今日待辦",
+    todayTodoSubtitle: "把讀書計畫拆成今天可以完成的小任務",
+    manageTasks: "管理任務",
+    export: "匯出",
+    start: "開始整理",
+    send: "送出",
+    search: "搜尋",
+    cancel: "取消",
+    confirm: "確認",
+    delete: "刪除",
+    notesTitle: "AI 筆記整理",
+    tutorTitle: "AI Tutor 問答老師",
+    knowledgeTitle: "我的知識庫",
+    plannerTitle: "讀書計畫",
+    myNotesTitle: "我的筆記",
+    knowledgeSearchPlaceholder: "輸入關鍵字、問題或考點，例如：FVTPL、OCI、公允價值...",
+    notesSourcePlaceholder: "請貼上課堂筆記、講義內容、老師上課重點或你想整理的資料...",
+    tutorInputPlaceholderSimple: "輸入你的問題，例如：FVTPL 和 FVOCI 差在哪？"
+  },
+  en: {
+    navHome: "Home",
+    navNotes: "Notes",
+    navTutor: "AI Tutor",
+    navKnowledge: "Knowledge Base",
+    navPlanner: "Study Planner",
+    navMyNotes: "My Notes",
+    homeTitle: "Let AI become your study assistant",
+    homeSubtitle: "Do you want to organize notes, review key points, or ask AI Tutor today?",
+    aiTodaySuggestion: "AI Suggestions",
+    aiTodaySuggestionSubtitle: "Get today’s review direction based on your notes and tasks",
+    todayRecommended: "Recommended",
+    suggestReviewLabel: "Review first",
+    possibleQuestionLabel: "Possible exam question",
+    todayTaskLabel: "Today's task",
+    quickStart: "Quick Start",
+    quickStartSubtitle: "Choose a feature based on what you want to do",
+    startLearning: "Start Learning",
+    quickNewNote: "I have new notes",
+    quickOrganizeNotes: "Organize Notes",
+    quickOrganizeNotesDesc: "Upload or paste content to generate summaries, key points, and questions.",
+    quickAskQuestion: "I want to ask a question",
+    quickAITutor: "AI Tutor",
+    quickAITutorDesc: "Ask questions based on your current notes with guided explanations.",
+    quickFindData: "I want to find information",
+    quickKnowledge: "Knowledge Base",
+    quickKnowledgeDesc: "Search organized notes, keywords, and related exam points.",
+    quickPrepareExam: "I want to prepare for exams",
+    quickPlanner: "Study Planner",
+    quickPlannerDesc: "Create today, weekly, and completed task boards.",
+    todayTodo: "Today's To-do",
+    todayTodoSubtitle: "Break your study plan into tasks you can finish today",
+    manageTasks: "Manage Tasks",
+    export: "Export",
+    start: "Start",
+    send: "Send",
+    search: "Search",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    delete: "Delete",
+    notesTitle: "AI Note Organizer",
+    tutorTitle: "AI Tutor",
+    knowledgeTitle: "Knowledge Base",
+    plannerTitle: "Study Planner",
+    myNotesTitle: "My Notes",
+    knowledgeSearchPlaceholder: "Search keywords, questions, or exam points, such as FVTPL, OCI, or fair value...",
+    notesSourcePlaceholder: "Paste your notes, lecture content, teacher highlights, or any material you want to organize...",
+    tutorInputPlaceholderSimple: "Ask a question, for example: What is the difference between FVTPL and FVOCI?"
+  }
+};
+
+let currentLanguage = loadFromStorage(STORAGE_KEYS.language, "zh");
+let currentTheme = loadFromStorage(STORAGE_KEYS.theme, "light");
+let currentNoteModes = ["quick"];
+const NOTE_MODE_STORAGE_KEY = STORAGE_KEYS.myNotes;
 const noteModeToLegacyMode = {
   quick: "simple",
   deep: "report",
@@ -995,7 +1219,13 @@ const legacyModeToNoteMode = {
   report: "deep",
   exam: "exam"
 };
+const noteModeOrder = ["quick", "deep", "exam", "quiz", "concept", "mistake"];
 let currentTutorSource = null;
+let currentOpenedNotePayload = null;
+let currentExportContext = {
+  source: null,
+  payload: null
+};
 const fallbackTutorSourceMessage = {
   title: "尚未選擇筆記",
   meta: "請先從「我的筆記」或「知識庫」選擇一份資料。"
@@ -1155,18 +1385,13 @@ function saveLatestStudyResult(result) {
   if (!payload) {
     return;
   }
-  try {
-    localStorage.setItem(SMARTSTUDY_LATEST_RESULT_KEY, JSON.stringify(payload));
-  } catch (error) {
-    // Ignore storage failures and keep the in-memory result.
-  }
+  saveToStorage(SMARTSTUDY_LATEST_RESULT_KEY, payload);
 }
 
 function loadLatestStudyResult() {
   try {
-    const raw = localStorage.getItem(SMARTSTUDY_LATEST_RESULT_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
+    const parsed = loadFromStorage(SMARTSTUDY_LATEST_RESULT_KEY, null);
+    if (parsed) {
       const payload = normalizeLatestStudyResult(parsed);
       if (payload) {
         const hasUsefulContent = Boolean(payload.summary)
@@ -1183,32 +1408,55 @@ function loadLatestStudyResult() {
   }
 
   try {
-    const rawAnalysis = localStorage.getItem(LATEST_ANALYSIS_STORAGE_KEY);
-    if (!rawAnalysis) {
+    const parsedAnalysis = loadFromStorage(LATEST_ANALYSIS_STORAGE_KEY, null);
+    if (!parsedAnalysis) {
       return null;
     }
-    const parsedAnalysis = JSON.parse(rawAnalysis);
     return normalizeLatestStudyResult(parsedAnalysis);
   } catch (error) {
     return null;
   }
 }
 
-function saveJsonStorage(key, value) {
+function saveToStorage(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    // Ignore storage errors.
+    console.error("Failed to save storage:", key, error);
   }
 }
 
-function loadJsonStorage(key) {
+function loadFromStorage(key, fallback = null) {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) {
+      return fallback;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (parseError) {
+      return raw;
+    }
   } catch (error) {
-    return null;
+    console.error("Failed to load storage:", key, error);
+    return fallback;
   }
+}
+
+function removeFromStorage(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error("Failed to remove storage:", key, error);
+  }
+}
+
+function saveJsonStorage(key, value) {
+  saveToStorage(key, value);
+}
+
+function loadJsonStorage(key) {
+  return loadFromStorage(key, null);
 }
 
 function normalizeFocusMusicState(value) {
@@ -1216,14 +1464,10 @@ function normalizeFocusMusicState(value) {
   const volume = Number.isFinite(savedVolume)
     ? Math.min(1, Math.max(0, savedVolume))
     : 0.25;
-  const persistedExpanded = localStorage.getItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY);
+  const persistedExpanded = loadFromStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, false);
   const expanded = typeof value?.expanded === "boolean"
     ? value.expanded
-    : persistedExpanded === "true"
-      ? true
-      : persistedExpanded === "false"
-        ? false
-        : false;
+    : Boolean(persistedExpanded);
 
   return {
     volume,
@@ -1239,7 +1483,7 @@ function loadFocusMusicState() {
 
 function saveFocusMusicState(state) {
   const normalizedState = normalizeFocusMusicState(state);
-  localStorage.setItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, normalizedState.expanded ? "true" : "false");
+  saveToStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, normalizedState.expanded);
   saveJsonStorage(FOCUS_MUSIC_STORAGE_KEY, normalizedState);
 }
 
@@ -1250,7 +1494,7 @@ function openFocusMusicWidget() {
   focusMusicPanel.hidden = false;
   focusMusicWidget.classList.add("is-open");
   focusMusicToggle?.setAttribute("aria-expanded", "true");
-  localStorage.setItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, "true");
+  saveToStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, true);
 }
 
 function closeFocusMusicWidget() {
@@ -1260,7 +1504,7 @@ function closeFocusMusicWidget() {
   focusMusicPanel.hidden = true;
   focusMusicWidget.classList.remove("is-open");
   focusMusicToggle?.setAttribute("aria-expanded", "false");
-  localStorage.setItem(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, "false");
+  saveToStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, false);
 }
 
 function toggleFocusMusicWidget(event) {
@@ -1688,19 +1932,15 @@ function saveLatestAnalysis(result) {
   if (!result) {
     return;
   }
-  try {
-    localStorage.setItem(LATEST_ANALYSIS_STORAGE_KEY, JSON.stringify(result));
-    saveLatestStudyResult(result);
-  } catch (error) {
-    // Ignore storage errors and keep the in-memory result.
-  }
+  saveToStorage(LATEST_ANALYSIS_STORAGE_KEY, result);
+  saveLatestStudyResult(result);
 }
 
 function loadLatestAnalysis() {
   try {
-    const raw = localStorage.getItem(LATEST_ANALYSIS_STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
+    const saved = loadFromStorage(LATEST_ANALYSIS_STORAGE_KEY, null);
+    if (saved) {
+      return saved;
     }
     const latestResult = loadLatestStudyResult();
     return latestResult ? convertLatestStudyResultToAnalysisResult(latestResult) : null;
@@ -1712,22 +1952,18 @@ function loadLatestAnalysis() {
 
 function loadLocalKnowledgeStore() {
   try {
-    const rawChunks = localStorage.getItem(KNOWLEDGE_CHUNKS_KEY);
-    if (rawChunks) {
-      const parsedChunks = JSON.parse(rawChunks);
-      if (Array.isArray(parsedChunks)) {
-        const files = [...new Set(parsedChunks.map((chunk) => chunk.fileName).filter(Boolean))];
-        return {
-          fileCount: files.length,
-          chunkCount: parsedChunks.length,
-          chunks: parsedChunks,
-          files,
-          updatedAt: parsedChunks[0]?.createdAt || null
-        };
-      }
+    const parsedChunks = loadFromStorage(KNOWLEDGE_CHUNKS_KEY, null);
+    if (Array.isArray(parsedChunks)) {
+      const files = [...new Set(parsedChunks.map((chunk) => chunk.fileName).filter(Boolean))];
+      return {
+        fileCount: files.length,
+        chunkCount: parsedChunks.length,
+        chunks: parsedChunks,
+        files,
+        updatedAt: parsedChunks[0]?.createdAt || null
+      };
     }
-    const raw = localStorage.getItem(LOCAL_RAG_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
+    const parsed = loadFromStorage(LOCAL_RAG_STORAGE_KEY, null);
     if (!parsed || !Array.isArray(parsed.chunks)) {
       return { fileCount: 0, chunkCount: 0, chunks: [], files: [], updatedAt: null };
     }
@@ -1744,12 +1980,84 @@ function loadLocalKnowledgeStore() {
 }
 
 function saveLocalKnowledgeStore(store) {
-  localStorage.setItem(LOCAL_RAG_STORAGE_KEY, JSON.stringify(store));
-  localStorage.setItem(KNOWLEDGE_CHUNKS_KEY, JSON.stringify(Array.isArray(store?.chunks) ? store.chunks : []));
+  saveToStorage(LOCAL_RAG_STORAGE_KEY, store);
+  saveToStorage(KNOWLEDGE_CHUNKS_KEY, Array.isArray(store?.chunks) ? store.chunks : []);
 }
 
 function setCurrentLanguage(language) {
   currentLanguage = language === "en" ? "en" : "zh";
+}
+
+function getLanguageInstruction() {
+  if (currentLanguage === "en") {
+    return [
+      "Please answer entirely in English.",
+      "Do not mix Chinese unless the original source term requires it.",
+      "Use clear explanations suitable for a student."
+    ].join(" ");
+  }
+
+  return [
+    "請全部使用繁體中文回答。",
+    "不要中英文夾雜，除非原文必要名詞本身是英文。",
+    "請用適合學生理解的方式清楚解釋。"
+  ].join(" ");
+}
+
+function buildNotePrompt({ text, mode }) {
+  return `
+你是 SmartStudy AI 筆記整理助手。
+
+${getLanguageInstruction()}
+
+請根據以下內容整理筆記：
+${text}
+
+整理模式：${mode}
+
+請輸出以下區塊：
+1. 智慧摘要
+2. 可能重點
+3. 考題預測
+4. 關鍵字整理
+5. 易錯觀念
+6. 概念連結
+
+格式要求：
+- 每個區塊都要有 preview 與 detail。
+- preview 是 1～2 句核心重點。
+- detail 是較完整的解釋。
+- 不要使用重複模板化開頭。
+- 不要只寫籠統描述，要有具體觀念與說明。
+`.trim();
+}
+
+function buildTutorPrompt({ question, source }) {
+  const sourceContent = source
+    ? JSON.stringify(source.result || source.content || source, null, 2)
+    : "目前沒有指定資料。";
+
+  return `
+你是 SmartStudy AI 的 AI Tutor 問答老師。
+
+${getLanguageInstruction()}
+
+請只根據「目前選取資料」回答。
+不要引用其他科目、其他章節或無關內容。
+
+目前選取資料：
+${sourceContent}
+
+使用者問題：
+${question}
+
+回答格式：
+1. 重點
+2. 解釋
+3. 考試可能問法
+
+如果目前沒有選取資料，請提醒使用者先選擇筆記，不要假裝有資料。
+`.trim();
 }
 
 function normalizeText(text) {
@@ -1824,25 +2132,17 @@ function getEnhancementLabel() {
 }
 
 function persistEnhancementPreference() {
-  try {
-    localStorage.setItem(ANALYSIS_ENHANCEMENT_STORAGE_KEY, getSelectedEnhancement());
-  } catch (error) {
-    // Ignore storage failures and keep the in-memory selection.
-  }
+  saveToStorage(ANALYSIS_ENHANCEMENT_STORAGE_KEY, getSelectedEnhancement());
 }
 
 function restoreEnhancementPreference() {
-  try {
-    const saved = localStorage.getItem(ANALYSIS_ENHANCEMENT_STORAGE_KEY);
-    if (saved === "hybrid" && analysisEnhancement) {
-      analysisEnhancement.value = "local";
-      return;
-    }
-    if (saved && enhancementConfigs[saved] && analysisEnhancement) {
-      analysisEnhancement.value = saved;
-    }
-  } catch (error) {
-    // Ignore storage failures and fall back to the default option.
+  const saved = loadFromStorage(ANALYSIS_ENHANCEMENT_STORAGE_KEY, null);
+  if (saved === "hybrid" && analysisEnhancement) {
+    analysisEnhancement.value = "local";
+    return;
+  }
+  if (saved && enhancementConfigs[saved] && analysisEnhancement) {
+    analysisEnhancement.value = saved;
   }
 }
 
@@ -1858,22 +2158,16 @@ function applyTemplate(template, values = {}) {
 }
 
 function restoreDisplayLanguagePreference() {
-  try {
-    const saved = localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY);
-    if (saved === "zh" || saved === "en") {
-      setCurrentLanguage(saved);
-    }
-  } catch (error) {
+  const saved = loadFromStorage(DISPLAY_LANGUAGE_STORAGE_KEY, "zh");
+  if (saved === "zh" || saved === "en") {
+    setCurrentLanguage(saved);
+  } else {
     setCurrentLanguage("zh");
   }
 }
 
 function persistDisplayLanguagePreference() {
-  try {
-    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, currentLanguage);
-  } catch (error) {
-    // Ignore storage failures and keep the in-memory selection.
-  }
+  saveToStorage(DISPLAY_LANGUAGE_STORAGE_KEY, currentLanguage);
 }
 
 function getSelectedRagMode() {
@@ -1881,21 +2175,13 @@ function getSelectedRagMode() {
 }
 
 function persistRagModePreference() {
-  try {
-    localStorage.setItem(RAG_MODE_STORAGE_KEY, getSelectedRagMode());
-  } catch (error) {
-    // Ignore storage failures and keep the in-memory selection.
-  }
+  saveToStorage(RAG_MODE_STORAGE_KEY, getSelectedRagMode());
 }
 
 function restoreRagModePreference() {
-  try {
-    const saved = localStorage.getItem(RAG_MODE_STORAGE_KEY);
-    if ((saved === "local" || saved === "advanced") && ragModeSelect) {
-      ragModeSelect.value = saved;
-    }
-  } catch (error) {
-    // Ignore storage failures and use the default mode.
+  const saved = loadFromStorage(RAG_MODE_STORAGE_KEY, null);
+  if ((saved === "local" || saved === "advanced") && ragModeSelect) {
+    ragModeSelect.value = saved;
   }
 }
 
@@ -5492,6 +5778,10 @@ function convertTutorSourceToAnalysisResult(note) {
   }
 
   const title = note.title || "未命名筆記";
+  const noteModes = Array.isArray(note.modes) && note.modes.length
+    ? note.modes.filter((mode) => noteModeDisplayConfigs[mode])
+    : [note.mode || "exam"];
+  const primaryMode = getPrimaryNoteMode(noteModes);
   const keywordPreview = stripHtmlTags(note.result?.keywords?.preview || "");
   const keywordLabels = keywordPreview
     .split(/[、,，]/)
@@ -5508,8 +5798,8 @@ function convertTutorSourceToAnalysisResult(note) {
 
   return {
     analyzedAt: note.createdAt || new Date().toISOString(),
-    mode: note.mode || "exam",
-    modeLabel: note.mode || "exam",
+    mode: primaryMode,
+    modeLabel: noteModeDisplayConfigs[primaryMode]?.label || primaryMode,
     cleanedText: sourceText,
     sourceText,
     sourceMeta: {
@@ -5631,9 +5921,12 @@ function updateTutorSourceUI() {
 
   currentTutorSourceTitle.textContent = currentTutorSource.title || "未命名筆記";
   const subject = currentTutorSource.subject || "未分類";
-  const mode = currentTutorSource.mode || "未指定模式";
+  const modes = Array.isArray(currentTutorSource.modes) && currentTutorSource.modes.length
+    ? currentTutorSource.modes
+    : [currentTutorSource.mode || "未指定模式"];
+  const mode = modes.map((item) => noteModeDisplayConfigs[item]?.label || item).join(currentLanguage === "en" ? ", " : "、");
   currentTutorSourceMeta.textContent = currentLanguage === "en"
-    ? `Subject: ${subject} | Study mode: ${mode}`
+    ? `Subject: ${subject} | Study modes: ${mode}`
     : `科目：${subject}｜整理類型：${mode}`;
   generateAndRenderRecommendedQuestions();
 }
@@ -5642,16 +5935,14 @@ function chooseLatestNoteAsTutorSource() {
   const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
 
   if (!notes.length) {
-    currentTutorSource = null;
-    updateTutorSourceUI();
+    setTutorSource(null);
     alert(currentLanguage === "en"
       ? "There are no available notes yet. Please generate one from the Notes page first."
       : "目前沒有可用筆記。請先到「筆記整理」產生一份筆記。");
     return;
   }
 
-  currentTutorSource = notes[0];
-  updateTutorSourceUI();
+  setTutorSource(notes[0]);
 }
 
 function appendChatMessage(role, content) {
@@ -5804,6 +6095,11 @@ async function handleSendTutorMessage() {
 
 function setTutorSource(note) {
   currentTutorSource = note || null;
+  if (currentTutorSource) {
+    saveToStorage(STORAGE_KEYS.tutorSource, currentTutorSource);
+  } else {
+    removeFromStorage(STORAGE_KEYS.tutorSource);
+  }
   updateTutorSourceUI();
 }
 
@@ -5877,13 +6173,18 @@ function getKnowledgeItems() {
   const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
   const noteItems = notes.map((note) => {
     const result = note.result || {};
+    const noteModes = Array.isArray(note.modes) && note.modes.length
+      ? note.modes.filter((mode) => noteModeDisplayConfigs[mode])
+      : [note.mode || ""].filter(Boolean);
+    const primaryMode = note.mode || getPrimaryNoteMode(noteModes);
 
     return {
       id: note.id,
       title: note.title || "未命名筆記",
       subject: note.subject || "未分類",
       chapter: note.chapter || "",
-      mode: note.mode || "",
+      mode: primaryMode,
+      modes: noteModes,
       createdAt: note.createdAt || "",
       sourceNote: note,
       summaryText: [
@@ -5924,6 +6225,394 @@ function getKnowledgeItems() {
   });
 
   return [...noteItems, ...ragItems];
+}
+
+function getStudyTasks() {
+  return loadJsonStorage(STORAGE_KEYS.tasks) || [];
+}
+
+function saveStudyTasks(tasks) {
+  saveJsonStorage(STORAGE_KEYS.tasks, tasks);
+}
+
+function getMyNotes() {
+  return loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+}
+
+function saveMyNotes(notes) {
+  saveJsonStorage(NOTE_MODE_STORAGE_KEY, notes);
+}
+
+function refreshAfterNotesChanged() {
+  if (typeof renderMyNotes === "function") renderMyNotes();
+  if (typeof updateKnowledgeResults === "function") updateKnowledgeResults();
+  if (typeof populatePlannerNoteSelect === "function") populatePlannerNoteSelect();
+}
+
+function refreshAfterTasksChanged() {
+  if (typeof renderStudyPlanner === "function") renderStudyPlanner();
+  if (typeof renderHomeTasks === "function") renderHomeTasks();
+}
+
+function refreshAfterNoteDeleted() {
+  if (typeof renderMyNotes === "function") renderMyNotes();
+  if (typeof updateKnowledgeResults === "function") updateKnowledgeResults();
+  if (typeof populatePlannerNoteSelect === "function") populatePlannerNoteSelect();
+}
+
+function updateTaskCount(id, count) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = String(count);
+  }
+}
+
+function updateTaskStatus(taskId, status) {
+  const tasks = getStudyTasks();
+  const updated = tasks.map((task) => task.id === taskId ? { ...task, status } : task);
+  saveStudyTasks(updated);
+  refreshAfterTasksChanged();
+}
+
+function renderTaskColumn(containerId, tasks) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!tasks.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state small-empty";
+    empty.textContent = "目前沒有任務。";
+    container.appendChild(empty);
+    return;
+  }
+
+  tasks.forEach((task) => {
+    const card = document.createElement("article");
+    card.className = "soft-card study-task-card";
+    card.draggable = true;
+    card.dataset.taskId = task.id;
+
+    card.innerHTML = `
+      <span class="task-tag">${escapeHTML(task.type || "任務")}</span>
+      <h3>${escapeHTML(task.title || "未命名任務")}</h3>
+      <p>${escapeHTML(task.detail || "")}</p>
+      <p>來源：${escapeHTML(task.source || "未指定")}</p>
+
+      <div class="task-card-actions">
+        ${task.status !== "today" ? '<button class="secondary-btn move-today-btn" type="button">移到今日</button>' : ""}
+        ${task.status !== "week" ? '<button class="secondary-btn move-week-btn" type="button">移到本週</button>' : ""}
+        ${task.status !== "done" ? '<button class="primary-btn complete-task-btn" type="button">標記完成</button>' : ""}
+      </div>
+    `;
+
+    card.querySelector(".move-today-btn")?.addEventListener("click", () => {
+      updateTaskStatus(task.id, "today");
+    });
+
+    card.querySelector(".move-week-btn")?.addEventListener("click", () => {
+      updateTaskStatus(task.id, "week");
+    });
+
+    card.querySelector(".complete-task-btn")?.addEventListener("click", () => {
+      updateTaskStatus(task.id, "done");
+    });
+
+    card.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", task.id);
+      card.classList.add("dragging");
+    });
+
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function renderStudyPlanner() {
+  const tasks = getStudyTasks();
+  const todayTasks = tasks.filter((task) => task.status === "today");
+  const weekTasks = tasks.filter((task) => task.status === "week");
+  const doneTasks = tasks.filter((task) => task.status === "done");
+
+  renderTaskColumn("todayTasksColumn", todayTasks);
+  renderTaskColumn("weekTasksColumn", weekTasks);
+  renderTaskColumn("doneTasksColumn", doneTasks);
+
+  updateTaskCount("todayTaskCount", todayTasks.length);
+  updateTaskCount("weekTaskCount", weekTasks.length);
+  updateTaskCount("doneTaskCount", doneTasks.length);
+}
+
+function renderHomeTasks() {
+  const container = document.querySelector(".task-card-list");
+  if (!container) return;
+
+  const tasks = getStudyTasks()
+    .filter((task) => task.status === "today")
+    .slice(0, 3);
+
+  if (!tasks.length) {
+    container.innerHTML = `
+      <div class="soft-card task-card">
+        <span class="task-tag">提示</span>
+        <strong>目前沒有今日任務</strong>
+        <p>可以到讀書計畫頁建立任務。</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = tasks.map((task) => `
+    <div class="soft-card task-card">
+      <span class="task-tag">${escapeHTML(task.type || "任務")}</span>
+      <strong>${escapeHTML(task.title || "未命名任務")}</strong>
+      <p>${escapeHTML(task.detail || "")}</p>
+    </div>
+  `).join("");
+}
+
+function formatNoteDate(dateString) {
+  if (!dateString) return "未知時間";
+
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "未知時間";
+
+  return date.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+}
+
+function getMyNoteModeLabel(mode) {
+  const map = {
+    quick: "快速摘要",
+    deep: "深度解析",
+    exam: "考前複習",
+    quiz: "題目生成",
+    concept: "概念連結",
+    mistake: "易錯觀念"
+  };
+
+  return map[mode] || "未指定";
+}
+
+function buildMyNoteTags(note) {
+  const result = note.result || {};
+  const tags = [];
+
+  if (result.summary?.preview) tags.push("智慧摘要");
+  if (result.keyPoints?.preview) tags.push("可能重點");
+  if (result.quiz?.preview) tags.push("考題預測");
+  if (result.keywords?.preview) tags.push("關鍵字");
+  if (result.mistakes?.preview) tags.push("易錯觀念");
+  if (result.concepts?.preview) tags.push("概念連結");
+
+  return tags.slice(0, 4);
+}
+
+function filterMyNotes() {
+  const query = myNotesSearch?.value.trim().toLowerCase() || "";
+  const subject = myNotesSubjectFilter?.value || "all";
+  const sort = myNotesSort?.value || "newest";
+  const type = myNotesTypeFilter?.value || "all";
+
+  let notes = getMyNotes();
+
+  notes = notes.filter((note) => {
+    const result = note.result || {};
+
+    const searchableText = [
+      note.title,
+      note.subject,
+      note.chapter,
+      note.mode,
+      result.summary?.preview,
+      result.summary?.detail,
+      result.keyPoints?.preview,
+      result.keyPoints?.detail,
+      result.keywords?.preview,
+      result.keywords?.detail,
+      result.mistakes?.preview,
+      result.mistakes?.detail
+    ]
+      .map((item) => stripHtmlTags(item))
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    const matchQuery = !query || searchableText.includes(query);
+    const matchSubject = subject === "all" || note.subject === subject;
+    const matchType = type === "all" || note.mode === type || (Array.isArray(note.modes) && note.modes.includes(type));
+
+    return matchQuery && matchSubject && matchType;
+  });
+
+  notes.sort((a, b) => {
+    const timeA = new Date(a.createdAt || 0).getTime();
+    const timeB = new Date(b.createdAt || 0).getTime();
+    return sort === "newest" ? timeB - timeA : timeA - timeB;
+  });
+
+  return notes;
+}
+
+function updateMyNotesStats(allNotes, filteredNotes) {
+  if (myNotesTotalCount) {
+    myNotesTotalCount.textContent = String(allNotes.length);
+  }
+
+  if (myNotesFilteredCount) {
+    myNotesFilteredCount.textContent = String(filteredNotes.length);
+  }
+
+  if (myNotesLatestDate) {
+    if (!allNotes.length) {
+      myNotesLatestDate.textContent = "尚無資料";
+      return;
+    }
+
+    const latest = [...allNotes].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0];
+    myNotesLatestDate.textContent = formatNoteDate(latest.createdAt);
+  }
+}
+
+function buildExportPayloadAsAnalysisResult(note) {
+  if (!note) return null;
+  return convertTutorSourceToAnalysisResult(note);
+}
+
+function openMyNote(note) {
+  if (!note) return;
+
+  currentOpenedNotePayload = note;
+  switchPage("notes");
+
+  if (note.result && typeof renderNotesResult === "function") {
+    renderNotesResult(note.result);
+  }
+
+  if (sourceText) {
+    sourceText.value = extractTutorSourceText(note);
+    updateCounts();
+  }
+
+  if (notesResultStatus) {
+    notesResultStatus.textContent = `已開啟筆記：${note.title || "未命名筆記"}`;
+  }
+}
+
+function deleteMyNote(noteId) {
+  const confirmed = confirm("確定要刪除這份筆記嗎？此操作無法復原。");
+  if (!confirmed) return;
+
+  const notes = getMyNotes();
+  const updated = notes.filter((note) => note.id !== noteId);
+  if (currentOpenedNotePayload?.id === noteId) {
+    currentOpenedNotePayload = null;
+  }
+  if (currentExportContext.payload?.id === noteId) {
+    currentExportContext = {
+      source: null,
+      payload: null
+    };
+  }
+  saveMyNotes(updated);
+  refreshAfterNoteDeleted();
+}
+
+function handleMyNoteExport(note) {
+  if (typeof window.openExportModal === "function") {
+    window.openExportModal({
+      source: "myNotes",
+      payload: note
+    });
+    return;
+  }
+
+  const previousResult = currentAnalysisResult;
+  currentAnalysisResult = buildExportPayloadAsAnalysisResult(note);
+  try {
+    downloadResult();
+  } finally {
+    currentAnalysisResult = previousResult;
+  }
+}
+
+function renderMyNotes() {
+  const allNotes = getMyNotes();
+  const notes = filterMyNotes();
+
+  if (!myNotesGrid) return;
+
+  updateMyNotesStats(allNotes, notes);
+  myNotesGrid.innerHTML = "";
+
+  if (!notes.length) {
+    myNotesGrid.innerHTML = `
+      <div class="app-card empty-state-card">
+        <h2>目前沒有符合條件的筆記</h2>
+        <p>請調整搜尋或篩選條件，或先到「筆記整理」頁產生一份筆記。</p>
+      </div>
+    `;
+    return;
+  }
+
+  notes.forEach((note) => {
+    const card = document.createElement("article");
+    card.className = "app-card my-note-card";
+
+    const preview =
+      note.result?.summary?.preview ||
+      note.result?.keyPoints?.preview ||
+      "這份筆記尚無摘要預覽。";
+
+    const tags = buildMyNoteTags(note);
+
+    card.innerHTML = `
+      <div>
+        <h2>${escapeHTML(note.title || "未命名筆記")}</h2>
+        <p class="note-preview">${escapeHTML(stripHtmlTags(preview))}</p>
+      </div>
+
+      <div class="note-meta-list">
+        <p>科目：${escapeHTML(note.subject || "未分類")}</p>
+        <p>最後整理：${escapeHTML(formatNoteDate(note.createdAt))}</p>
+        <p>整理類型：${escapeHTML(getMyNoteModeLabel(note.mode))}</p>
+      </div>
+
+      <div class="meta-row">
+        ${tags.map((tag) => `<span class="soft-badge">${escapeHTML(tag)}</span>`).join("")}
+      </div>
+
+      <div class="note-card-actions">
+        <button class="primary-btn open-note-btn" type="button">開啟</button>
+        <button class="secondary-btn export-trigger" data-source="myNotes" type="button">匯出</button>
+        <button class="secondary-btn danger-btn delete-note-btn" type="button">刪除</button>
+      </div>
+    `;
+
+    card.querySelector(".open-note-btn")?.addEventListener("click", () => {
+      openMyNote(note);
+    });
+
+    card.querySelector(".delete-note-btn")?.addEventListener("click", () => {
+      deleteMyNote(note.id);
+    });
+
+    card.querySelector(".export-trigger")?.addEventListener("click", () => {
+      handleMyNoteExport(note);
+    });
+    if (card.querySelector(".export-trigger")) {
+      card.querySelector(".export-trigger").dataset.exportBound = "true";
+    }
+
+    myNotesGrid.appendChild(card);
+  });
 }
 
 function buildKnowledgeTags(item) {
@@ -5984,7 +6673,8 @@ function filterKnowledgeItems() {
 
     const matchType =
       type === "all" ||
-      item.mode === type;
+      item.mode === type ||
+      (Array.isArray(item.modes) && item.modes.includes(type));
 
     const matchTag =
       tag === "all" ||
@@ -5995,7 +6685,7 @@ function filterKnowledgeItems() {
 }
 
 function addKnowledgeItemToTodayTasks(item) {
-  const tasks = loadJsonStorage("smartstudy_tasks") || [];
+  const tasks = loadJsonStorage(STORAGE_KEYS.tasks) || [];
 
   const task = {
     id: `task_${Date.now()}`,
@@ -6008,7 +6698,8 @@ function addKnowledgeItemToTodayTasks(item) {
   };
 
   tasks.unshift(task);
-  saveJsonStorage("smartstudy_tasks", tasks);
+  saveJsonStorage(STORAGE_KEYS.tasks, tasks);
+  refreshAfterTasksChanged();
   alert(currentLanguage === "en" ? "Added to today's tasks." : "已加入今日待辦。");
 }
 
@@ -6140,6 +6831,16 @@ function renderKnowledgeResults(items) {
       copyKnowledgeItem(item);
     });
 
+    card.querySelector(".export-trigger")?.addEventListener("click", () => {
+      openExportModal({
+        source: "knowledge",
+        payload: item
+      });
+    });
+    if (card.querySelector(".export-trigger")) {
+      card.querySelector(".export-trigger").dataset.exportBound = "true";
+    }
+
     knowledgeResults.appendChild(card);
   });
 }
@@ -6149,6 +6850,113 @@ function updateKnowledgeResults() {
   syncKnowledgeChapterFilterOptions(allItems);
   const filtered = filterKnowledgeItems();
   renderKnowledgeResults(filtered);
+}
+
+function generateBasicStudyTasks({ examDate, dailyTime, scope, noteTitle }) {
+  return [
+    {
+      id: `task_${Date.now()}_1`,
+      type: "複習",
+      title: `複習 ${scope || noteTitle || "考試範圍"}`,
+      detail: `預估時間：${dailyTime || "30 分鐘"}`,
+      source: noteTitle || "未指定筆記",
+      status: "today",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: `task_${Date.now()}_2`,
+      type: "練習",
+      title: "完成 3 題練習題",
+      detail: "先做題目，再回頭整理錯誤觀念。",
+      source: noteTitle || "未指定筆記",
+      status: "today",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: `task_${Date.now()}_3`,
+      type: "整理",
+      title: "整理易錯觀念與關鍵字",
+      detail: "把容易混淆的地方整理成複習卡。",
+      source: noteTitle || "未指定筆記",
+      status: "week",
+      createdAt: new Date().toISOString()
+    }
+  ];
+}
+
+function getSelectedPlannerNoteTitle() {
+  if (!plannerNoteSelect) return "";
+  const selectedOption = plannerNoteSelect.options[plannerNoteSelect.selectedIndex];
+  return selectedOption ? selectedOption.textContent : "";
+}
+
+function clearPlannerForm() {
+  if (examDateInput) examDateInput.value = "";
+  if (studyHoursInput) studyHoursInput.value = "";
+  if (examScopeInput) examScopeInput.value = "";
+  if (plannerNoteSelect) plannerNoteSelect.value = "";
+}
+
+function populatePlannerNoteSelect() {
+  if (!plannerNoteSelect) return;
+
+  const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+  plannerNoteSelect.innerHTML = '<option value="">請選擇筆記</option>';
+
+  notes.forEach((note) => {
+    const option = document.createElement("option");
+    option.value = note.id;
+    option.textContent = note.title || "未命名筆記";
+    plannerNoteSelect.appendChild(option);
+  });
+}
+
+function initPlannerDragAndDrop() {
+  document.querySelectorAll(".kanban-column").forEach((column) => {
+    column.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      column.classList.add("drag-over");
+    });
+
+    column.addEventListener("dragleave", () => {
+      column.classList.remove("drag-over");
+    });
+
+    column.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const taskId = event.dataTransfer.getData("text/plain");
+      const status = column.dataset.status;
+      column.classList.remove("drag-over");
+
+      if (taskId && status) {
+        updateTaskStatus(taskId, status);
+      }
+    });
+  });
+}
+
+function handleGenerateStudyPlan() {
+  const examDate = examDateInput?.value || "";
+  const dailyTime = studyHoursInput?.value.trim() || "";
+  const scope = examScopeInput?.value.trim() || "";
+  const noteTitle = getSelectedPlannerNoteTitle();
+
+  if (!examDate && !dailyTime && !scope && !noteTitle) {
+    alert("請至少填寫一個考試資訊或選擇一份筆記。");
+    return;
+  }
+
+  const newTasks = generateBasicStudyTasks({
+    examDate,
+    dailyTime,
+    scope,
+    noteTitle
+  });
+
+  const tasks = getStudyTasks();
+  saveStudyTasks([...newTasks, ...tasks]);
+  refreshAfterTasksChanged();
+  alert("已產生讀書計畫任務。");
 }
 
 function setAccordionContent(section, preview, detailHtml) {
@@ -6265,14 +7073,62 @@ function inferNoteTitle(result) {
     : "未命名筆記";
 }
 
+function getSelectedNoteModes() {
+  const normalizedModes = currentNoteModes
+    .filter((mode) => noteModeDisplayConfigs[mode])
+    .sort((a, b) => noteModeOrder.indexOf(a) - noteModeOrder.indexOf(b));
+
+  return normalizedModes.length ? normalizedModes : ["quick"];
+}
+
+function getPrimaryNoteMode(selectedModes = getSelectedNoteModes()) {
+  if (selectedModes.some((mode) => ["exam", "quiz", "mistake"].includes(mode))) {
+    return selectedModes.find((mode) => ["exam", "quiz", "mistake"].includes(mode)) || "exam";
+  }
+  if (selectedModes.some((mode) => ["deep", "concept"].includes(mode))) {
+    return selectedModes.find((mode) => ["deep", "concept"].includes(mode)) || "deep";
+  }
+  return selectedModes[0] || "quick";
+}
+
+function getLegacyModeFromSelectedNoteModes(selectedModes = getSelectedNoteModes()) {
+  return noteModeToLegacyMode[getPrimaryNoteMode(selectedModes)] || "simple";
+}
+
+function updateNoteModeSummary() {
+  const selectedModes = getSelectedNoteModes();
+  const labels = selectedModes
+    .map((mode) => noteModeDisplayConfigs[mode]?.label)
+    .filter(Boolean);
+
+  if (modeBadge) {
+    modeBadge.textContent = currentLanguage === "en"
+      ? `Current modes: ${labels.join(", ")}`
+      : `目前模式：${labels.join("、")}`;
+  }
+
+  if (modeDescription) {
+    if (selectedModes.length === 1) {
+      modeDescription.textContent = noteModeDisplayConfigs[selectedModes[0]]?.description || "";
+    } else {
+      modeDescription.textContent = currentLanguage === "en"
+        ? `Selected ${selectedModes.length} organization modes. SmartStudy AI will combine these directions in one result while keeping a compatible primary mode underneath.`
+        : `已選擇 ${selectedModes.length} 種整理模式。SmartStudy AI 會在同一次整理中整合這些方向，底層仍保留相容的主模式來維持原本分析流程。`;
+    }
+  }
+}
+
 function saveGeneratedNote(result) {
   const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+  const selectedModes = getSelectedNoteModes();
+  const primaryMode = getPrimaryNoteMode(selectedModes);
 
   const note = {
     id: `note_${Date.now()}`,
     title: inferNoteTitle(result),
     subject: "未分類",
-    mode: currentNoteMode,
+    mode: primaryMode,
+    modes: selectedModes,
     language: outputLanguage?.value || currentLanguage || "zh",
     createdAt: new Date().toISOString(),
     result
@@ -6280,36 +7136,443 @@ function saveGeneratedNote(result) {
 
   notes.unshift(note);
   saveJsonStorage(NOTE_MODE_STORAGE_KEY, notes);
+  currentOpenedNotePayload = note;
+  refreshAfterNotesChanged();
 }
 
 function setNoteMode(mode, options = {}) {
-  const nextMode = noteModeToLegacyMode[mode] ? mode : "quick";
-  currentNoteMode = nextMode;
+  const nextMode = noteModeDisplayConfigs[mode] ? mode : "quick";
+  const selectedModes = new Set(getSelectedNoteModes());
+
+  if (options.replaceAll) {
+    selectedModes.clear();
+    selectedModes.add(nextMode);
+  } else if (selectedModes.has(nextMode)) {
+    if (selectedModes.size > 1) {
+      selectedModes.delete(nextMode);
+    }
+  } else {
+    selectedModes.add(nextMode);
+  }
+
+  currentNoteModes = [...selectedModes].sort((a, b) => noteModeOrder.indexOf(a) - noteModeOrder.indexOf(b));
 
   document.querySelectorAll(".mode-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.mode === nextMode);
+    const isActive = currentNoteModes.includes(btn.dataset.mode);
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 
-  if (!options.skipLegacySync && modeSelect && noteModeToLegacyMode[nextMode]) {
-    modeSelect.value = noteModeToLegacyMode[nextMode];
+  if (!options.skipLegacySync && modeSelect) {
+    modeSelect.value = getLegacyModeFromSelectedNoteModes(currentNoteModes);
   }
 
   updateModeUI();
-  const displayConfig = noteModeDisplayConfigs[nextMode];
-  if (displayConfig && modeBadge) {
-    modeBadge.textContent = currentLanguage === "en"
-      ? `Current mode: ${displayConfig.label}`
-      : `目前模式：${displayConfig.label}`;
-  }
-  if (displayConfig && modeDescription) {
-    modeDescription.textContent = displayConfig.description;
-  }
+  updateNoteModeSummary();
 }
 
 function syncVisibleNoteModeFromLegacyMode() {
   const nextMode = legacyModeToNoteMode[modeSelect?.value] || "quick";
-  setNoteMode(nextMode, { skipLegacySync: true });
+  if (!getSelectedNoteModes().length || !currentNoteModes.length) {
+    setNoteMode(nextMode, { skipLegacySync: true, replaceAll: true });
+    return;
+  }
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    const isActive = getSelectedNoteModes().includes(btn.dataset.mode);
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+  updateNoteModeSummary();
 }
+
+const exportDefaults = {
+  quick: {
+    format: "md",
+    template: "studyNote"
+  },
+  deep: {
+    format: "docx",
+    template: "formalReport"
+  },
+  exam: {
+    format: "pdf",
+    template: "examReview"
+  },
+  quiz: {
+    format: "pdf",
+    template: "examReview"
+  },
+  concept: {
+    format: "docx",
+    template: "studyNote"
+  },
+  mistake: {
+    format: "pdf",
+    template: "examReview"
+  }
+};
+
+function createEmptyExportPayload() {
+  return {
+    title: "SmartStudy AI 筆記",
+    result: {
+      summary: { preview: "", detail: "" },
+      keyPoints: { preview: "", detail: "" },
+      quiz: { preview: "", detail: "" },
+      keywords: { preview: "", detail: "" },
+      mistakes: { preview: "", detail: "" },
+      concepts: { preview: "", detail: "" }
+    }
+  };
+}
+
+function getDefaultExportPayload() {
+  if (currentOpenedNotePayload?.result) {
+    return currentOpenedNotePayload;
+  }
+
+  if (currentAnalysisResult) {
+    return {
+      title: lastSourceMeta?.fileName || inferNoteTitle(normalizeNoteResult(currentAnalysisResult)) || "SmartStudy AI 筆記",
+      result: normalizeNoteResult(currentAnalysisResult)
+    };
+  }
+
+  return createEmptyExportPayload();
+}
+
+function resolveExportPayloadMode(payload) {
+  if (Array.isArray(payload?.modes) && payload.modes.length) {
+    return getPrimaryNoteMode(payload.modes);
+  }
+
+  if (payload?.mode) {
+    return payload.mode;
+  }
+
+  if (payload?.sourceNote?.mode) {
+    return payload.sourceNote.mode;
+  }
+
+  if (getSelectedNoteModes().length) {
+    return getPrimaryNoteMode();
+  }
+
+  return "quick";
+}
+
+function applyExportDefaults(mode) {
+  const defaults = exportDefaults[mode] || exportDefaults.quick;
+
+  if (exportFormat) {
+    exportFormat.value = defaults.format;
+  }
+
+  if (exportTemplate) {
+    exportTemplate.value = defaults.template;
+  }
+}
+
+function getExportPayloadBySource(source) {
+  if (source === "notes") {
+    return currentOpenedNotePayload || getDefaultExportPayload();
+  }
+
+  if (currentExportContext.source === source && currentExportContext.payload) {
+    return currentExportContext.payload;
+  }
+
+  return getDefaultExportPayload();
+}
+
+function getSelectedExportSections() {
+  return Array.from(document.querySelectorAll(".export-content-check:checked"))
+    .map((checkbox) => checkbox.value);
+}
+
+function updateExportPreview() {
+  if (!exportPreviewText) return;
+
+  const format = exportFormat?.value || "md";
+  const template = exportTemplate?.value || "studyNote";
+  const sections = getSelectedExportSections();
+
+  const formatLabel = {
+    md: "Markdown 筆記",
+    docx: "Word 文件",
+    pdf: "PDF 講義",
+    pptx: "PowerPoint 簡報"
+  }[format] || "檔案";
+
+  const templateLabel = {
+    studyNote: "讀書筆記模板",
+    formalReport: "正式報告模板",
+    examReview: "考前複習模板",
+    autoPresentation: "自動報告簡報模板"
+  }[template] || "預設模板";
+
+  exportPreviewText.textContent = `將匯出為 ${formatLabel}，使用 ${templateLabel}，包含 ${sections.length} 個內容區塊。`;
+}
+
+function openExportModal(context = {}) {
+  currentExportContext = {
+    source: context.source || "notes",
+    payload: context.payload || getDefaultExportPayload()
+  };
+
+  applyExportDefaults(resolveExportPayloadMode(currentExportContext.payload));
+  exportModal.classList.remove("hidden");
+  updateExportPreview();
+}
+
+function closeExportModal() {
+  exportModal.classList.add("hidden");
+}
+
+function bindExportTriggers() {
+  document.querySelectorAll(".export-trigger").forEach((button) => {
+    if (button.dataset.exportBound === "true") return;
+
+    button.dataset.exportBound = "true";
+    button.addEventListener("click", () => {
+      openExportModal({
+        source: button.dataset.source || "notes",
+        payload: getExportPayloadBySource(button.dataset.source || "notes")
+      });
+    });
+  });
+}
+
+function getExportSectionText(resultSection) {
+  return stripHtmlTags(resultSection?.detail || resultSection?.preview || "尚無內容。").trim() || "尚無內容。";
+}
+
+function buildExportContent(payload, template, sections) {
+  const result = payload?.result || payload?.sourceNote?.result || createEmptyExportPayload().result;
+  const title = payload?.title || payload?.sourceNote?.title || "SmartStudy AI 筆記";
+  const lines = [`# ${title}`, ""];
+
+  if (template === "formalReport") {
+    lines.push("## 前言");
+    lines.push("本文件根據 SmartStudy AI 整理結果產生，可作為報告草稿或學習資料。");
+    lines.push("");
+  }
+
+  if (sections.includes("summary")) {
+    lines.push("## 智慧摘要");
+    lines.push(getExportSectionText(result.summary));
+    lines.push("");
+  }
+
+  if (sections.includes("keyPoints")) {
+    lines.push("## 重要重點");
+    lines.push(getExportSectionText(result.keyPoints));
+    lines.push("");
+  }
+
+  if (sections.includes("quiz")) {
+    lines.push("## 考題預測");
+    lines.push(getExportSectionText(result.quiz));
+    lines.push("");
+  }
+
+  if (sections.includes("keywords")) {
+    lines.push("## 關鍵字");
+    lines.push(getExportSectionText(result.keywords));
+    lines.push("");
+  }
+
+  if (sections.includes("mistakes")) {
+    lines.push("## 易錯觀念");
+    lines.push(getExportSectionText(result.mistakes));
+    lines.push("");
+  }
+
+  if (sections.includes("concepts")) {
+    lines.push("## 概念連結");
+    lines.push(getExportSectionText(result.concepts));
+    lines.push("");
+  }
+
+  if (sections.includes("references")) {
+    lines.push("## 參考資料");
+    lines.push("請在此補充課本、講義、網站或其他資料來源。");
+    lines.push("");
+  }
+
+  if (template === "examReview") {
+    lines.push("## 考前複習建議");
+    lines.push("建議先複習核心觀念，再練習題目，最後整理易錯觀念。");
+    lines.push("");
+  }
+
+  if (template === "formalReport") {
+    lines.push("## 結論");
+    lines.push("以上內容可作為正式報告或課堂作業的初稿，後續可再補充案例與資料來源。");
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+function sanitizeFilename(name) {
+  return String(name || "smartstudy-export")
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .replace(/\s+/g, "-")
+    .slice(0, 60);
+}
+
+function downloadTextFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function markdownToSimpleHTML(markdown) {
+  return escapeHTML(markdown)
+    .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+    .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+    .replace(/^---$/gm, "<hr>")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/^/, "<p>")
+    .replace(/$/, "</p>");
+}
+
+function exportMarkdown(payload, template, sections) {
+  const content = buildExportContent(payload, template, sections);
+  const filename = `${sanitizeFilename(payload?.title || payload?.sourceNote?.title || "smartstudy-note")}.md`;
+  downloadTextFile(filename, content, "text/markdown;charset=utf-8");
+}
+
+function exportWord(payload, template, sections) {
+  const markdown = buildExportContent(payload, template, sections);
+  const html = markdownToSimpleHTML(markdown);
+  const wordHTML = `
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${escapeHTML(payload?.title || payload?.sourceNote?.title || "SmartStudy AI 筆記")}</title>
+      </head>
+      <body>
+        ${html}
+      </body>
+    </html>
+  `;
+
+  const filename = `${sanitizeFilename(payload?.title || payload?.sourceNote?.title || "smartstudy-note")}.doc`;
+  downloadTextFile(filename, wordHTML, "application/msword;charset=utf-8");
+}
+
+function exportPDF(payload, template, sections) {
+  const markdown = buildExportContent(payload, template, sections);
+  const html = markdownToSimpleHTML(markdown);
+  const printWindow = window.open("", "_blank");
+
+  if (!printWindow) {
+    alert(currentLanguage === "en"
+      ? "Unable to open the print window. Please allow pop-ups in your browser."
+      : "無法開啟列印視窗，請確認瀏覽器沒有阻擋彈出視窗。");
+    return;
+  }
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${escapeHTML(payload?.title || payload?.sourceNote?.title || "SmartStudy AI 筆記")}</title>
+        <style>
+          body {
+            font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+            line-height: 1.8;
+            padding: 32px;
+            color: #111827;
+          }
+          h1, h2 {
+            color: #4C1D95;
+          }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
+function exportPowerPoint(payload, template, sections) {
+  const result = payload?.result || payload?.sourceNote?.result || createEmptyExportPayload().result;
+  const title = payload?.title || payload?.sourceNote?.title || "SmartStudy AI 簡報";
+  const slides = [
+    {
+      title,
+      body: "SmartStudy AI 自動報告型簡報"
+    },
+    {
+      title: "研究背景 / 主題說明",
+      body: getExportSectionText(result.summary)
+    },
+    {
+      title: "重點整理",
+      body: getExportSectionText(result.keyPoints)
+    },
+    {
+      title: "分析內容",
+      body: sections.includes("concepts") ? getExportSectionText(result.concepts) : getExportSectionText(result.mistakes)
+    },
+    {
+      title: "結論",
+      body: "根據上述內容，整理出核心觀點與後續可延伸討論的方向。"
+    },
+    {
+      title: "參考資料 / 補充內容",
+      body: sections.includes("references") ? "請補充課本、講義、網站或其他資料來源。" : "目前未勾選參考資料區塊，可在後續編修時補上來源。"
+    }
+  ];
+
+  const outline = slides
+    .map((slide, index) => `# 第 ${index + 1} 頁｜${slide.title}\n\n${slide.body}\n`)
+    .join("\n---\n\n");
+
+  const filename = `${sanitizeFilename(title)}-presentation-outline.md`;
+  downloadTextFile(filename, outline, "text/markdown;charset=utf-8");
+  alert(currentLanguage === "en"
+    ? "A PowerPoint outline was exported for now. You can switch to real .pptx later if pptxgenjs is added."
+    : "目前已先匯出 PowerPoint 簡報大綱。若專案之後支援 pptxgenjs，可再改成真正 .pptx。");
+}
+
+function startExport() {
+  const format = exportFormat?.value || "md";
+  const template = exportTemplate?.value || "studyNote";
+  const sections = getSelectedExportSections();
+  const payload = currentExportContext.payload || getDefaultExportPayload();
+
+  if (!sections.length) {
+    alert(currentLanguage === "en" ? "Please choose at least one section to export." : "請至少選擇一個要匯出的內容。");
+    return;
+  }
+
+  if (format === "md") {
+    exportMarkdown(payload, template, sections);
+  } else if (format === "docx") {
+    exportWord(payload, template, sections);
+  } else if (format === "pdf") {
+    exportPDF(payload, template, sections);
+  } else if (format === "pptx") {
+    exportPowerPoint(payload, template, sections);
+  }
+
+  closeExportModal();
+}
+
+window.openExportModal = openExportModal;
 
 function toggleAccordion(accordion) {
   const isOpen = accordion.classList.contains("open");
@@ -7520,6 +8783,10 @@ async function requestTutorAction(action, userInput = "") {
         body: JSON.stringify({
           action,
           userInput,
+          language: currentLanguage,
+          languageInstruction: getLanguageInstruction(),
+          prompt: buildTutorPrompt({ question: userInput, source: currentTutorSource }),
+          source: currentTutorSource,
           noteContext: getTutorContextPayload(currentAnalysisResult),
           messages: buildTutorHistoryPayload(),
           pendingQuestion: tutorPendingQuestion
@@ -8398,8 +9665,8 @@ function refreshKnowledgeStats() {
 }
 
 function clearFrontendKnowledgeBase() {
-  localStorage.removeItem(KNOWLEDGE_CHUNKS_KEY);
-  localStorage.removeItem(LOCAL_RAG_STORAGE_KEY);
+  removeFromStorage(KNOWLEDGE_CHUNKS_KEY);
+  removeFromStorage(LOCAL_RAG_STORAGE_KEY);
   selectedKnowledgeFiles = [];
   ragSelectedFiles = [];
   if (knowledgeFileInput) {
@@ -8903,17 +10170,12 @@ function renderLastResult() {
 }
 
 function loadHistory() {
-  try {
-    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    return [];
-  }
+  const parsed = loadFromStorage(HISTORY_STORAGE_KEY, []);
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function persistHistory(history) {
-  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+  saveToStorage(HISTORY_STORAGE_KEY, history);
 }
 
 function restoreLatestWorkspaceFromHistory() {
@@ -9068,8 +10330,12 @@ function updateLanguageView() {
   updateModeUI();
   updateTutorSourceUI();
   updateKnowledgeResults();
+  renderMyNotes();
+  renderStudyPlanner();
+  renderHomeTasks();
   syncSourceContextUI();
   updateKnowledgeSelectionUI();
+  updateExportPreview();
   if (!ragAnswerResult.textContent.trim() || ragAnswerResult.textContent === uiTranslations.zh.ragAnswerEmpty || ragAnswerResult.textContent === uiTranslations.en.ragAnswerEmpty) {
     ragAnswerResult.textContent = getUiText("ragAnswerEmpty");
   }
@@ -9217,6 +10483,7 @@ function updateModeUI() {
   outputMeta.textContent += currentLanguage === "en"
     ? " Core analysis runs in the browser. PPTX, DOCX, PDF, and OCR support rely on front-end parsing libraries that may be loaded from CDN resources."
     : " 主要分析流程在瀏覽器端完成；PPTX、DOCX、PDF 與 OCR 支援則仰賴前端解析套件，首次使用時可能透過 CDN 載入。";
+  updateNoteModeSummary();
 }
 
 function isContextMarkerSentence(sentence) {
@@ -9438,6 +10705,7 @@ function buildAiLanguageAnalysis(aiAnalysis = {}) {
 
 async function analyzeWithOpenAI(text, mode, modeLabel, modeConfig, enhancement) {
   const context = buildAnalysisInputContext(text, mode, modeConfig);
+  const languageInstruction = getLanguageInstruction();
   const response = await fetch("/api/analyze", {
     method: "POST",
     headers: {
@@ -9446,7 +10714,10 @@ async function analyzeWithOpenAI(text, mode, modeLabel, modeConfig, enhancement)
     body: JSON.stringify({
       text,
       mode,
-      modeLabel
+      modeLabel,
+      language: currentLanguage,
+      languageInstruction,
+      prompt: buildNotePrompt({ text, mode })
     })
   });
 
@@ -9820,9 +11091,8 @@ async function handleGenerateNotes() {
     return null;
   }
 
-  setCurrentLanguage(selectedLanguage);
-  updateLanguageView();
-  setNoteMode(currentNoteMode, { skipLegacySync: true });
+  setLanguage(selectedLanguage);
+  updateNoteModeSummary();
 
   if (notesResultStatus) {
     notesResultStatus.textContent = selectedLanguage === "en"
@@ -9964,9 +11234,7 @@ function downloadResult() {
 
 function toggleResultLanguage() {
   const nextLanguage = getCurrentLanguage() === "zh" ? "en" : "zh";
-  setCurrentLanguage(nextLanguage);
-  updateLanguageToggleLabel();
-  updateLanguageView();
+  setLanguage(nextLanguage);
 
   if (currentAnalysisResult && typeof renderLastResult === "function") {
     renderLastResult();
@@ -10098,8 +11366,12 @@ ragModeSelect?.addEventListener("change", () => {
 });
 
 copyButton.addEventListener("click", copyResult);
-downloadButton.addEventListener("click", downloadResult);
-notesExportTrigger?.addEventListener("click", downloadResult);
+downloadButton.addEventListener("click", () => {
+  openExportModal({
+    source: "notes",
+    payload: getExportPayloadBySource("notes")
+  });
+});
 refreshQuestionsButton?.addEventListener("click", refreshQuestions);
 tutorAskButton?.addEventListener("click", handleTutorAsk);
 tutorQuizButton?.addEventListener("click", handleTutorQuiz);
@@ -10109,8 +11381,7 @@ chooseTutorSourceBtn?.addEventListener("click", () => {
   chooseLatestNoteAsTutorSource();
 });
 clearTutorSourceBtn?.addEventListener("click", () => {
-  currentTutorSource = null;
-  updateTutorSourceUI();
+  setTutorSource(null);
 });
 refreshQuestionsBtn?.addEventListener("click", () => {
   if (!currentTutorSource) {
@@ -10138,6 +11409,8 @@ resetKnowledgeFiltersBtn?.addEventListener("click", () => {
   if (knowledgeTypeFilter) knowledgeTypeFilter.value = "all";
   updateKnowledgeResults();
 });
+generateStudyPlanBtn?.addEventListener("click", handleGenerateStudyPlan);
+clearPlannerFormBtn?.addEventListener("click", clearPlannerForm);
 buildKnowledgeBaseButton?.addEventListener("click", buildKnowledgeBase);
 askKnowledgeBaseButton?.addEventListener("click", askKnowledgeBase);
 clearKnowledgeBaseButton?.addEventListener("click", clearFrontendKnowledgeBase);
@@ -10146,11 +11419,32 @@ sendRagToTutorButton?.addEventListener("click", sendRagToTutor);
 sendRagToStudyAgentButton?.addEventListener("click", sendRagToStudyAgent);
 makeRagExamFocusButton?.addEventListener("click", renderRagExamFocus);
 generateStudyPlanButton?.addEventListener("click", generateStudyPlan);
+[
+  myNotesSearch,
+  myNotesSubjectFilter,
+  myNotesSort,
+  myNotesTypeFilter
+].forEach((element) => {
+  element?.addEventListener("input", renderMyNotes);
+  element?.addEventListener("change", renderMyNotes);
+});
+closeExportModalButton?.addEventListener("click", closeExportModal);
+cancelExportBtn?.addEventListener("click", closeExportModal);
+exportModalBackdrop?.addEventListener("click", closeExportModal);
+startExportBtn?.addEventListener("click", startExport);
+exportFormat?.addEventListener("change", () => {
+  if (exportFormat.value === "pptx" && exportTemplate) {
+    exportTemplate.value = "autoPresentation";
+  }
+  updateExportPreview();
+});
+exportTemplate?.addEventListener("change", updateExportPreview);
+document.querySelectorAll(".export-content-check").forEach((checkbox) => {
+  checkbox.addEventListener("change", updateExportPreview);
+});
 if (outputLanguage) {
   outputLanguage.addEventListener("change", () => {
-    setCurrentLanguage(outputLanguage.value);
-    updateLanguageView();
-    setNoteMode(currentNoteMode, { skipLegacySync: true });
+    setLanguage(outputLanguage.value);
     if (currentAnalysisResult) {
       renderCurrentResult(currentAnalysisResult);
     }
@@ -10174,8 +11468,18 @@ if (tutorInput) {
   });
 }
 
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !exportModal.classList.contains("hidden")) {
+    closeExportModal();
+  }
+});
+
 function initNotesPage() {
   document.querySelectorAll(".mode-btn").forEach((btn) => {
+    if (btn.dataset.modeBound === "true") {
+      return;
+    }
+    btn.dataset.modeBound = "true";
     btn.addEventListener("click", () => {
       setNoteMode(btn.dataset.mode);
       setProcessStateText(currentLanguage === "en" ? "Organization mode switched" : "整理模式已切換");
@@ -10183,6 +11487,10 @@ function initNotesPage() {
   });
 
   document.querySelectorAll(".result-accordion .accordion-header").forEach((header) => {
+    if (header.dataset.accordionBound === "true") {
+      return;
+    }
+    header.dataset.accordionBound = "true";
     header.addEventListener("click", () => {
       const accordion = header.closest(".result-accordion");
       if (accordion) {
@@ -10197,15 +11505,70 @@ function initNotesPage() {
 
   syncVisibleNoteModeFromLegacyMode();
   syncNotesAccordionResult(currentAnalysisResult);
+  bindExportTriggers();
 }
 
 function initTutorWorkspace() {
+  if (!currentTutorSource) {
+    currentTutorSource = loadFromStorage(STORAGE_KEYS.tutorSource, null);
+  }
   updateTutorSourceUI();
 }
 
 function initKnowledgeWorkspace() {
   syncKnowledgeChapterFilterOptions();
   updateKnowledgeResults();
+}
+
+function initPlannerWorkspace() {
+  populatePlannerNoteSelect();
+  renderStudyPlanner();
+  renderHomeTasks();
+  initPlannerDragAndDrop();
+}
+
+function initMyNotesWorkspace() {
+  renderMyNotes();
+}
+
+function initExportModal() {
+  bindExportTriggers();
+  updateExportPreview();
+}
+
+function initApp() {
+  restoreEnhancementPreference();
+  restoreLatestWorkspaceFromHistory();
+  updateCounts();
+  restoreUploadHelp();
+  updateKnowledgeSelectionUI();
+  setKnowledgeBusyState(false);
+  renderRagSources([]);
+  refreshKnowledgeBaseStatus();
+  resetStudyPlanView();
+  setStudyAgentBusyState(false);
+
+  initThemeToggle();
+  initLanguageToggle();
+  initNavigation();
+  initNotesPage();
+  initTutorWorkspace();
+  initKnowledgeWorkspace();
+  initPlannerWorkspace();
+  initMyNotesWorkspace();
+  initExportModal();
+  initFocusMusicPlayer();
+
+  renderCurrentResult();
+  renderHistory();
+  ragAnswerResult.textContent = getUiText("ragAnswerEmpty");
+  setKnowledgeStatus(getUiText("knowledgeStatusTitle"), getUiText("knowledgeStatusDetail"));
+  setStudyAgentStatus(getUiText("studyAgentStatusTitle"), getUiText("studyAgentStatusDetail"));
+
+  initTutorPage();
+  initKnowledgePage();
+  initStudyAgentPage();
+  switchPage("home");
 }
 if (resultLanguageTag) {
   resultLanguageTag.addEventListener("click", toggleResultLanguage);
@@ -10264,33 +11627,6 @@ clearHistoryButton.addEventListener("click", () => {
   renderHistory([]);
   setProcessStateText("歷史紀錄已清空");
 });
-
-restoreDisplayLanguagePreference();
-restoreEnhancementPreference();
-restoreLatestWorkspaceFromHistory();
-applyInterfaceLanguage();
-renderCurrentResult();
-renderHistory();
-updateCounts();
-updateModeUI();
-restoreUploadHelp();
-updateKnowledgeSelectionUI();
-setKnowledgeBusyState(false);
-ragAnswerResult.textContent = getUiText("ragAnswerEmpty");
-renderRagSources([]);
-setKnowledgeStatus(getUiText("knowledgeStatusTitle"), getUiText("knowledgeStatusDetail"));
-refreshKnowledgeBaseStatus();
-resetStudyPlanView();
-setStudyAgentBusyState(false);
-setStudyAgentStatus(getUiText("studyAgentStatusTitle"), getUiText("studyAgentStatusDetail"));
-initTutorPage();
-initKnowledgePage();
-initStudyAgentPage();
 document.addEventListener("DOMContentLoaded", () => {
-  bindPageNavigation();
-  switchPage("home");
-  initNotesPage();
-  initTutorWorkspace();
-  initKnowledgeWorkspace();
-  initFocusMusicPlayer();
+  initApp();
 });

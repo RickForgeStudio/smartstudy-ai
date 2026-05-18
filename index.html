@@ -11,57 +11,120 @@
     <header class="top-nav" aria-label="主要功能導覽">
       <div class="brand">SmartStudy AI</div>
       <nav class="nav-pills" aria-label="主要導覽">
-        <button class="nav-pill active" data-page="home" type="button">首頁</button>
-        <button class="nav-pill" data-page="notes" type="button">筆記整理</button>
-        <button class="nav-pill" data-page="tutor" type="button">AI Tutor</button>
-        <button class="nav-pill" data-page="knowledge" type="button">知識庫</button>
-        <button class="nav-pill" data-page="planner" type="button">讀書計畫</button>
-        <button class="nav-pill" data-page="myNotes" type="button">我的筆記</button>
+        <button class="nav-pill active" data-page="home" data-i18n="navHome" type="button">首頁</button>
+        <button class="nav-pill" data-page="notes" data-i18n="navNotes" type="button">筆記整理</button>
+        <button class="nav-pill" data-page="tutor" data-i18n="navTutor" type="button">AI Tutor</button>
+        <button class="nav-pill" data-page="knowledge" data-i18n="navKnowledge" type="button">知識庫</button>
+        <button class="nav-pill" data-page="planner" data-i18n="navPlanner" type="button">讀書計畫</button>
+        <button class="nav-pill" data-page="myNotes" data-i18n="navMyNotes" type="button">我的筆記</button>
       </nav>
       <div class="nav-actions">
-        <button class="ghost-button" type="button" disabled>中文</button>
-        <button class="ghost-button" type="button" disabled>🌙</button>
+        <div class="language-toggle" aria-label="語言切換">
+          <button class="lang-btn active" data-lang="zh" type="button">中文</button>
+          <button class="lang-btn" data-lang="en" type="button">English</button>
+        </div>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="切換深色模式">🌙</button>
       </div>
     </header>
 
     <main class="app-shell">
       <section id="homePage" class="page active">
-        <header class="hero">
-          <div class="hero-copy">
-            <p class="eyebrow">SmartStudy-AI</p>
-            <h1>先整理筆記，再延伸成問答、知識庫與讀書計畫。</h1>
-            <p class="hero-text">
-              先建立同頁切換的學習平台骨架，之後你可以在不重新整理頁面的情況下切換功能，讓專注音樂持續播放。
-            </p>
-            <div class="hero-pills">
-              <span>文字貼上</span>
-              <span>文件上傳</span>
-              <span>快速整理</span>
-              <span>SPA 切換</span>
+        <div class="home-hero">
+          <p class="eyebrow">SmartStudy AI</p>
+          <h1 data-i18n="homeTitle">讓 AI 成為你的學習助教</h1>
+          <p data-i18n="homeSubtitle">今天要整理筆記、複習重點，還是問 AI 老師？</p>
+        </div>
+
+        <div class="home-grid">
+          <article class="app-card ai-suggestion-card">
+            <div class="card-header">
+              <div>
+                <h2 data-i18n="aiTodaySuggestion">AI 今日建議</h2>
+                <p class="card-subtitle" data-i18n="aiTodaySuggestionSubtitle">根據你的筆記與待辦，提供今日複習方向</p>
+              </div>
+              <span class="soft-badge" data-i18n="todayRecommended">今日推薦</span>
             </div>
-            <div class="control-row">
-              <button class="primary-button" data-page="notes" type="button">開始整理筆記</button>
-              <button class="secondary-button" data-page="knowledge" type="button">前往知識庫</button>
+
+            <div class="suggestion-list">
+              <div class="suggestion-block">
+                <p class="label" data-i18n="suggestReviewLabel">今天建議先複習</p>
+                <h3>FVTPL 與 FVOCI 差異</h3>
+                <p>先掌握公允價值變動進入損益或 OCI 的差別。</p>
+              </div>
+
+              <div class="suggestion-block">
+                <p class="label" data-i18n="possibleQuestionLabel">可能考題</p>
+                <h3>公允價值變動如何認列？</h3>
+                <p>題目可能要求你判斷分類、認列位置與出售時處理。</p>
+              </div>
+
+              <div class="suggestion-block">
+                <p class="label" data-i18n="todayTaskLabel">今日任務</p>
+                <h3>完成 3 題練習題</h3>
+                <p>建議先做選擇題，再回頭整理錯誤觀念。</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="app-card quick-start-card">
+            <div class="card-header">
+              <div>
+                <h2 data-i18n="quickStart">快速開始</h2>
+                <p class="card-subtitle" data-i18n="quickStartSubtitle">依照你現在的需求選擇功能</p>
+              </div>
+              <span class="soft-badge" data-i18n="startLearning">開始學習</span>
+            </div>
+
+            <div class="quick-action-list">
+              <button class="quick-action" data-page="notes" type="button">
+                <span data-i18n="quickNewNote">我有新筆記</span>
+                <strong data-i18n="quickOrganizeNotes">整理筆記</strong>
+                <small data-i18n="quickOrganizeNotesDesc">上傳或貼上內容，產生摘要、重點與考題。</small>
+              </button>
+
+              <button class="quick-action" data-page="tutor" type="button">
+                <span data-i18n="quickAskQuestion">我想問問題</span>
+                <strong data-i18n="quickAITutor">AI Tutor</strong>
+                <small data-i18n="quickAITutorDesc">根據目前筆記，用教學方式回答你的問題。</small>
+              </button>
+
+              <button class="quick-action" data-page="knowledge" type="button">
+                <span data-i18n="quickFindData">我想找資料</span>
+                <strong data-i18n="quickKnowledge">知識庫</strong>
+                <small data-i18n="quickKnowledgeDesc">搜尋整理過的筆記、關鍵字與相關考點。</small>
+              </button>
+
+              <button class="quick-action" data-page="planner" type="button">
+                <span data-i18n="quickPrepareExam">我想準備考試</span>
+                <strong data-i18n="quickPlanner">讀書計畫</strong>
+                <small data-i18n="quickPlannerDesc">建立今日、本週與已完成任務看板。</small>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <section class="app-card today-tasks">
+          <div class="card-header">
+            <div>
+              <h2 data-i18n="todayTodo">今日待辦</h2>
+              <p class="card-subtitle" data-i18n="todayTodoSubtitle">把讀書計畫拆成今天可以完成的小任務</p>
+            </div>
+            <button class="secondary-btn" data-page="planner" data-i18n="manageTasks" type="button">管理任務</button>
+          </div>
+
+          <div class="task-card-list">
+            <div class="soft-card task-card">
+              <span class="task-tag">提示</span>
+              <strong>目前沒有今日任務</strong>
+              <p>可以到讀書計畫頁建立任務。</p>
             </div>
           </div>
-          <div class="hero-card floating-ai-card">
-            <span class="ai-orb" aria-hidden="true"></span>
-            <div class="hero-card-top">
-              <span class="status-dot"></span>
-              <span>首頁重點</span>
-            </div>
-            <ul class="hero-list">
-              <li>切換頁面時不會重新整理網站</li>
-              <li>專注音樂播放器保留在全站共用層</li>
-              <li>先穩定保留筆記整理與音樂持續播放</li>
-            </ul>
-          </div>
-        </header>
+        </section>
       </section>
 
       <section id="notesPage" class="page">
         <div class="page-title">
-          <h1>AI 筆記整理</h1>
+          <h1 data-i18n="notesTitle">AI 筆記整理</h1>
           <p>上傳或貼上課堂內容，讓 AI 幫你整理成可複習的學習筆記。</p>
         </div>
 
@@ -109,10 +172,11 @@
             <textarea
               id="sourceText"
               class="input-control textarea"
+              data-i18n-placeholder="notesSourcePlaceholder"
               placeholder="請貼上課堂筆記、講義內容、老師上課重點或你想整理的資料..."
             ></textarea>
 
-            <label class="form-label">整理模式</label>
+            <label class="form-label">整理模式（可複選）</label>
             <div class="mode-grid" role="group" aria-label="整理模式">
               <button class="mode-btn active" data-mode="quick" type="button">
                 <strong>快速摘要</strong>
@@ -146,8 +210,8 @@
             </div>
 
             <div class="soft-card notes-mode-summary">
-              <strong id="modeBadge">目前模式：考試複習模式</strong>
-              <p id="modeDescription">聚焦重點整理與複習提問，適合考前快速統整與背誦。</p>
+              <strong id="modeBadge">目前模式：快速摘要</strong>
+              <p id="modeDescription">快速抓出整份內容的大意與主線，適合先建立整體理解。</p>
             </div>
 
             <label class="form-label" for="outputLanguage">輸出語言</label>
@@ -156,7 +220,7 @@
               <option value="en">English</option>
             </select>
 
-            <button id="analyzeButton" class="primary-btn full-width" type="button">
+            <button id="analyzeButton" class="primary-btn full-width" data-i18n="start" type="button">
               開始整理
             </button>
 
@@ -192,7 +256,7 @@
                 <p class="card-subtitle">先看一句重點，展開後再看詳細解析</p>
               </div>
 
-              <button class="secondary-btn export-trigger" id="notesExportTrigger" type="button">
+              <button class="secondary-btn export-trigger" id="notesExportTrigger" data-source="notes" data-i18n="export" type="button">
                 匯出
               </button>
             </div>
@@ -371,7 +435,7 @@
 
       <section id="tutorPage" class="page">
         <div class="page-title">
-          <h1>AI Tutor 問答老師</h1>
+          <h1 data-i18n="tutorTitle">AI Tutor 問答老師</h1>
           <p>根據你目前選取的筆記內容回答問題，並用教學方式幫你理解觀念。</p>
         </div>
 
@@ -443,9 +507,10 @@
               <input
                 id="tutorInput"
                 class="input-control"
+                data-i18n-placeholder="tutorInputPlaceholderSimple"
                 placeholder="輸入你的問題，例如：FVTPL 和 FVOCI 差在哪？"
               >
-              <button id="sendTutorMessage" class="primary-btn" type="button">
+              <button id="sendTutorMessage" class="primary-btn" data-i18n="send" type="button">
                 送出
               </button>
             </div>
@@ -455,7 +520,7 @@
 
       <section id="knowledgePage" class="page">
         <div class="page-title">
-          <h1>我的知識庫</h1>
+          <h1 data-i18n="knowledgeTitle">我的知識庫</h1>
           <p>搜尋你整理過的筆記、摘要與重點，快速找到相關考點。</p>
         </div>
 
@@ -464,9 +529,10 @@
             <input
               id="knowledgeSearchInput"
               class="input-control"
+              data-i18n-placeholder="knowledgeSearchPlaceholder"
               placeholder="輸入關鍵字、問題或考點，例如：FVTPL、OCI、公允價值..."
             >
-            <button id="knowledgeSearchBtn" class="primary-btn" type="button">
+            <button id="knowledgeSearchBtn" class="primary-btn" data-i18n="search" type="button">
               搜尋
             </button>
           </div>
@@ -547,26 +613,175 @@
       </section>
 
       <section id="plannerPage" class="page">
-        <section class="panel single-page-panel">
-          <div class="section-head">
+        <div class="page-title">
+          <h1 data-i18n="plannerTitle">讀書計畫</h1>
+          <p>根據考試日期、讀書時間與筆記內容，建立可追蹤的複習任務。</p>
+        </div>
+
+        <section class="app-card planner-form">
+          <div class="card-header">
             <div>
-              <p class="section-kicker">讀書計畫</p>
-              <h2>讀書計畫功能將接到 SPA 主頁</h2>
+              <h2>建立讀書計畫</h2>
+              <p class="card-subtitle">輸入考試資訊，讓 AI 幫你拆成可執行任務</p>
             </div>
           </div>
-          <p class="output-meta">這一階段先把切頁與全站共用播放器穩定下來，後面再把既有計畫表單搬進來。</p>
+
+          <div class="form-grid planner-form-grid">
+            <div>
+              <label class="form-label" for="examDateInput">考試日期</label>
+              <input id="examDateInput" type="date" class="input-control">
+            </div>
+
+            <div>
+              <label class="form-label" for="studyHoursInput">每天可讀時間</label>
+              <input
+                id="studyHoursInput"
+                type="text"
+                class="input-control"
+                placeholder="例如：1.5 小時、90 分鐘"
+              >
+            </div>
+
+            <div>
+              <label class="form-label" for="examScopeInput">考試範圍</label>
+              <input
+                id="examScopeInput"
+                type="text"
+                class="input-control"
+                placeholder="例如：第 50-66 頁、Chapter 13"
+              >
+            </div>
+
+            <div>
+              <label class="form-label" for="plannerNoteSelect">選擇科目 / 筆記</label>
+              <select id="plannerNoteSelect" class="input-control">
+                <option value="">請選擇筆記</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="planner-form-actions">
+            <button id="generateStudyPlanBtn" class="primary-btn" type="button">
+              產生計畫
+            </button>
+
+            <button id="clearPlannerFormBtn" class="secondary-btn" type="button">
+              清除輸入
+            </button>
+          </div>
+
+          <p class="helper-text">
+            產生的任務會加入下方看板，並同步到首頁今日待辦。
+          </p>
+        </section>
+
+        <section class="kanban-board" aria-label="讀書任務看板">
+          <div class="app-card kanban-column" data-status="today">
+            <div class="kanban-column-header">
+              <h2>今日任務</h2>
+              <span id="todayTaskCount" class="soft-badge">0</span>
+            </div>
+
+            <div id="todayTasksColumn" class="kanban-task-list">
+              <div class="empty-state small-empty">目前沒有今日任務。</div>
+            </div>
+          </div>
+
+          <div class="app-card kanban-column" data-status="week">
+            <div class="kanban-column-header">
+              <h2>本週任務</h2>
+              <span id="weekTaskCount" class="soft-badge">0</span>
+            </div>
+
+            <div id="weekTasksColumn" class="kanban-task-list">
+              <div class="empty-state small-empty">目前沒有本週任務。</div>
+            </div>
+          </div>
+
+          <div class="app-card kanban-column" data-status="done">
+            <div class="kanban-column-header">
+              <h2>已完成</h2>
+              <span id="doneTaskCount" class="soft-badge">0</span>
+            </div>
+
+            <div id="doneTasksColumn" class="kanban-task-list">
+              <div class="empty-state small-empty">目前尚無已完成任務。</div>
+            </div>
+          </div>
         </section>
       </section>
 
       <section id="myNotesPage" class="page">
-        <section class="panel single-page-panel">
-          <div class="section-head">
-            <div>
-              <p class="section-kicker">我的筆記</p>
-              <h2>我的筆記區將承接歷史內容與整理結果</h2>
-            </div>
+        <div class="page-title">
+          <h1 data-i18n="myNotesTitle">我的筆記</h1>
+          <p>管理、查看、重新開啟、匯出或刪除你整理過的筆記。</p>
+        </div>
+
+        <section class="app-card note-manager-toolbar">
+          <div class="note-search-wrap">
+            <label class="form-label" for="myNotesSearch">搜尋筆記</label>
+            <input
+              id="myNotesSearch"
+              class="input-control"
+              placeholder="搜尋標題、科目、摘要或關鍵字..."
+            >
           </div>
-          <p class="output-meta">目前先保留骨架，之後會把歷史紀錄與儲存筆記整合成這個 section。</p>
+
+          <div>
+            <label class="form-label" for="myNotesSubjectFilter">科目</label>
+            <select id="myNotesSubjectFilter" class="input-control">
+              <option value="all">全部科目</option>
+              <option value="會計">會計</option>
+              <option value="永續金融">永續金融</option>
+              <option value="醫院管理">醫院管理</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="myNotesSort">日期排序</label>
+            <select id="myNotesSort" class="input-control">
+              <option value="newest">日期：新到舊</option>
+              <option value="oldest">日期：舊到新</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="myNotesTypeFilter">類型</label>
+            <select id="myNotesTypeFilter" class="input-control">
+              <option value="all">全部類型</option>
+              <option value="quick">快速摘要</option>
+              <option value="deep">深度解析</option>
+              <option value="exam">考前複習</option>
+              <option value="quiz">題目生成</option>
+              <option value="concept">概念連結</option>
+              <option value="mistake">易錯觀念</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="my-notes-summary-row">
+          <div class="soft-card notes-stat-card">
+            <span>全部筆記</span>
+            <strong id="myNotesTotalCount">0</strong>
+          </div>
+
+          <div class="soft-card notes-stat-card">
+            <span>最近整理</span>
+            <strong id="myNotesLatestDate">尚無資料</strong>
+          </div>
+
+          <div class="soft-card notes-stat-card">
+            <span>目前篩選結果</span>
+            <strong id="myNotesFilteredCount">0</strong>
+          </div>
+        </section>
+
+        <section id="myNotesGrid" class="my-notes-grid">
+          <div class="app-card empty-state-card">
+            <h2>目前沒有筆記</h2>
+            <p>請先到「筆記整理」頁產生一份筆記，整理完成後會出現在這裡。</p>
+          </div>
         </section>
       </section>
     </main>
@@ -574,6 +789,94 @@
     <section class="feature-strip compact-strip global-music-strip">
       <p>想延伸問答、查詢知識庫或安排讀書計畫，可以使用上方導覽列切換功能。</p>
     </section>
+  </div>
+
+  <div id="exportModal" class="modal hidden" aria-label="匯出設定">
+    <div class="modal-backdrop" id="exportModalBackdrop"></div>
+
+    <div class="modal-content app-card">
+      <div class="card-header">
+        <div>
+          <h2>匯出設定</h2>
+          <p class="card-subtitle">選擇格式、模板與要包含的內容</p>
+        </div>
+
+        <button id="closeExportModal" class="icon-btn" type="button" aria-label="關閉匯出視窗">
+          ✕
+        </button>
+      </div>
+
+      <label class="form-label" for="exportFormat">格式</label>
+      <select id="exportFormat" class="input-control">
+        <option value="md">Markdown 筆記 .md</option>
+        <option value="docx">Word 文件 .docx</option>
+        <option value="pdf">PDF 講義 .pdf</option>
+        <option value="pptx">PowerPoint 簡報 .pptx</option>
+      </select>
+
+      <label class="form-label" for="exportTemplate">模板</label>
+      <select id="exportTemplate" class="input-control">
+        <option value="studyNote">讀書筆記模板</option>
+        <option value="formalReport">正式報告模板</option>
+        <option value="examReview">考前複習模板</option>
+        <option value="autoPresentation">自動報告簡報模板</option>
+      </select>
+
+      <label class="form-label">包含內容</label>
+      <div class="checkbox-list">
+        <label>
+          <input type="checkbox" class="export-content-check" value="summary" checked>
+          智慧摘要
+        </label>
+
+        <label>
+          <input type="checkbox" class="export-content-check" value="keyPoints" checked>
+          重要重點
+        </label>
+
+        <label>
+          <input type="checkbox" class="export-content-check" value="quiz" checked>
+          考題預測
+        </label>
+
+        <label>
+          <input type="checkbox" class="export-content-check" value="keywords" checked>
+          關鍵字
+        </label>
+
+        <label>
+          <input type="checkbox" class="export-content-check" value="mistakes" checked>
+          易錯觀念
+        </label>
+
+        <label>
+          <input type="checkbox" class="export-content-check" value="concepts" checked>
+          概念連結
+        </label>
+
+        <label>
+          <input type="checkbox" class="export-content-check" value="references">
+          參考資料
+        </label>
+      </div>
+
+      <div class="export-preview-box">
+        <strong>目前匯出內容</strong>
+        <p id="exportPreviewText">
+          請選擇要匯出的格式與內容。
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button id="cancelExportBtn" class="secondary-btn" data-i18n="cancel" type="button">
+          取消
+        </button>
+
+        <button id="startExportBtn" class="primary-btn" type="button">
+          開始匯出
+        </button>
+      </div>
+    </div>
   </div>
 
   <div id="focusMusicPlayer" class="focus-player collapsed" aria-label="專注音樂播放器">
