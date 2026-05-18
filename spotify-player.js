@@ -1,8 +1,15 @@
 const SPOTIFY_CLIENT_ID = "930d6d20806249f1828734389e5c9173";
-const SPOTIFY_REDIRECT_URI = (() => {
+function resolveSpotifyRedirectUri() {
   const fallback = "https://rickforgestudio.github.io/smartstudy-ai/";
   if (typeof window === "undefined" || !window.location) {
     return fallback;
+  }
+
+  const override = typeof window.SMARTSTUDY_SPOTIFY_REDIRECT_URI === "string"
+    ? window.SMARTSTUDY_SPOTIFY_REDIRECT_URI.trim()
+    : "";
+  if (override) {
+    return override;
   }
 
   try {
@@ -10,15 +17,21 @@ const SPOTIFY_REDIRECT_URI = (() => {
     currentUrl.search = "";
     currentUrl.hash = "";
 
-    if (currentUrl.hostname.endsWith("github.io")) {
-      return fallback;
+    // Prefer the current page during local development so the callback matches
+    // the page you are actually testing on.
+    if (currentUrl.hostname === "localhost" || currentUrl.hostname === "127.0.0.1") {
+      return currentUrl.toString();
     }
 
+    // On deployed environments, use the current page unless Spotify auth is
+    // configured to return to a dedicated callback path via override.
     return currentUrl.toString();
   } catch (error) {
     return fallback;
   }
-})();
+}
+
+const SPOTIFY_REDIRECT_URI = resolveSpotifyRedirectUri();
 
 const SPOTIFY_SCOPES = [
   "streaming",
@@ -102,6 +115,10 @@ let spotifyAutoResumeUntil = 0;
 
   function setSpotifyStatus(message, title) {
     setStatus(message, title);
+  }
+
+  function getSpotifyRedirectHint() {
+    return `Redirect URI：${SPOTIFY_REDIRECT_URI}`;
   }
 
   function armSpotifyAutoResume(durationMs = SPOTIFY_AUTO_RESUME_GRACE_MS) {
@@ -319,9 +336,11 @@ let spotifyAutoResumeUntil = 0;
 
   async function redirectToSpotifyAuth() {
     if (!SPOTIFY_CLIENT_ID || SPOTIFY_CLIENT_ID.includes("請在這裡填入")) {
-      setError("請先在 spotify-player.js 填入 Spotify Developer App Client ID。", "尚未設定 Spotify Client ID");
+      setError("請先在 spotify-player.js 填入 Spotify Developer App Client ID。", "尚未設定 Spotify");
       return;
     }
+
+    setStatus(`正在導向 Spotify 授權頁。${getSpotifyRedirectHint()}`, "正在授權");
 
     const codeVerifier = createCodeVerifier();
     const challenge = base64UrlEncode(await sha256(codeVerifier));
@@ -440,7 +459,7 @@ let spotifyAutoResumeUntil = 0;
       try {
         await refreshAccessToken();
       } catch (error) {
-        setError("Spotify 授權已過期，請重新連接", "請重新連接 Spotify");
+        setError("Spotify 授權已過期，請按重新連接重新取得授權。", "授權已過期");
         throw error;
       }
       return spotifyFetch(path, options, false);
@@ -448,14 +467,14 @@ let spotifyAutoResumeUntil = 0;
 
     if (response.status === 403) {
       setPremiumState(false);
-      setError("Spotify 網頁播放需要 Premium 或播放權限", "Spotify Premium 必要");
+      setError("Spotify 網頁播放需要 Premium 帳號，或目前帳號沒有足夠的播放控制權限。", "Spotify Premium 必要");
       throw new Error("Spotify Premium required");
     }
 
     if (response.status === 429) {
       state.pollIntervalMs = 10000;
       startSpotifySync();
-      setError("Spotify 請求太頻繁，稍後自動重試", "Spotify 請求過多");
+      setError("Spotify 請求太頻繁，系統會稍後自動重試，請先等幾秒再操作。", "請求過多");
       throw new Error("Spotify rate limited");
     }
 
@@ -484,7 +503,7 @@ let spotifyAutoResumeUntil = 0;
 
     if (!response.ok && response.status !== 204) {
       if (response.status === 403) {
-        setError("Spotify 網頁播放需要 Premium 或播放權限", "Spotify Premium 必要");
+        setError("Spotify 網頁播放需要 Premium 帳號，或目前帳號沒有足夠的播放控制權限。", "Spotify Premium 必要");
       } else if (response.status === 429) {
         state.pollIntervalMs = 10000;
         startSpotifySync();
@@ -519,16 +538,21 @@ let spotifyAutoResumeUntil = 0;
     if (response.status === 204) {
       currentSpotifyPlaybackState = null;
       renderPlayback(null);
-      setStatus("Spotify 目前沒有正在播放的歌曲", "尚未播放");
+      setStatus("Spotify 已連接，但目前沒有正在播放的內容。請先在 Spotify 選一首歌或直接按播放。", "尚未播放");
       return null;
     }
 
     const playback = await response.json();
     renderPlayback(playback);
     if (playback?.device?.id && state.deviceId && playback.device.id !== state.deviceId) {
-      setStatus("播放裝置已切換，可點重新連接播放器切回 SmartStudy-AI。", "播放裝置已切換");
+      setStatus("Spotify 目前正在別的裝置上播放。你可以按重新連接播放器，把 SmartStudy-AI Player 切回 active device。", "播放裝置已切換");
     } else if (playback?.item) {
-      setStatus(playback.is_playing ? "Spotify 已連接並正在播放。" : "Spotify 已連接，目前為暫停狀態。", "SmartStudy-AI Player 已準備好");
+      setStatus(
+        playback.is_playing
+          ? "Spotify 已連接並正在播放。"
+          : "Spotify 已連接，目前是暫停狀態。",
+        playback.is_playing ? "正在播放" : "已暫停"
+      );
     }
     return playback;
   }
@@ -669,7 +693,7 @@ let spotifyAutoResumeUntil = 0;
 
   async function transferPlayback(forcePlay) {
     if (!state.deviceId) {
-      setError("播放器尚未準備完成，請稍後再試。", "播放器未準備");
+      setError("播放器尚未準備完成，請先重新連接播放器，讓 SmartStudy-AI Player 成為可用裝置。", "播放器未準備");
       return;
     }
 
@@ -702,7 +726,7 @@ let spotifyAutoResumeUntil = 0;
     }
     state.connecting = true;
     updateConnectButtons();
-    setStatus("正在準備 SmartStudy-AI Player…", "正在連接 Spotify");
+    setStatus("正在準備 SmartStudy-AI Player，這通常需要幾秒鐘。", "正在連接 Spotify");
 
     try {
       await loadSpotifySdk();
@@ -717,7 +741,7 @@ let spotifyAutoResumeUntil = 0;
             const token = await ensureValidAccessToken();
             callback(token);
           } catch (error) {
-            setError("Spotify 授權已過期，請重新連接", "請重新連接 Spotify");
+            setError("Spotify 授權已過期，請按重新連接重新取得授權。", "授權已過期");
           }
         },
         volume: state.volume
@@ -728,7 +752,7 @@ let spotifyAutoResumeUntil = 0;
         spotifyDeviceId = deviceId;
         state.sdkReady = true;
         setPremiumState(true);
-        setStatus("SmartStudy-AI Player 已準備好", "播放器已就緒");
+        setStatus("Spotify Player 已就緒，可以直接播放或切歌。", "播放器已就緒");
         try {
           await transferPlayback();
           await getPlaybackState();
@@ -741,7 +765,7 @@ let spotifyAutoResumeUntil = 0;
       state.player.addListener("not_ready", () => {
         state.sdkReady = false;
         spotifyDeviceId = null;
-        setError("播放器目前未就緒，請重新連接。", "播放器離線");
+        setError("播放器目前離線，請按重新連接播放器，讓 SmartStudy-AI Player 再次成為可用裝置。", "播放器離線");
       });
 
       state.player.addListener("player_state_changed", (playerState) => {
@@ -770,12 +794,12 @@ let spotifyAutoResumeUntil = 0;
       });
 
       state.player.addListener("authentication_error", () => {
-        setError("Spotify 授權失敗，請重新連接。", "授權失敗");
+        setError(`Spotify 授權失敗，請重新連接，並確認 Spotify Developer Dashboard 的設定是否包含目前網址。${getSpotifyRedirectHint()}`, "授權失敗");
       });
 
       state.player.addListener("account_error", () => {
         setPremiumState(false);
-        setError("Spotify 網頁播放需要 Premium 帳號", "Spotify Premium 必要");
+        setError("Spotify 網頁播放需要 Premium 帳號，或目前帳號沒有足夠的播放控制權限。", "Spotify Premium 必要");
       });
 
       state.player.addListener("playback_error", ({ message }) => {
@@ -788,7 +812,7 @@ let spotifyAutoResumeUntil = 0;
       );
     } catch (error) {
       if (error?.code === "SPOTIFY_CONTROL_TIMEOUT") {
-        setError("Spotify Player 連線逾時，請稍後再試或按重新連接。", "連線逾時");
+        setError("Spotify Player 連線逾時。通常是網路較慢、Spotify 端反應較慢，或帳號尚未把 SmartStudy-AI Player 切成 active device。", "連線逾時");
       } else {
         setError("Spotify Player 初始化失敗，請稍後再試。", "初始化失敗");
       }
@@ -804,7 +828,7 @@ let spotifyAutoResumeUntil = 0;
     const error = url.searchParams.get("error");
 
     if (error) {
-      setError("Spotify 授權被取消或失敗，請重新連接。", "授權失敗");
+      setError(`Spotify 授權被取消或失敗。請重新連接，並確認 Spotify Developer Dashboard 的 Redirect URI 設定是否包含目前網址。${getSpotifyRedirectHint()}`, "授權失敗");
       url.searchParams.delete("error");
       window.history.replaceState({}, document.title, url.toString());
       return;
@@ -816,9 +840,9 @@ let spotifyAutoResumeUntil = 0;
 
     try {
       await exchangeCodeForToken(code);
-      setStatus("Spotify 已授權，正在準備播放器。", "Spotify 已連接");
+      setStatus("Spotify 已授權，正在準備播放器。", "已授權");
     } catch (oauthError) {
-      setError(oauthError.message || "Spotify 授權失敗，請重新連接。", "授權失敗");
+      setError(`${oauthError.message || "Spotify 授權失敗，請重新連接。"} ${getSpotifyRedirectHint()}`, "授權失敗");
     } finally {
       url.searchParams.delete("code");
       window.history.replaceState({}, document.title, url.toString());
@@ -834,12 +858,12 @@ let spotifyAutoResumeUntil = 0;
 
     if (!spotifyPlayButton) {
       console.warn("[Spotify] play button not found");
-      setSpotifyStatus("Spotify 播放按鈕不存在，請重新整理頁面。", "控制項遺失");
+      setSpotifyStatus("Spotify 控制項沒有完整載入，請重新整理頁面後再試。", "控制項遺失");
       return;
     }
 
     if (!spotifyPlayer || !spotifyReady || !spotifyDeviceId) {
-      setSpotifyStatus("Spotify Player 尚未準備完成，請稍候或按重新連接", "播放器未準備");
+      setSpotifyStatus("Spotify Player 尚未準備完成。請先按重新連接播放器，確認 SmartStudy-AI Player 已成為 active device。", "播放器未準備");
       console.warn("Spotify not ready:", {
         hasPlayer: !!spotifyPlayer,
         spotifyReady,
@@ -901,7 +925,7 @@ let spotifyAutoResumeUntil = 0;
     const spotifyReady = state.sdkReady;
     const spotifyDeviceId = state.deviceId;
     if (!spotifyPlayer || !spotifyReady) {
-      setSpotifyStatus("Spotify Player 尚未準備完成，無法調整音量", "播放器未準備");
+      setSpotifyStatus("Spotify Player 尚未準備完成，無法調整音量。請先重新連接播放器。", "播放器未準備");
       return;
     }
 
@@ -1149,7 +1173,7 @@ let spotifyAutoResumeUntil = 0;
     persistAuth();
     setPremiumState(false);
     renderPlayback(null);
-    setStatus("Spotify 已中斷連線。", "尚未連接 Spotify");
+    setStatus("Spotify 已中斷連線。按下連接 Spotify 可重新授權。", "尚未連接 Spotify");
     updateConnectButtons();
   }
 
@@ -1169,7 +1193,7 @@ let spotifyAutoResumeUntil = 0;
     } = getSpotifyControlElements();
 
     if (!spotifyPlayButton || !spotifyVolumeInput) {
-      setSpotifyStatus("Spotify 控制項未完整載入，請重新整理頁面。", "控制項遺失");
+      setSpotifyStatus("Spotify 控制項沒有完整載入，請重新整理頁面後再試。", "控制項遺失");
     }
 
     if (spotifyPlayButton) {
