@@ -1059,6 +1059,7 @@ function initFocusMusicPlayer() {
       connectButton: document.getElementById("focusSpotifyConnectButton"),
       reconnectButton: document.getElementById("focusSpotifyReconnectButton"),
       disconnectButton: document.getElementById("focusSpotifyDisconnectButton"),
+      authHint: document.getElementById("focusSpotifyAuthHint"),
       nowPlaying: document.getElementById("focusSpotifyNowPlaying"),
       cover: document.getElementById("focusSpotifyCover"),
       trackName: document.getElementById("focusSpotifyTrackName"),
