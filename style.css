@@ -2786,6 +2786,85 @@
       margin-top: 14px;
     }
 
+    .notes-knowledge-toggle {
+      margin-top: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .notes-knowledge-toggle input {
+      margin-top: 3px;
+      accent-color: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    .notes-knowledge-toggle strong {
+      display: block;
+      color: var(--ink);
+    }
+
+    .notes-knowledge-toggle p,
+    .notes-knowledge-status p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .notes-knowledge-status {
+      margin-top: 12px;
+    }
+
+    .notes-knowledge-status strong {
+      display: block;
+      color: var(--ink);
+    }
+
+    .notes-knowledge-preview {
+      margin-top: 12px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .notes-knowledge-preview-toggle {
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .notes-knowledge-preview-body {
+      padding: 0 16px 16px;
+    }
+
+    .notes-knowledge-preview-body.hidden {
+      display: none;
+    }
+
+    .notes-knowledge-preview-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .notes-knowledge-preview-item {
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 14px;
+      background: rgba(227, 238, 252, 0.42);
+      padding: 12px 14px;
+    }
+
+    .notes-knowledge-preview-item strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .notes-knowledge-preview-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
     .notes-mode-summary strong {
       display: block;
       color: var(--ink);
@@ -3067,9 +3146,27 @@
       border-top: 1px solid rgba(148, 163, 184, 0.18);
     }
 
-    .knowledge-search-card {
-      margin-bottom: 22px;
-    }
+.knowledge-search-card {
+  margin-bottom: 22px;
+}
+
+.knowledge-seed-actions {
+  margin-top: 12px;
+}
+
+.knowledge-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.knowledge-summary-topics p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 14px;
+}
 
     .knowledge-search-row {
       display: grid;
@@ -3643,6 +3740,7 @@
       .notes-layout,
       .tutor-layout,
       .knowledge-layout,
+      .knowledge-summary-row,
       .kanban-board,
       .my-notes-grid,
       .form-grid,

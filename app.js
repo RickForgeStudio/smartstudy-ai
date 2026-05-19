@@ -30,6 +30,14 @@ const downloadButton = getElementByIdSafe("downloadButton", "button");
 const modeSelect = getElementByIdSafe("modeSelect", "select");
 const analysisEnhancement = getElementByIdSafe("analysisEnhancement", "select");
 const outputLanguage = getElementByIdSafe("outputLanguage", "select");
+const useKnowledgeBaseCheckbox = getElementByIdSafe("useKnowledgeBaseCheckbox", "input");
+const knowledgeAssistStatus = getElementByIdSafe("knowledgeAssistStatus");
+const knowledgeAssistMeta = getElementByIdSafe("knowledgeAssistMeta");
+const knowledgeAssistPreviewToggle = getElementByIdSafe("knowledgeAssistPreviewToggle", "button");
+const knowledgeAssistPreviewIcon = getElementByIdSafe("knowledgeAssistPreviewIcon");
+const knowledgeAssistPreviewBody = getElementByIdSafe("knowledgeAssistPreviewBody");
+const knowledgeAssistPreviewList = getElementByIdSafe("knowledgeAssistPreviewList");
+const knowledgeAssistPreviewSubtitle = getElementByIdSafe("knowledgeAssistPreviewSubtitle");
 const analysisEnhancementDescription = getElementByIdSafe("analysisEnhancementDescription");
 const modeDescription = getElementByIdSafe("modeDescription");
 const modeBadge = getElementByIdSafe("modeBadge");
@@ -240,6 +248,11 @@ const chatMessages = getElementByIdSafe("chatMessages");
 const sendTutorMessage = getElementByIdSafe("sendTutorMessage", "button");
 const knowledgeSearchInput = getElementByIdSafe("knowledgeSearchInput", "input");
 const knowledgeSearchBtn = getElementByIdSafe("knowledgeSearchBtn", "button");
+const seedKnowledgeBaseButton = getElementByIdSafe("seedKnowledgeBaseButton", "button");
+const knowledgeSummaryFiles = getElementByIdSafe("knowledgeSummaryFiles");
+const knowledgeSummaryChunks = getElementByIdSafe("knowledgeSummaryChunks");
+const knowledgeSummarySubjects = getElementByIdSafe("knowledgeSummarySubjects");
+const knowledgeSummaryTopTopicsText = getElementByIdSafe("knowledgeSummaryTopTopicsText");
 const knowledgeSubjectFilter = getElementByIdSafe("knowledgeSubjectFilter", "select");
 const knowledgeChapterFilter = getElementByIdSafe("knowledgeChapterFilter", "select");
 const knowledgeTagFilter = getElementByIdSafe("knowledgeTagFilter", "select");
@@ -668,6 +681,7 @@ const STORAGE_KEYS = {
   latestResult: "smartstudy_latest_result",
   latestAnalysis: "smartstudy-latest-analysis",
   knowledgeChunks: "smartstudy_knowledge_chunks",
+  knowledgeSeedVersion: "smartstudy_knowledge_seed_version",
   ragMode: "smartstudy-rag-mode",
   musicExpanded: "smartstudy.focusMusic.expanded"
 };
@@ -680,6 +694,7 @@ const SMARTSTUDY_LATEST_RESULT_KEY = STORAGE_KEYS.latestResult;
 const LATEST_ANALYSIS_STORAGE_KEY = STORAGE_KEYS.latestAnalysis;
 const KNOWLEDGE_CHUNKS_KEY = STORAGE_KEYS.knowledgeChunks;
 const LOCAL_RAG_STORAGE_KEY = STORAGE_KEYS.knowledge;
+const KNOWLEDGE_SEED_VERSION_KEY = STORAGE_KEYS.knowledgeSeedVersion;
 const RAG_MODE_STORAGE_KEY = STORAGE_KEYS.ragMode;
 const RAG_TO_TUTOR_STORAGE_KEY = "smartstudy-rag-to-tutor";
 const RAG_TO_STUDY_AGENT_STORAGE_KEY = "smartstudy-rag-to-study-agent";
@@ -766,6 +781,7 @@ function updateInterfaceLanguage() {
   });
 
   document.documentElement.lang = currentLanguage === "en" ? "en" : "zh-Hant";
+  updateKnowledgeAssistStatus();
 }
 
 function setLanguage(lang) {
@@ -793,6 +809,7 @@ function setLanguage(lang) {
   renderMyNotes();
   updateKnowledgeResults();
   updateExportPreview();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
 }
 
 function initLanguageToggle() {
@@ -1408,6 +1425,11 @@ const i18n = {
     pasteTextLabel: "貼上文字",
     noteModesLabel: "整理模式（可複選）",
     outputLanguageLabel: "輸出語言",
+    knowledgeAssistLabel: "知識庫輔助",
+    knowledgeAssistOption: "引用最相關知識庫段落",
+    knowledgeAssistHint: "整理筆記時可額外參考知識庫中最相關的 1～3 段補充內容。",
+    knowledgeAssistPreviewTitle: "引用預覽",
+    knowledgeAssistPreviewSubtitle: "整理前可先查看這次會引用的知識片段。",
     notesResultTitle: "整理結果",
     notesResultSubtitle: "先看一句重點，展開後再看詳細解析",
     tutorTitle: "AI Tutor 問答老師",
@@ -1428,6 +1450,11 @@ const i18n = {
     chatAreaSubtitle: "回答會採用「重點 → 解釋 → 考試可能問法」的教學格式",
     knowledgeSubtitle: "搜尋你整理過的筆記、摘要與重點，快速找到相關考點。",
     knowledgeHelperText: "可以搜尋筆記標題、智慧摘要、可能重點、關鍵字、易錯觀念與考題預測。",
+    loadDemoKnowledge: "載入 / 重建示範知識庫",
+    knowledgeSummaryFiles: "知識文件",
+    knowledgeSummaryChunks: "知識段落",
+    knowledgeSummarySubjects: "目前領域",
+    knowledgeSummaryTopTopics: "主要主題",
     filtersTitle: "篩選",
     filtersSubtitle: "縮小搜尋範圍",
     subjectLabel: "科目",
@@ -1561,6 +1588,11 @@ const i18n = {
     pasteTextLabel: "Paste Text",
     noteModesLabel: "Organization Modes (Multi-select)",
     outputLanguageLabel: "Output Language",
+    knowledgeAssistLabel: "Knowledge Support",
+    knowledgeAssistOption: "Include the most relevant knowledge-base passages",
+    knowledgeAssistHint: "When organizing notes, SmartStudy AI can optionally reference 1 to 3 relevant supporting passages from your knowledge base.",
+    knowledgeAssistPreviewTitle: "Reference Preview",
+    knowledgeAssistPreviewSubtitle: "Preview the knowledge passages that may be referenced before generating notes.",
     notesResultTitle: "Results",
     notesResultSubtitle: "Start with one key idea, then expand for full details.",
     tutorTitle: "AI Tutor",
@@ -1581,6 +1613,11 @@ const i18n = {
     chatAreaSubtitle: "Answers follow a teaching structure: key point, explanation, and possible exam question.",
     knowledgeSubtitle: "Search your organized notes, summaries, and key points to quickly find relevant exam topics.",
     knowledgeHelperText: "You can search note titles, summaries, key points, keywords, common mistakes, and predicted questions.",
+    loadDemoKnowledge: "Load / Rebuild Demo Knowledge Base",
+    knowledgeSummaryFiles: "Knowledge Files",
+    knowledgeSummaryChunks: "Knowledge Chunks",
+    knowledgeSummarySubjects: "Active Subjects",
+    knowledgeSummaryTopTopics: "Main Topics",
     filtersTitle: "Filters",
     filtersSubtitle: "Narrow the search scope",
     subjectLabel: "Subject",
@@ -2471,6 +2508,395 @@ function saveLocalKnowledgeStore(store) {
   saveToStorage(KNOWLEDGE_CHUNKS_KEY, Array.isArray(store?.chunks) ? store.chunks : []);
 }
 
+const KNOWLEDGE_SEED_VERSION = "2026-05-multidomain-seed-v1";
+
+function buildSeedKnowledgeDocuments() {
+  return [
+    {
+      fileName: "SmartStudy Seed - Python Foundations",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "Python 基礎語法",
+          text: "Python 強調可讀性，常見流程包含變數、條件判斷、迴圈與函式。初學者最容易忽略的是縮排規則與資料型別的差異，例如 list、tuple、dict 在可變性與用途上就不一樣。整理這類筆記時，應先抓語法角色，再用簡短例子說明輸入輸出與常見錯誤。",
+          paragraphNumber: 1
+        },
+        {
+          title: "List Comprehension",
+          text: "List comprehension 是 Python 常見的語法糖，用一行式子把迴圈、條件與輸出列表整合起來。它適合做輕量資料轉換，但如果條件太多，反而會降低可讀性。理解時要先看輸出表達式，再看 for 與 if 的順序，這樣比較不容易混淆。",
+          paragraphNumber: 2
+        },
+        {
+          title: "除錯與可讀性",
+          text: "程式筆記除了記語法，也要記除錯思路，例如先確認輸入、再檢查流程、最後檢查輸出。當程式可以執行不代表容易維護，因此命名、註解與函式切分同樣重要。若要用 AI Tutor 問程式題，最好附上錯誤訊息與你目前的理解。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Data Analysis Notes",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "資料分析流程",
+          text: "資料分析通常從問題定義開始，再進入資料蒐集、清理、探索、建模與解讀。若一開始沒有明確問題，後面就容易變成只有圖表沒有結論。好的分析筆記要把指標、資料來源、限制條件與可行結論一起整理，不要只記分析工具名稱。",
+          paragraphNumber: 1
+        },
+        {
+          title: "Pandas 與表格整理",
+          text: "Pandas 常用於清理缺失值、轉換欄位格式、篩選資料與建立彙整表。學習時要分清楚 row、column、index 的角色，也要理解 copy 與 view 可能帶來的修改副作用。若資料量變大，向量化操作通常會比逐列迴圈穩定。",
+          paragraphNumber: 2
+        },
+        {
+          title: "解讀結果",
+          text: "分析結果不只是在圖上找最高點或最低點，而是要回到原本問題。若看到相關性，不能直接推論因果；若看到平均值，也要注意離群值與分布形狀。整理筆記時，建議把結論、限制與下一步問題分開寫。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Accounting Review",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "金融資產分類",
+          text: "FVTPL 與 FVOCI 的核心差異在於公允價值變動認列位置，以及出售時是否影響損益。理解時不要只背縮寫，應該連同衡量基礎、持有目的與報表影響一起整理。若題目要求比較，通常會考分類依據與後續處理。",
+          paragraphNumber: 1
+        },
+        {
+          title: "分錄思考",
+          text: "會計分錄的重點不是死背借貸方向，而是先判斷交易影響了哪些會計要素。資產增加未必永遠在借方被單獨考，因為題目常會搭配費用、收入或金融資產重分類。整理筆記時，可以把交易事件、分錄結構與原因寫成三欄。",
+          paragraphNumber: 2
+        },
+        {
+          title: "常見易錯點",
+          text: "學生常把 OCI 與損益混在一起，也常忽略出售金融資產時的重分類效果。若只記結論而不記原因，到比較題或綜合題就容易答錯。好的複習方式是把觀念差異、報表位置與出售後處理放在同一張表裡對照。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Hospital Management",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "醫院流程管理",
+          text: "醫院管理不只處理醫療品質，也同時考慮掛號、分流、病床、人力與資訊系統的效率。當流程設計不清楚時，病患等待時間會變長，護理與行政負擔也會上升。整理這類筆記時，應把服務流程、痛點與改善方案分開寫。",
+          paragraphNumber: 1
+        },
+        {
+          title: "病人安全",
+          text: "病人安全的重點在於降低可預防錯誤，例如交接失誤、藥物辨識錯誤與感染控制缺口。這類內容常見考法是情境題，要你判斷哪個環節風險最高，或哪個改善措施最有效。複習時可以從流程、責任角色與指標三個角度整理。",
+          paragraphNumber: 2
+        },
+        {
+          title: "績效指標",
+          text: "醫院績效常同時看品質、成本、效率與病患滿意度。若只追求看診量，可能反而犧牲照護品質，因此管理上需要平衡不同指標。筆記整理時，適合把指標定義、可能衝突與改善工具一起並列。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Daily Observation",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "咖啡廳觀察",
+          text: "在咖啡廳進行觀察時，可以從座位選擇、停留時間、裝置使用與互動模式切入。有人偏好靠窗單人座位，有人則會選插座旁並長時間使用筆電。若要整理成筆記，建議把觀察事實、可能原因與不確定處分開，不要太快下結論。",
+          paragraphNumber: 1
+        },
+        {
+          title: "行為紀錄方法",
+          text: "觀察筆記應先記可見行為，再補自己的推測，例如先寫某人反覆查看手機，再討論可能是等待訊息或分心。這樣能降低主觀判斷直接混入資料本身。若日後要回顧，這種分層記錄會比較清楚。",
+          paragraphNumber: 2
+        },
+        {
+          title: "從觀察到洞見",
+          text: "觀察的價值不只在紀錄細節，而是從重複模式中找出可用的洞見。像是環境噪音、空間配置或背景音樂，都可能影響停留時間與專注程度。整理時可以把模式、例外情況與下一步想驗證的問題一起寫下。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Language Learning",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "單字記憶",
+          text: "背單字不只是看中文意思，而是要連同詞性、常見搭配與使用情境一起記。若只記翻譯，看到題目時容易不知道怎麼真正用在句子裡。整理筆記時，適合把核心意思、例句與常錯用法放在一起。",
+          paragraphNumber: 1
+        },
+        {
+          title: "文法理解",
+          text: "文法學習最怕只記規則名稱，卻不知道它在句子裡解決什麼問題。像是時態、被動語態或關係子句，都應先理解溝通目的，再看形式。若要複習，最好用自己的句子重組一次，而不是只讀課本例句。",
+          paragraphNumber: 2
+        },
+        {
+          title: "輸入與輸出",
+          text: "語言能力提升通常來自穩定輸入與逐步輸出。閱讀與聽力提供範例，寫作與口說則幫助你發現自己還不會的地方。筆記中可以把常見錯誤分類為字彙、文法、搭配與表達邏輯。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Design Thinking",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "設計思考流程",
+          text: "設計思考常從同理開始，再進入定義問題、發想、原型與測試。若一開始沒有真正理解使用者，後面的解法可能只是設計者自己覺得好。整理筆記時，最好把每個階段的目的與輸出物分開記錄。",
+          paragraphNumber: 1
+        },
+        {
+          title: "資訊層級",
+          text: "一個介面是否容易理解，常取決於資訊層級是否清楚。標題、次標、說明與操作按鈕如果都一樣重，使用者就不知道先看哪裡。設計筆記可以把視覺層級、操作流程與內容密度一起整理。",
+          paragraphNumber: 2
+        },
+        {
+          title: "測試與迭代",
+          text: "原型測試不是證明設計師是對的，而是找出使用者哪裡卡住。若多數人都在同一個步驟停下來，問題通常在資訊提示或流程設計。複習時，應記錄觀察到的卡點與後續調整方向。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Biology Basics",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "細胞與功能",
+          text: "細胞是生命系統的基本單位，不同胞器負責不同功能，例如粒線體與能量轉換、核糖體與蛋白質合成有關。學生常把名稱背起來，卻沒有把功能連到整體流程。整理筆記時，適合用結構、功能、關聯三層去記。",
+          paragraphNumber: 1
+        },
+        {
+          title: "恆定與調節",
+          text: "生物體會透過回饋機制維持體內恆定，例如體溫、血糖或水分平衡。這類題目常考負回饋與正回饋差異，因此複習時要把刺激、感受器、反應器與結果串成流程。只背定義通常不夠。",
+          paragraphNumber: 2
+        },
+        {
+          title: "學習重點整理",
+          text: "生物筆記最實用的方式是把概念連成系統，例如細胞功能如何影響組織與器官層級。當不同章節彼此有關聯時，記憶會比單點背誦穩定。若遇到名詞很多的單元，先抓核心流程再補細節比較有效。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Psychology of Learning",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "記憶形成",
+          text: "記憶形成通常涉及注意、編碼、儲存與提取。若學習時沒有足夠專注，後面即使反覆看內容，也可能只是熟悉感增加而不是真的記住。整理筆記時，可以把影響記憶的因素與改善策略並列。",
+          paragraphNumber: 1
+        },
+        {
+          title: "主動回想",
+          text: "主動回想比單純重讀更能鞏固學習，因為它迫使大腦練習提取資訊。像是用小測驗、自問自答或空白回憶法，都比只劃重點更有效。若做成筆記系統，可以把回想題與錯誤概念綁在一起。",
+          paragraphNumber: 2
+        },
+        {
+          title: "分散練習",
+          text: "分散練習通常比短時間密集讀書更能提高長期保留。雖然密集練習當下感覺進步很快，但隔一段時間後忘得也快。規劃讀書計畫時，應把複習拆成多次短區段，而不是一次塞滿。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Presentation Skills",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "簡報結構",
+          text: "一份好的簡報通常先定義問題，再提出重點，最後給出結論與下一步。若一開始資訊太多，聽眾會在還沒抓到主題前就失去焦點。整理報告筆記時，可以用背景、主張、證據、結論的框架。",
+          paragraphNumber: 1
+        },
+        {
+          title: "口語表達",
+          text: "口語簡報的重點不是把投影片文字念完，而是替投影片補上脈絡與轉折。講者若能先告訴聽眾為什麼這張重要，再進入細節，理解會比較順。練習時應注意速度、停頓與段落轉換。",
+          paragraphNumber: 2
+        },
+        {
+          title: "視覺與內容平衡",
+          text: "投影片若塞滿字，通常表示內容還沒有被充分整理。真正有層次的簡報會把重點濃縮，再用口頭補充細節。整理這類筆記時，適合分成訊息主線、圖像支援與聽眾可能提問三欄。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Personal Productivity",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "任務拆解",
+          text: "很多人拖延不是因為懶，而是任務太模糊。當事情只被寫成『完成報告』時，大腦很難立刻開始；但若拆成找資料、列大綱、寫第一段，就比較容易進入行動。整理計畫時要把任務寫到足夠具體。",
+          paragraphNumber: 1
+        },
+        {
+          title: "專注與休息",
+          text: "長時間工作不代表高效率，因為注意力會隨時間下降。番茄鐘或其他節奏化休息方式的重點，不只是休息本身，而是創造清楚的開始與結束。若要提高學習穩定度，應把休息也當成流程的一部分。",
+          paragraphNumber: 2
+        },
+        {
+          title: "回顧機制",
+          text: "生產力系統若沒有回顧，就很難知道哪些方法真的有效。每週回顧可以幫助你發現哪些任務總是延期、哪些時段最專注、哪些工具只是看起來很有效。筆記裡最好留下可回顧的觀察而不只是待辦清單。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - AI in Education",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "AI 與學習支援",
+          text: "AI 可以幫助學生整理筆記、生成問題、提供即時回饋，也能協助教師快速重組教材。但它不是替代思考，而是放大整理與回顧的效率。使用時仍需判斷內容正確性與適用脈絡。",
+          paragraphNumber: 1
+        },
+        {
+          title: "風險與限制",
+          text: "AI 回答可能流暢但不一定正確，也可能忽略題目中的特殊條件。如果學生完全依賴生成內容，反而容易缺少原始理解。整理 AI 學習筆記時，應把便利性、風險與人工檢查原則一起記錄。",
+          paragraphNumber: 2
+        },
+        {
+          title: "實際應用",
+          text: "在教育情境中，AI 最適合用來做第一輪整理、引導提問與個人化複習建議。真正的學習價值來自學生回頭檢查、比較與重述內容。若把 AI 與知識庫結合，就能讓回答更接近使用者自己的材料。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - JavaScript Frontend",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "DOM 與事件",
+          text: "前端 JavaScript 常見核心包括 DOM 選取、事件綁定、狀態更新與畫面重新渲染。若元素很多又分散，事件重複綁定很容易造成按鈕點一次卻觸發多次。整理這類筆記時，最好把元素來源、事件目的與副作用分開記錄。",
+          paragraphNumber: 1
+        },
+        {
+          title: "SPA 思維",
+          text: "單頁式應用的重點不是只有不重整頁面，而是要把狀態、畫面與事件關係整理清楚。若切頁後舊狀態還殘留、播放器被重建、或事件越綁越多，就表示資料流設計還不夠穩。複習時應把頁面切換、共用元件與初始化流程分開理解。",
+          paragraphNumber: 2
+        },
+        {
+          title: "可維護性",
+          text: "前端程式變亂通常不是因為功能太多，而是缺少統一的命名、共用樣式與初始化策略。像 localStorage key、按鈕 class、i18n key 如果各寫一套，後續維護成本會快速上升。整理筆記時要把規則、例外與風險點一起記下。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - UX Research",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "訪談與觀察",
+          text: "使用者研究不只是問對方喜不喜歡某個功能，而是理解他的任務、限制與決策方式。觀察與訪談常要一起看，因為使用者說的和實際做的未必完全一致。整理研究筆記時，應分清楚觀察事實、受訪者原話與研究者推論。",
+          paragraphNumber: 1
+        },
+        {
+          title: "痛點判斷",
+          text: "真正的痛點通常會反覆出現在多位使用者的流程中，而不是單一次抱怨。若一個步驟讓很多人停下來、重試或求助，那就值得優先處理。研究整理時要把高頻卡點、低頻特殊案例與可能原因拆開寫。",
+          paragraphNumber: 2
+        },
+        {
+          title: "從發現到建議",
+          text: "研究成果最常見的問題是只有洞察沒有下一步。好的整理方式會把發現、影響、設計建議與待驗證假設並列。這樣團隊在看研究筆記時，不只知道問題，也知道接下來可以做什麼。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Team Collaboration",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "協作與分工",
+          text: "團隊協作最怕責任邊界不清，因為大家都以為別人會處理。有效分工不是把工作切碎而已，而是明確知道誰擁有哪個模組、哪個決策、哪個交付物。整理這類筆記時，可以用責任、依賴、風險三欄描述。",
+          paragraphNumber: 1
+        },
+        {
+          title: "回饋與同步",
+          text: "好的協作回饋應該具體指出問題、影響與建議，而不是只有模糊意見。同步會議的目標也不是把所有事情講一遍，而是快速對齊阻塞點與下一步。若要複習團隊管理概念，這類對齊機制很值得拆開整理。",
+          paragraphNumber: 2
+        },
+        {
+          title: "決策紀錄",
+          text: "很多團隊反覆討論同一題，不是因為沒有想法，而是沒有留下清楚的決策紀錄。當一個決定的背景、限制與取捨沒有被寫下來，後面的人就很難理解為什麼當時那樣做。整理時應把決策原因和結果一起保存。",
+          paragraphNumber: 3
+        }
+      ]
+    },
+    {
+      fileName: "SmartStudy Seed - Creative Writing",
+      extension: "smartstudy-seed",
+      sections: [
+        {
+          title: "敘事節奏",
+          text: "寫作的節奏感來自資訊揭露順序，而不是單靠華麗詞藻。若每段都同樣重，讀者就抓不到真正的轉折。整理寫作筆記時，可以把開場、推進、轉折與收束的功能分別標示出來。",
+          paragraphNumber: 1
+        },
+        {
+          title: "觀點與細節",
+          text: "具體細節能讓文字更有畫面，但若沒有清楚觀點，就容易變成只有堆砌描寫。好的寫作會讓細節服務主題，而不是搶走主題本身。複習時適合把核心觀點與支撐細節對照整理。",
+          paragraphNumber: 2
+        },
+        {
+          title: "修改思路",
+          text: "寫作修改不只是修錯字，而是重新確認每段是否真的有功能。刪掉重複、移動順序、重寫開頭，往往比加更多句子有效。若把修改理由也記下來，會更容易看出自己常見的寫作弱點。",
+          paragraphNumber: 3
+        }
+      ]
+    }
+  ];
+}
+
+function ensureSeedKnowledgeBase() {
+  const store = loadLocalKnowledgeStore();
+  const seedDocuments = buildSeedKnowledgeDocuments();
+  const expectedSeedFiles = seedDocuments.map((document) => document.fileName);
+  const seededVersion = loadFromStorage(KNOWLEDGE_SEED_VERSION_KEY, "");
+  const existingSeedFiles = new Set(
+    (store.files || [])
+      .filter((fileName) => String(fileName || "").startsWith("SmartStudy Seed - "))
+  );
+
+  if (seededVersion === KNOWLEDGE_SEED_VERSION && expectedSeedFiles.every((fileName) => existingSeedFiles.has(fileName))) {
+    return;
+  }
+
+  mergeDocumentsIntoLocalKnowledge(seedDocuments);
+  saveToStorage(KNOWLEDGE_SEED_VERSION_KEY, KNOWLEDGE_SEED_VERSION);
+}
+
+function reloadSeedKnowledgeBase() {
+  const store = loadLocalKnowledgeStore();
+  const nonSeedChunks = (store.chunks || []).filter((chunk) => !String(chunk.fileName || "").startsWith("SmartStudy Seed - "));
+  const nonSeedFiles = [...new Set(nonSeedChunks.map((chunk) => chunk.fileName).filter(Boolean))];
+
+  saveLocalKnowledgeStore({
+    fileCount: nonSeedFiles.length,
+    chunkCount: nonSeedChunks.length,
+    files: nonSeedFiles,
+    chunks: nonSeedChunks,
+    updatedAt: new Date().toISOString()
+  });
+
+  removeFromStorage(KNOWLEDGE_SEED_VERSION_KEY);
+  ensureSeedKnowledgeBase();
+  refreshKnowledgeStats();
+  refreshKnowledgeBaseStatus();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
+  updateKnowledgeResults();
+
+  setKnowledgeStatus(
+    currentLanguage === "en" ? "Demo knowledge base rebuilt" : "示範知識庫已重建",
+    currentLanguage === "en"
+      ? "Fresh multi-domain seed content has been loaded into the local knowledge base."
+      : "已重新載入多領域示範內容到本地知識庫。"
+  );
+}
+
 function setCurrentLanguage(language) {
   currentLanguage = language === "en" ? "en" : "zh";
 }
@@ -2491,14 +2917,39 @@ function getLanguageInstruction() {
   ].join(" ");
 }
 
-function buildNotePrompt({ text, mode }) {
+function buildNotePrompt({ text, mode, originalText = "", knowledgeChunks = [] }) {
+  const hasKnowledgeSupport = Array.isArray(knowledgeChunks) && knowledgeChunks.length > 0;
+  const originalSection = normalizeText(originalText || text);
+  const supportSection = hasKnowledgeSupport
+    ? knowledgeChunks
+        .map((chunk, index) => {
+          const title = normalizeText(chunk.sectionTitle || chunk.fileName || `${currentLanguage === "en" ? "Support passage" : "補充片段"} ${index + 1}`);
+          const content = normalizeText(chunk.content || chunk.text || "");
+          return `${currentLanguage === "en" ? `Support passage ${index + 1}` : `補充片段 ${index + 1}`}｜${title}\n${content}`;
+        })
+        .join("\n\n")
+    : "";
+
   return `
 你是 SmartStudy AI 筆記整理助手。
 
 ${getLanguageInstruction()}
 
-請根據以下內容整理筆記：
-${text}
+${currentLanguage === "en"
+    ? "Please organize the note based on the original note content below."
+    : "請根據下方的原始筆記內容整理筆記。"}
+
+${currentLanguage === "en" ? "Original note content:" : "原始筆記內容："}
+${originalSection}
+
+${hasKnowledgeSupport
+    ? `${currentLanguage === "en"
+        ? "The following knowledge-base passages are only supporting references. Use them only when they genuinely help clarify or complete the original note, and do not let them override the original note's focus."
+        : "以下是知識庫補充段落，只能作為輔助參考。只有在能幫助澄清或補足原始筆記時才可引用，不要讓它們蓋掉原始筆記本身的重點。"}
+
+${currentLanguage === "en" ? "Knowledge-base support:" : "知識庫補充段落："}
+${supportSection}`
+    : ""}
 
 整理模式：${mode}
 
@@ -2516,7 +2967,273 @@ ${text}
 - detail 是較完整的解釋。
 - 不要使用重複模板化開頭。
 - 不要只寫籠統描述，要有具體觀念與說明。
+- 優先以原始筆記內容為主，知識庫只作補充，不要把補充段落當成主題本體。
 `.trim();
+}
+
+function buildKnowledgeAssistQuery(text) {
+  const normalized = normalizeText(text);
+  const firstLines = normalized
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter(Boolean)
+    .slice(0, 6)
+    .join(" ");
+
+  return normalizeText(firstLines || normalized).slice(0, 600);
+}
+
+function retrieveKnowledgeSupportForNote(text, limit = 3) {
+  const store = loadLocalKnowledgeStore();
+  const chunks = Array.isArray(store?.chunks) ? store.chunks : [];
+  if (!chunks.length) {
+    return [];
+  }
+
+  const query = buildKnowledgeAssistQuery(text);
+  const queryTokens = tokenize(query);
+  if (!queryTokens.length) {
+    return [];
+  }
+
+  return chunks
+    .map((item) => ({
+      ...item,
+      score: scoreTextAgainstQuestion(queryTokens, item.content || item.text || "")
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || (b.content || b.text || "").length - (a.content || a.text || "").length)
+    .slice(0, limit);
+}
+
+function buildNoteAnalysisSupport(text) {
+  const shouldUseKnowledge = Boolean(useKnowledgeBaseCheckbox?.checked);
+  if (!shouldUseKnowledge) {
+    return {
+      shouldUseKnowledge,
+      matchedChunks: [],
+      analysisText: text,
+      promptText: text
+    };
+  }
+
+  const matchedChunks = retrieveKnowledgeSupportForNote(text, 3);
+  if (!matchedChunks.length) {
+    return {
+      shouldUseKnowledge,
+      matchedChunks: [],
+      analysisText: text,
+      promptText: text
+    };
+  }
+
+  const supportText = matchedChunks
+    .map((chunk, index) => {
+      const heading = chunk.sectionTitle || chunk.fileName || `知識片段 ${index + 1}`;
+      return `[補充資料 ${index + 1}] ${heading}\n${normalizeText(chunk.content || chunk.text || "")}`;
+    })
+    .join("\n\n");
+
+  const combinedText = normalizeText([
+    text,
+    currentLanguage === "en" ? "Knowledge base support:" : "知識庫補充段落：",
+    supportText
+  ].join("\n\n"));
+
+  return {
+    shouldUseKnowledge,
+    matchedChunks,
+    analysisText: combinedText,
+    promptText: combinedText
+  };
+}
+
+function renderKnowledgeAssistPreview(chunks = null) {
+  if (!knowledgeAssistPreviewList || !knowledgeAssistPreviewSubtitle) {
+    return;
+  }
+
+  if (!Boolean(useKnowledgeBaseCheckbox?.checked)) {
+    knowledgeAssistPreviewSubtitle.textContent = currentLanguage === "en"
+      ? "Knowledge-base support is off, so no preview is shown."
+      : "目前已關閉知識庫輔助，因此不顯示引用預覽。";
+    knowledgeAssistPreviewList.innerHTML = `<p class="empty-state">${currentLanguage === "en" ? "Turn on knowledge support to preview referenced passages." : "開啟知識庫輔助後，這裡會顯示引用預覽。"}</p>`;
+    return;
+  }
+
+  if (!Array.isArray(chunks)) {
+    knowledgeAssistPreviewSubtitle.textContent = currentLanguage === "en"
+      ? "Type or upload content first to preview the referenced knowledge passages."
+      : "請先輸入或上傳內容，才會顯示這次可能引用的知識片段。";
+    knowledgeAssistPreviewList.innerHTML = `<p class="empty-state">${currentLanguage === "en" ? "No preview yet." : "目前尚未顯示知識庫引用預覽。"}</p>`;
+    return;
+  }
+
+  if (!chunks.length) {
+    knowledgeAssistPreviewSubtitle.textContent = currentLanguage === "en"
+      ? "No relevant supporting passage was found for the current note."
+      : "目前沒有找到與這份筆記相關的補充段落。";
+    knowledgeAssistPreviewList.innerHTML = `<p class="empty-state">${currentLanguage === "en" ? "No matching knowledge passage found." : "目前沒有符合的知識片段。"}</p>`;
+    return;
+  }
+
+  knowledgeAssistPreviewSubtitle.textContent = currentLanguage === "en"
+    ? `Previewing ${chunks.length} supporting passage(s) that will be referenced in this run.`
+    : `目前預覽本次會引用的 ${chunks.length} 段補充內容。`;
+
+  knowledgeAssistPreviewList.innerHTML = chunks.map((chunk, index) => {
+    const title = escapeHTML(normalizeText(chunk.sectionTitle || chunk.fileName || `${currentLanguage === "en" ? "Support passage" : "補充片段"} ${index + 1}`));
+    const content = escapeHTML(extractPreviewText(normalizeText(chunk.content || chunk.text || ""), currentLanguage === "en" ? "No content." : "無內容。", 180));
+    return `
+      <article class="notes-knowledge-preview-item">
+        <strong>${currentLanguage === "en" ? `Support ${index + 1}` : `補充 ${index + 1}`}｜${title}</strong>
+        <p>${content}</p>
+      </article>
+    `;
+  }).join("");
+}
+
+function refreshKnowledgeAssistPreviewFromCurrentInput() {
+  const currentText = normalizeText(sourceText?.value || "");
+  if (!currentText) {
+    updateKnowledgeAssistStatus();
+    renderKnowledgeAssistPreview(null);
+    return;
+  }
+
+  const support = buildNoteAnalysisSupport(currentText);
+  updateKnowledgeAssistStatus(support.matchedChunks);
+  renderKnowledgeAssistPreview(support.matchedChunks);
+}
+
+function detectSubject(text) {
+  return inferSubjectFromText(normalizeText(text || ""), "", getDefaultSubjectLabel());
+}
+
+function extractTags(text) {
+  const normalized = normalizeText(text || "").toLowerCase();
+  const tags = [];
+
+  if (/(摘要|summary|總結|overview)/i.test(normalized)) tags.push("summary");
+  if (/(重點|key point|核心|important)/i.test(normalized)) tags.push("keyPoints");
+  if (/(考題|quiz|question|測驗|題目)/i.test(normalized)) tags.push("quiz");
+  if (/(關鍵字|keyword|term|名詞)/i.test(normalized)) tags.push("keywords");
+  if (/(易錯|mistake|混淆|confuse)/i.test(normalized)) tags.push("mistakes");
+  if (/(概念|concept|關聯|connection)/i.test(normalized)) tags.push("concepts");
+
+  return [...new Set(tags)];
+}
+
+function AI_generateNote(text, options = {}) {
+  const normalizedText = normalizeText(text || "");
+  const titleSeed = normalizeText(options.title || normalizedText.split(/\n+/)[0] || "");
+  const subject = detectSubject(normalizedText);
+  const chapter = inferChapterFromText(normalizedText, titleSeed);
+  const tags = extractTags(normalizedText);
+
+  return {
+    title: titleSeed || (currentLanguage === "en" ? "AI Generated Note" : "AI 生成筆記"),
+    subject,
+    chapter: chapter || (currentLanguage === "en" ? "Auto classified" : "自動分類"),
+    tags,
+    content: normalizedText
+  };
+}
+
+function updateFilters(notes = getMyNotes()) {
+  const normalizedNotes = Array.isArray(notes) ? notes : [];
+  syncMyNotesSubjectFilterOptions(normalizedNotes);
+
+  const knowledgeItems = getKnowledgeItems();
+  syncKnowledgeSubjectFilterOptions(knowledgeItems);
+  syncKnowledgeChapterFilterOptions(knowledgeItems);
+  syncKnowledgeTagFilterOptions(knowledgeItems);
+
+  renderMyNotes();
+  updateKnowledgeResults();
+
+  return {
+    subjects: [...new Set(normalizedNotes.map((note) => normalizeText(note.subject)).filter(Boolean))],
+    chapters: [...new Set(knowledgeItems.map((item) => normalizeText(item.chapter)).filter(Boolean))],
+    tags: [...new Set(knowledgeItems.flatMap((item) => item.tags || buildDynamicTagKeys(item.result)))]
+  };
+}
+
+async function generateNotes(fileText, useKnowledgeBase = true) {
+  const normalizedText = normalizeText(fileText || "");
+  if (!normalizedText) {
+    return null;
+  }
+
+  sourceText.value = normalizedText;
+  if (useKnowledgeBaseCheckbox) {
+    useKnowledgeBaseCheckbox.checked = Boolean(useKnowledgeBase);
+  }
+
+  updateCounts();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
+
+  const result = await handleGenerateNotes();
+  if (!result) {
+    return null;
+  }
+
+  updateFilters(getMyNotes());
+  return getMyNotes()[0] || null;
+}
+
+function updateKnowledgeAssistStatus(chunks = null) {
+  if (!knowledgeAssistStatus || !knowledgeAssistMeta) {
+    return;
+  }
+
+  const useKnowledge = Boolean(useKnowledgeBaseCheckbox?.checked);
+  if (!useKnowledge) {
+    knowledgeAssistStatus.textContent = currentLanguage === "en"
+      ? "Knowledge-base support is currently turned off."
+      : "目前已關閉知識庫輔助。";
+    knowledgeAssistMeta.textContent = currentLanguage === "en"
+      ? "Only the text you upload or paste will be used to generate the note."
+      : "系統只會使用你上傳或貼上的文字來整理筆記。";
+    renderKnowledgeAssistPreview([]);
+    return;
+  }
+
+  if (!Array.isArray(chunks)) {
+    knowledgeAssistStatus.textContent = currentLanguage === "en"
+      ? "Knowledge-base support is enabled."
+      : "目前會引用知識庫輔助內容。";
+    knowledgeAssistMeta.textContent = currentLanguage === "en"
+      ? "If no relevant content exists yet, SmartStudy AI will organize only your uploaded or pasted text."
+      : "如果目前知識庫沒有相關內容，系統會只整理你上傳或貼上的文字。";
+    return;
+  }
+
+  if (!chunks.length) {
+    knowledgeAssistStatus.textContent = currentLanguage === "en"
+      ? "Knowledge-base support is enabled, but no relevant passage was found."
+      : "已啟用知識庫輔助，但目前沒有找到相關段落。";
+    knowledgeAssistMeta.textContent = currentLanguage === "en"
+      ? "This run will organize only the file text itself."
+      : "本次會只整理檔案本身的內容。";
+    return;
+  }
+
+  const titles = chunks
+    .map((chunk) => normalizeText(chunk.sectionTitle || chunk.fileName || ""))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  knowledgeAssistStatus.textContent = currentLanguage === "en"
+    ? `Knowledge-base support is enabled and ${chunks.length} relevant passage(s) will be referenced.`
+    : `已啟用知識庫輔助，將引用 ${chunks.length} 段最相關內容。`;
+  knowledgeAssistMeta.textContent = titles.length
+    ? (currentLanguage === "en"
+        ? `Referenced sources: ${titles.join(", ")}`
+        : `引用來源：${titles.join("、")}`)
+    : (currentLanguage === "en"
+        ? "Relevant supporting passages were found in the current knowledge base."
+        : "已從目前知識庫找到相關補充段落。");
 }
 
 function buildTutorPrompt({ question, source }) {
@@ -4119,6 +4836,7 @@ function setBusyState(isBusy) {
   chooseFileButton.disabled = isBusy;
   analyzeButton.disabled = isBusy;
   demoButton.disabled = isBusy;
+  useKnowledgeBaseCheckbox.disabled = isBusy;
 }
 
 function restoreUploadHelp() {
@@ -6326,32 +7044,34 @@ function generateRecommendedQuestions(currentNote) {
     .filter(Boolean)
     .join(" ");
 
-  const title = currentNote.title || "這份筆記";
+  const title = currentNote.title || (currentLanguage === "en" ? "this note" : "這份筆記");
+  const subjectLabel = currentNote.subject || getDefaultSubjectLabel();
+  const chapterLabel = currentNote.chapter || (currentLanguage === "en" ? "this material" : "這份資料");
 
   if (!textSource.trim()) {
     return currentLanguage === "en"
       ? [
           `Can you explain the core idea of "${title}"?`,
-          "What is the easiest concept in this note to confuse?",
-          "How might this note appear on an exam?"
+          `What is the easiest concept in this ${subjectLabel} material to confuse?`,
+          `How might ${chapterLabel} be asked in a quiz, review, or discussion?`
         ]
       : [
           `請解釋「${title}」的核心重點？`,
-          "這份筆記中最容易混淆的觀念是什麼？",
-          "這份筆記可能會怎麼出考題？"
+          `這份${subjectLabel}資料中最容易混淆的觀念是什麼？`,
+          `這份${chapterLabel}可能會怎麼被提問、測驗或延伸應用？`
         ];
   }
 
   return currentLanguage === "en"
     ? [
         `Can you explain the core idea of "${title}" in a simple way?`,
-        "Which concept in this source is most likely to appear on the exam?",
-        "What parts of this source are easiest to confuse or answer incorrectly?"
+        `What ideas from this ${subjectLabel} source are most worth understanding first?`,
+        `Which part of ${chapterLabel} is most likely to be misunderstood or answered incorrectly?`
       ]
     : [
         `請用簡單方式解釋「${title}」的核心重點？`,
-        "這份資料中最可能被考的觀念是什麼？",
-        "這份資料有哪些容易混淆或容易答錯的地方？"
+        `這份${subjectLabel}資料最值得先理解的觀念是什麼？`,
+        `這份${chapterLabel}有哪些容易混淆或容易答錯的地方？`
       ];
 }
 
@@ -6407,8 +7127,8 @@ function updateTutorSourceUI() {
     return;
   }
 
-  currentTutorSourceTitle.textContent = currentTutorSource.title || "未命名筆記";
-  const subject = currentTutorSource.subject || "未分類";
+  currentTutorSourceTitle.textContent = currentTutorSource.title || (currentLanguage === "en" ? "Untitled note" : "未命名筆記");
+  const subject = currentTutorSource.subject || getDefaultSubjectLabel();
   const modes = Array.isArray(currentTutorSource.modes) && currentTutorSource.modes.length
     ? currentTutorSource.modes
     : [currentTutorSource.mode || "未指定模式"];
@@ -6608,22 +7328,158 @@ function openNoteInTutor(note) {
 }
 
 function normalizeKnowledgeSubjectValue(subject) {
-  const value = normalizeText(String(subject || "")).toLowerCase();
-  if (!value) return "other";
-  if (value.includes("會計") || value.includes("accounting")) return "accounting";
-  if (value.includes("永續") || value.includes("sustainable")) return "sustainableFinance";
-  if (value.includes("醫院") || value.includes("hospital")) return "hospitalManagement";
-  return "other";
+  return normalizeFilterValue(subject);
+}
+
+function normalizeFilterValue(value) {
+  return normalizeText(String(value || ""))
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getDefaultSubjectLabel() {
+  return currentLanguage === "en" ? "General Notes" : "一般筆記";
+}
+
+function getDefaultKnowledgeSubjectLabel() {
+  return currentLanguage === "en" ? "Knowledge Base" : "知識庫";
+}
+
+function extractCandidateHeadingLines(text) {
+  return normalizeText(text)
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter((line) => line && !looksLikeNoiseLine(line))
+    .filter((line) => line.length <= 48)
+    .slice(0, 12);
+}
+
+function inferSubjectFromText(text, title = "", fallback = "") {
+  const combined = `${title}\n${text}`.toLowerCase();
+  const subjectMatchers = [
+    { label: currentLanguage === "en" ? "Accounting" : "會計", patterns: ["fvtpl", "fvoci", "oci", "debit", "credit", "financial asset", "會計", "分錄", "損益"] },
+    { label: currentLanguage === "en" ? "Finance" : "金融", patterns: ["bond", "portfolio", "derivative", "投資", "金融", "利率", "股票"] },
+    { label: currentLanguage === "en" ? "Programming" : "程式設計", patterns: ["python", "javascript", "react", "api", "function", "class", "bug", "程式", "演算法", "函式"] },
+    { label: currentLanguage === "en" ? "Data Science" : "資料科學", patterns: ["machine learning", "dataset", "model", "training", "dataframe", "pandas", "資料分析", "模型"] },
+    { label: currentLanguage === "en" ? "Medicine" : "醫學", patterns: ["symptom", "diagnosis", "patient", "clinical", "disease", "醫學", "病人", "症狀"] },
+    { label: currentLanguage === "en" ? "Hospital Management" : "醫院管理", patterns: ["hospital", "ward", "醫院", "病房", "醫務", "healthcare management"] },
+    { label: currentLanguage === "en" ? "Language Learning" : "語言學習", patterns: ["grammar", "vocabulary", "pronunciation", "英文", "日文", "單字", "文法"] },
+    { label: currentLanguage === "en" ? "Science" : "自然科學", patterns: ["physics", "chemistry", "biology", "實驗", "化學", "物理", "生物"] },
+    { label: currentLanguage === "en" ? "Design" : "設計", patterns: ["typography", "layout", "color palette", "ux", "ui", "設計", "版面"] },
+    { label: currentLanguage === "en" ? "Observation Notes" : "觀察筆記", patterns: ["observation", "field note", "訪談", "觀察", "紀錄", "日常"] },
+    { label: currentLanguage === "en" ? "Management" : "管理", patterns: ["management", "strategy", "workflow", "project", "管理", "流程", "策略"] }
+  ];
+
+  const matched = subjectMatchers.find(({ patterns }) => patterns.some((pattern) => combined.includes(pattern)));
+  if (matched) {
+    return matched.label;
+  }
+
+  const headingMatch = extractCandidateHeadingLines(title || text)[0];
+  if (headingMatch && headingMatch.length <= 20) {
+    return headingMatch;
+  }
+
+  return fallback || getDefaultSubjectLabel();
+}
+
+function inferChapterFromText(text, title = "") {
+  const combinedHeadings = extractCandidateHeadingLines(`${title}\n${text}`);
+  const explicitChapter = combinedHeadings.find((line) => /(^chapter\s*\d+)|(^第.{1,6}[章節單元課])|(^unit\s*\d+)|(^module\s*\d+)/i.test(line));
+  if (explicitChapter) {
+    return explicitChapter;
+  }
+
+  const semanticHeading = combinedHeadings.find((line) => line.length >= 4 && line.length <= 24);
+  return semanticHeading || "";
+}
+
+function buildDynamicTagKeys(result) {
+  const dynamicTags = [];
+  if (result?.summary?.preview) dynamicTags.push("summary");
+  if (result?.keyPoints?.preview) dynamicTags.push("keyPoints");
+  if (result?.quiz?.preview) dynamicTags.push("quiz");
+  if (result?.keywords?.preview) dynamicTags.push("keywords");
+  if (result?.mistakes?.preview) dynamicTags.push("mistakes");
+  if (result?.concepts?.preview) dynamicTags.push("concepts");
+  return dynamicTags;
+}
+
+function buildDynamicTagLabel(tagKey) {
+  const labelMap = {
+    summary: getI18nText("tagSummary", "智慧摘要"),
+    keyPoints: getI18nText("tagKeyPoints", "可能重點"),
+    quiz: getI18nText("tagQuiz", "考題預測"),
+    keywords: getI18nText("tagKeywords", "關鍵字"),
+    mistakes: getI18nText("tagMistakes", "易錯觀念"),
+    concepts: getI18nText("tagConcepts", "概念連結")
+  };
+
+  return labelMap[tagKey] || tagKey;
+}
+
+function fillDynamicSelect(selectElement, items, allLabel, normalizeFn = normalizeFilterValue) {
+  if (!selectElement) return;
+
+  const previousValue = selectElement.value || "all";
+  selectElement.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = allLabel;
+  selectElement.appendChild(allOption);
+
+  items.forEach((item) => {
+    const value = normalizeFn(item);
+    if (!value) return;
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = item;
+    selectElement.appendChild(option);
+  });
+
+  const availableValues = items.map((item) => normalizeFn(item)).filter(Boolean);
+  selectElement.value = availableValues.includes(previousValue) ? previousValue : "all";
+}
+
+function syncKnowledgeSubjectFilterOptions(items = getKnowledgeItems()) {
+  const subjects = [...new Set(items.map((item) => normalizeText(item.subject)).filter(Boolean))];
+  fillDynamicSelect(knowledgeSubjectFilter, subjects, getI18nText("allSubjects", "全部科目"));
+}
+
+function syncKnowledgeTagFilterOptions(items = getKnowledgeItems()) {
+  if (!knowledgeTagFilter) return;
+
+  const tags = [...new Set(items.flatMap((item) => item.tags || buildDynamicTagKeys(item.result)))];
+  const previousValue = knowledgeTagFilter.value || "all";
+  knowledgeTagFilter.innerHTML = `<option value="all">${getI18nText("allTags", "全部標籤")}</option>`;
+
+  tags.forEach((tag) => {
+    const option = document.createElement("option");
+    option.value = tag;
+    option.textContent = buildDynamicTagLabel(tag);
+    knowledgeTagFilter.appendChild(option);
+  });
+
+  knowledgeTagFilter.value = tags.includes(previousValue) ? previousValue : "all";
+}
+
+function syncMyNotesSubjectFilterOptions(notes = getMyNotes()) {
+  const subjects = [...new Set(notes.map((note) => normalizeText(note.subject)).filter(Boolean))];
+  fillDynamicSelect(myNotesSubjectFilter, subjects, getI18nText("allSubjects", "全部科目"));
 }
 
 function buildRagChunkSourceNote(chunk) {
   const title = chunk.fileName || chunk.sectionTitle || "RAG 知識片段";
   const content = normalizeText(chunk.text || chunk.content || chunk.quote || "");
+  const inferredSubject = inferSubjectFromText(content, title, getDefaultKnowledgeSubjectLabel());
+  const inferredChapter = inferChapterFromText(content, chunk.sectionTitle || title);
   return {
     id: `rag_${title}_${chunk.chunkId || chunk.paragraphNumber || Date.now()}`,
     title,
-    subject: "知識庫",
-    chapter: chunk.sectionTitle || "",
+    subject: inferredSubject,
+    chapter: inferredChapter || chunk.sectionTitle || "",
     mode: "knowledge",
     language: currentLanguage,
     createdAt: chunk.createdAt || new Date().toISOString(),
@@ -6665,14 +7521,18 @@ function getKnowledgeItems() {
       ? note.modes.filter((mode) => noteModeDisplayConfigs[mode])
       : [note.mode || ""].filter(Boolean);
     const primaryMode = note.mode || getPrimaryNoteMode(noteModes);
+    const dynamicTags = Array.isArray(note.tags) && note.tags.length
+      ? note.tags
+      : buildDynamicTagKeys(result);
 
     return {
       id: note.id,
       title: note.title || "未命名筆記",
-      subject: note.subject || "未分類",
+      subject: note.subject || getDefaultSubjectLabel(),
       chapter: note.chapter || "",
       mode: primaryMode,
       modes: noteModes,
+      tags: dynamicTags,
       createdAt: note.createdAt || "",
       sourceNote: note,
       summaryText: [
@@ -6705,6 +7565,7 @@ function getKnowledgeItems() {
       subject: sourceNote.subject,
       chapter: sourceNote.chapter,
       mode: sourceNote.mode,
+      tags: buildDynamicTagKeys(sourceNote.result),
       createdAt: sourceNote.createdAt,
       sourceNote,
       summaryText: sourceNote.content || "",
@@ -6890,17 +7751,8 @@ function getMyNoteModeLabel(mode) {
 }
 
 function buildMyNoteTags(note) {
-  const result = note.result || {};
-  const tags = [];
-
-  if (result.summary?.preview) tags.push(getI18nText("tagSummary", "智慧摘要"));
-  if (result.keyPoints?.preview) tags.push(getI18nText("tagKeyPoints", "可能重點"));
-  if (result.quiz?.preview) tags.push(getI18nText("tagQuiz", "考題預測"));
-  if (result.keywords?.preview) tags.push(getI18nText("tagKeywords", "關鍵字"));
-  if (result.mistakes?.preview) tags.push(getI18nText("tagMistakes", "易錯觀念"));
-  if (result.concepts?.preview) tags.push(getI18nText("tagConcepts", "概念連結"));
-
-  return tags.slice(0, 4);
+  const tagKeys = note.tags?.length ? note.tags : buildDynamicTagKeys(note.result);
+  return tagKeys.map((tag) => buildDynamicTagLabel(tag)).slice(0, 4);
 }
 
 function filterMyNotes() {
@@ -6934,7 +7786,7 @@ function filterMyNotes() {
       .toLowerCase();
 
     const matchQuery = !query || searchableText.includes(query);
-    const matchSubject = subject === "all" || note.subject === subject;
+    const matchSubject = subject === "all" || normalizeFilterValue(note.subject) === subject;
     const matchType = type === "all" || note.mode === type || (Array.isArray(note.modes) && note.modes.includes(type));
 
     return matchQuery && matchSubject && matchType;
@@ -6960,7 +7812,7 @@ function updateMyNotesStats(allNotes, filteredNotes) {
 
   if (myNotesLatestDate) {
     if (!allNotes.length) {
-      myNotesLatestDate.textContent = "尚無資料";
+      myNotesLatestDate.textContent = getI18nText("noDataYet", currentLanguage === "en" ? "No data yet" : "尚無資料");
       return;
     }
 
@@ -7035,6 +7887,7 @@ function handleMyNoteExport(note) {
 
 function renderMyNotes() {
   const allNotes = getMyNotes();
+  syncMyNotesSubjectFilterOptions(allNotes);
   const notes = filterMyNotes();
 
   if (!myNotesGrid) return;
@@ -7108,16 +7961,8 @@ function renderMyNotes() {
 }
 
 function buildKnowledgeTags(item) {
-  const tags = [];
-
-  if (item.result?.summary?.preview) tags.push(getI18nText("tagSummary", "智慧摘要"));
-  if (item.result?.keyPoints?.preview) tags.push(getI18nText("tagKeyPoints", "可能重點"));
-  if (item.result?.quiz?.preview) tags.push(getI18nText("tagQuiz", "考題預測"));
-  if (item.result?.keywords?.preview) tags.push(getI18nText("tagKeywords", "關鍵字"));
-  if (item.result?.mistakes?.preview) tags.push(getI18nText("tagMistakes", "易錯觀念"));
-  if (item.result?.concepts?.preview) tags.push(getI18nText("tagConcepts", "概念連結"));
-
-  return tags.slice(0, 4);
+  const tagKeys = item.tags?.length ? item.tags : buildDynamicTagKeys(item.result);
+  return tagKeys.map((tag) => buildDynamicTagLabel(tag)).slice(0, 4);
 }
 
 function syncKnowledgeChapterFilterOptions(items = getKnowledgeItems()) {
@@ -7156,8 +8001,7 @@ function filterKnowledgeItems() {
 
     const matchSubject =
       subject === "all" ||
-      normalizeKnowledgeSubjectValue(item.subject) === subject ||
-      item.subject.toLowerCase() === subject.toLowerCase();
+      normalizeKnowledgeSubjectValue(item.subject) === subject;
 
     const matchChapter =
       chapter === "all" ||
@@ -7170,7 +8014,8 @@ function filterKnowledgeItems() {
 
     const matchTag =
       tag === "all" ||
-      Boolean(item.result?.[tag]);
+      Boolean(item.result?.[tag]) ||
+      Boolean(item.tags?.includes(tag));
 
     return matchQuery && matchSubject && matchChapter && matchType && matchTag;
   });
@@ -7344,7 +8189,9 @@ function renderKnowledgeResults(items) {
 
 function updateKnowledgeResults() {
   const allItems = getKnowledgeItems();
+  syncKnowledgeSubjectFilterOptions(allItems);
   syncKnowledgeChapterFilterOptions(allItems);
+  syncKnowledgeTagFilterOptions(allItems);
   const filtered = filterKnowledgeItems();
   renderKnowledgeResults(filtered);
 }
@@ -7411,7 +8258,8 @@ function populatePlannerNoteSelect() {
   notes.forEach((note) => {
     const option = document.createElement("option");
     option.value = note.id;
-    option.textContent = note.title || "未命名筆記";
+    const noteSubject = normalizeText(note.subject) || getDefaultSubjectLabel();
+    option.textContent = `${noteSubject}｜${note.title || (currentLanguage === "en" ? "Untitled note" : "未命名筆記")}`;
     plannerNoteSelect.appendChild(option);
   });
 }
@@ -7577,7 +8425,25 @@ function syncNotesAccordionResult(result = null) {
 function inferNoteTitle(result) {
   return result?.summary?.preview
     ? result.summary.preview.slice(0, 24)
-    : "未命名筆記";
+    : (currentLanguage === "en" ? "Untitled note" : "未命名筆記");
+}
+
+function inferNoteSubjectAndChapter(result, rawText = "", rawTitle = "") {
+  const summarySeed = [
+    result?.summary?.preview,
+    stripHtmlTags(result?.summary?.detail),
+    result?.keyPoints?.preview,
+    stripHtmlTags(result?.keyPoints?.detail),
+    result?.keywords?.preview
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const analysisText = normalizeText(`${rawTitle}\n${rawText}\n${summarySeed}`);
+
+  return {
+    subject: inferSubjectFromText(analysisText, rawTitle || result?.summary?.preview || "", getDefaultSubjectLabel()),
+    chapter: inferChapterFromText(analysisText, rawTitle || "")
+  };
 }
 
 function getSelectedNoteModes() {
@@ -7630,15 +8496,23 @@ function saveGeneratedNote(result) {
   const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
   const selectedModes = getSelectedNoteModes();
   const primaryMode = getPrimaryNoteMode(selectedModes);
+  const rawText = sourceText?.value?.trim() || "";
+  const inferredTitle = inferNoteTitle(result);
+  const inferredMeta = inferNoteSubjectAndChapter(result, rawText, inferredTitle);
+  const dynamicTags = buildDynamicTagKeys(result);
 
   const note = {
     id: `note_${Date.now()}`,
-    title: inferNoteTitle(result),
-    subject: "未分類",
+    title: inferredTitle,
+    subject: inferredMeta.subject,
+    chapter: inferredMeta.chapter,
     mode: primaryMode,
     modes: selectedModes,
+    tags: dynamicTags,
     language: outputLanguage?.value || currentLanguage || "zh",
     createdAt: new Date().toISOString(),
+    useKnowledgeBase: Boolean(result?.knowledgeSupport?.enabled),
+    knowledgeSupport: result?.knowledgeSupport || null,
     result
   };
 
@@ -9475,6 +10349,9 @@ function setKnowledgeBusyState(isBusy, queryBusy = isKnowledgeQuerying) {
   if (buildKnowledgeBaseButton) {
     buildKnowledgeBaseButton.disabled = isBusy || queryBusy || selectedKnowledgeFiles.length === 0;
   }
+  if (seedKnowledgeBaseButton) {
+    seedKnowledgeBaseButton.disabled = isBusy || queryBusy;
+  }
   if (ragQuestionInput) {
     ragQuestionInput.disabled = isBusy || queryBusy;
   }
@@ -9929,6 +10806,7 @@ async function buildFrontendKnowledgeBase() {
     if (errors.length && knowledgeStatusDetail) {
       knowledgeStatusDetail.innerHTML += `<br><br>部分檔案未成功：${errors.map((error) => `<br>・${escapeHTML(error)}`).join("")}`;
     }
+    refreshKnowledgeAssistPreviewFromCurrentInput();
   } catch (error) {
     setKnowledgeStatus(
       currentLanguage === "en" ? "Knowledge base build failed" : "知識庫建立失敗",
@@ -9977,6 +10855,7 @@ async function buildAdvancedKnowledgeBase() {
     if (knowledgeFileStatus) {
       knowledgeFileStatus.textContent = `已完成進階索引：${(payload.files || documents.map((document) => document.fileName)).join("、")}`;
     }
+    refreshKnowledgeAssistPreviewFromCurrentInput();
   } finally {
     setKnowledgeBusyState(false);
   }
@@ -10006,6 +10885,7 @@ async function addLatestNoteToKnowledgeBase() {
     "已加入最近一次整理結果",
     `已將首頁整理結果加入知識庫，新增 ${localSummary.addedChunkCount} 個段落。`
   );
+  refreshKnowledgeAssistPreviewFromCurrentInput();
 
   if (getSelectedRagMode() === "advanced") {
     try {
@@ -10160,18 +11040,44 @@ async function handleAskKnowledgeBase() {
 
 function refreshKnowledgeStats() {
   if (!knowledgeStats || !knowledgeStatsText) {
-    return;
+    // Continue updating the visible summary cards below even if the legacy stats block is absent.
   }
 
   const store = loadLocalKnowledgeStore();
-  if (!store.chunkCount) {
-    knowledgeStats.hidden = true;
-    knowledgeStatsText.textContent = "尚無資料。";
-    return;
+  if (knowledgeStats && knowledgeStatsText) {
+    if (!store.chunkCount) {
+      knowledgeStats.hidden = true;
+      knowledgeStatsText.textContent = "尚無資料。";
+    } else {
+      knowledgeStats.hidden = false;
+      knowledgeStatsText.textContent = `已建立 ${store.fileCount} 份文件、${store.chunkCount} 個段落。`;
+    }
   }
 
-  knowledgeStats.hidden = false;
-  knowledgeStatsText.textContent = `已建立 ${store.fileCount} 份文件、${store.chunkCount} 個段落。`;
+  const knowledgeItems = getKnowledgeItems();
+  const subjects = [...new Set(knowledgeItems.map((item) => normalizeText(item.subject)).filter(Boolean))];
+  const chapters = knowledgeItems
+    .map((item) => normalizeText(item.chapter))
+    .filter(Boolean);
+  const topTopics = [...new Set(chapters)].slice(0, 4);
+
+  if (knowledgeSummaryFiles) {
+    knowledgeSummaryFiles.textContent = String(store.fileCount || 0);
+  }
+
+  if (knowledgeSummaryChunks) {
+    knowledgeSummaryChunks.textContent = String(store.chunkCount || 0);
+  }
+
+  if (knowledgeSummarySubjects) {
+    knowledgeSummarySubjects.textContent = String(subjects.length);
+  }
+
+  if (knowledgeSummaryTopTopicsText) {
+    knowledgeSummaryTopTopicsText.textContent = topTopics.length
+      ? topTopics.join(currentLanguage === "en" ? ", " : "、")
+      : (currentLanguage === "en" ? "No data yet" : "尚無資料");
+  }
 }
 
 function clearFrontendKnowledgeBase() {
@@ -10189,6 +11095,7 @@ function clearFrontendKnowledgeBase() {
   renderRagSources([]);
   resetRagExamFocus();
   refreshKnowledgeStats();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
 }
 
 async function refreshKnowledgeBaseStatus() {
@@ -11107,7 +12014,7 @@ function buildAnalysisInputContext(text, mode, modeConfig) {
   };
 }
 
-function buildAnalysisResult({ mode, enhancement, text, analysisText, cleaned, chinese, fallbackOriginalSentences, chineseAnalysisSentences, analysisSource = "local" }) {
+function buildAnalysisResult({ mode, enhancement, text, analysisText, cleaned, chinese, fallbackOriginalSentences, chineseAnalysisSentences, analysisSource = "local", knowledgeSupport = null }) {
   return {
     mode,
     modeLabel: getModeLabel(mode),
@@ -11119,6 +12026,7 @@ function buildAnalysisResult({ mode, enhancement, text, analysisText, cleaned, c
     sourceSections: Array.isArray(lastSourceSections) ? lastSourceSections.map((section) => ({ ...section })) : [],
     sourceText: text,
     cleanedText: analysisText,
+    knowledgeSupport,
     removedNoise: cleaned.removedNoise,
     highlights: chinese?.highlights || [],
     questions: chinese?.questions || [],
@@ -11127,7 +12035,8 @@ function buildAnalysisResult({ mode, enhancement, text, analysisText, cleaned, c
   };
 }
 
-function buildLocalAnalysisResult(text, mode, modeConfig, enhancement) {
+function buildLocalAnalysisResult(text, mode, modeConfig, enhancement, options = {}) {
+  const originalText = options.originalText || text;
   const context = buildAnalysisInputContext(text, mode, modeConfig);
   const chinese = buildLanguageAnalysis(context.fallbackChineseSentences, mode, modeConfig, buildChineseQuestions, {
     rawText: text,
@@ -11137,13 +12046,14 @@ function buildLocalAnalysisResult(text, mode, modeConfig, enhancement) {
   return buildAnalysisResult({
     mode,
     enhancement,
-    text,
+    text: originalText,
     analysisText: context.analysisText,
     cleaned: context.cleaned,
     chinese,
     fallbackOriginalSentences: context.fallbackOriginalSentences,
     chineseAnalysisSentences: context.chineseAnalysisSentences,
-    analysisSource: "local"
+    analysisSource: "local",
+    knowledgeSupport: options.knowledgeSupport || null
   });
 }
 
@@ -11213,7 +12123,9 @@ function buildAiLanguageAnalysis(aiAnalysis = {}) {
   });
 }
 
-async function analyzeWithOpenAI(text, mode, modeLabel, modeConfig, enhancement) {
+async function analyzeWithOpenAI(text, mode, modeLabel, modeConfig, enhancement, options = {}) {
+  const originalText = options.originalText || text;
+  const knowledgeChunks = Array.isArray(options.knowledgeSupport?.chunks) ? options.knowledgeSupport.chunks : [];
   const context = buildAnalysisInputContext(text, mode, modeConfig);
   const languageInstruction = getLanguageInstruction();
   const response = await fetch("/api/analyze", {
@@ -11227,7 +12139,7 @@ async function analyzeWithOpenAI(text, mode, modeLabel, modeConfig, enhancement)
       modeLabel,
       language: currentLanguage,
       languageInstruction,
-      prompt: buildNotePrompt({ text, mode })
+      prompt: buildNotePrompt({ text, mode, originalText, knowledgeChunks })
     })
   });
 
@@ -11246,13 +12158,14 @@ async function analyzeWithOpenAI(text, mode, modeLabel, modeConfig, enhancement)
   return buildAnalysisResult({
     mode,
     enhancement,
-    text,
+    text: originalText,
     analysisText: context.analysisText,
     cleaned: context.cleaned,
     chinese,
     fallbackOriginalSentences: context.fallbackOriginalSentences,
     chineseAnalysisSentences: context.chineseAnalysisSentences,
-    analysisSource: "openai"
+    analysisSource: "openai",
+    knowledgeSupport: options.knowledgeSupport || null
   });
 }
 
@@ -11567,6 +12480,7 @@ function setStructuredTextResult(result) {
     "完成"
   );
   setProcessStateText("已完成文件匯入");
+  refreshKnowledgeAssistPreviewFromCurrentInput();
 }
 
 async function handleFileUpload(file) {
@@ -11641,6 +12555,10 @@ async function analyzeText(options = {}) {
     return null;
   }
 
+  const knowledgeSupport = buildNoteAnalysisSupport(text);
+  updateKnowledgeAssistStatus(knowledgeSupport.matchedChunks);
+  const analysisText = knowledgeSupport.analysisText;
+
   let result = null;
   let usedFallback = false;
 
@@ -11648,16 +12566,46 @@ async function analyzeText(options = {}) {
     setBusyState(true);
     setProcessStateText(currentLanguage === "en" ? "Advanced AI analysis in progress" : "進階 AI 分析中");
     try {
-      result = await analyzeWithOpenAI(text, mode, getModeLabel(mode), modeConfig, enhancement);
+      result = await analyzeWithOpenAI(analysisText, mode, getModeLabel(mode), modeConfig, enhancement, {
+        originalText: text,
+        knowledgeSupport: {
+          enabled: knowledgeSupport.shouldUseKnowledge,
+          chunks: knowledgeSupport.matchedChunks.map((chunk) => ({
+            fileName: chunk.fileName || "",
+            sectionTitle: chunk.sectionTitle || "",
+            content: normalizeText(chunk.content || chunk.text || "")
+          }))
+        }
+      });
     } catch (error) {
       console.error("Advanced AI analysis failed, falling back to Smart Rule Analysis.", error);
       usedFallback = true;
-      result = buildLocalAnalysisResult(text, mode, modeConfig, enhancement);
+      result = buildLocalAnalysisResult(analysisText, mode, modeConfig, enhancement, {
+        originalText: text,
+        knowledgeSupport: {
+          enabled: knowledgeSupport.shouldUseKnowledge,
+          chunks: knowledgeSupport.matchedChunks.map((chunk) => ({
+            fileName: chunk.fileName || "",
+            sectionTitle: chunk.sectionTitle || "",
+            content: normalizeText(chunk.content || chunk.text || "")
+          }))
+        }
+      });
     } finally {
       setBusyState(false);
     }
   } else {
-    result = buildLocalAnalysisResult(text, mode, modeConfig, enhancement);
+    result = buildLocalAnalysisResult(analysisText, mode, modeConfig, enhancement, {
+      originalText: text,
+      knowledgeSupport: {
+        enabled: knowledgeSupport.shouldUseKnowledge,
+        chunks: knowledgeSupport.matchedChunks.map((chunk) => ({
+          fileName: chunk.fileName || "",
+          sectionTitle: chunk.sectionTitle || "",
+          content: normalizeText(chunk.content || chunk.text || "")
+        }))
+      }
+    });
   }
 
   currentAnalysisResult = result;
@@ -11815,6 +12763,7 @@ ragQuickQuestions?.addEventListener("click", (event) => {
     updateModeUI();
   }
   updateCounts();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
 });
 
 analyzeButton.addEventListener("click", handleGenerateNotes);
@@ -11833,6 +12782,17 @@ clearButton.addEventListener("click", () => {
   renderCurrentResult();
   updateCounts();
   updateModeUI();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
+});
+
+useKnowledgeBaseCheckbox?.addEventListener("change", () => {
+  refreshKnowledgeAssistPreviewFromCurrentInput();
+});
+
+knowledgeAssistPreviewToggle?.addEventListener("click", () => {
+  const isHidden = knowledgeAssistPreviewBody.classList.contains("hidden");
+  knowledgeAssistPreviewBody.classList.toggle("hidden", !isHidden);
+  knowledgeAssistPreviewIcon.textContent = isHidden ? "−" : "＋";
 });
 
 demoButton.addEventListener("click", () => {
@@ -11924,6 +12884,7 @@ clearPlannerFormBtn?.addEventListener("click", clearPlannerForm);
 buildKnowledgeBaseButton?.addEventListener("click", buildKnowledgeBase);
 askKnowledgeBaseButton?.addEventListener("click", askKnowledgeBase);
 clearKnowledgeBaseButton?.addEventListener("click", clearFrontendKnowledgeBase);
+seedKnowledgeBaseButton?.addEventListener("click", reloadSeedKnowledgeBase);
 addLatestNoteToKnowledgeButton?.addEventListener("click", addLatestNoteToKnowledgeBase);
 sendRagToTutorButton?.addEventListener("click", sendRagToTutor);
 sendRagToStudyAgentButton?.addEventListener("click", sendRagToStudyAgent);
@@ -12047,6 +13008,7 @@ function initExportModal() {
 }
 
 function initApp() {
+  ensureSeedKnowledgeBase();
   restoreEnhancementPreference();
   restoreLatestWorkspaceFromHistory();
   updateCounts();

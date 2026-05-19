@@ -220,6 +220,35 @@
               <option value="en">English</option>
             </select>
 
+            <label class="form-label" for="useKnowledgeBaseCheckbox" data-i18n="knowledgeAssistLabel">知識庫輔助</label>
+            <label class="soft-card notes-knowledge-toggle" for="useKnowledgeBaseCheckbox">
+              <input id="useKnowledgeBaseCheckbox" type="checkbox" checked>
+              <div>
+                <strong data-i18n="knowledgeAssistOption">引用最相關知識庫段落</strong>
+                <p id="knowledgeAssistHint" data-i18n="knowledgeAssistHint">整理筆記時可額外參考知識庫中最相關的 1～3 段補充內容。</p>
+              </div>
+            </label>
+
+            <div class="soft-card notes-knowledge-status" aria-live="polite">
+              <strong id="knowledgeAssistStatus">目前會引用知識庫輔助內容。</strong>
+              <p id="knowledgeAssistMeta">如果目前知識庫沒有相關內容，系統會只整理你上傳或貼上的文字。</p>
+            </div>
+
+            <div class="soft-card notes-knowledge-preview">
+              <button id="knowledgeAssistPreviewToggle" class="accordion-header notes-knowledge-preview-toggle" type="button">
+                <div>
+                  <span data-i18n="knowledgeAssistPreviewTitle">引用預覽</span>
+                  <small id="knowledgeAssistPreviewSubtitle" data-i18n="knowledgeAssistPreviewSubtitle">整理前可先查看這次會引用的知識片段。</small>
+                </div>
+                <strong id="knowledgeAssistPreviewIcon" class="accordion-icon">＋</strong>
+              </button>
+              <div id="knowledgeAssistPreviewBody" class="notes-knowledge-preview-body hidden">
+                <div id="knowledgeAssistPreviewList" class="notes-knowledge-preview-list">
+                  <p class="empty-state">目前尚未顯示知識庫引用預覽。</p>
+                </div>
+              </div>
+            </div>
+
             <button id="analyzeButton" class="primary-btn full-width" data-i18n="start" type="button">
               開始整理
             </button>
@@ -537,9 +566,34 @@
             </button>
           </div>
 
+          <div class="notes-inline-actions knowledge-seed-actions">
+            <button id="seedKnowledgeBaseButton" class="secondary-btn" type="button">
+              <span data-i18n="loadDemoKnowledge">載入 / 重建示範知識庫</span>
+            </button>
+          </div>
+
           <p class="helper-text">
             <span data-i18n="knowledgeHelperText">可以搜尋筆記標題、智慧摘要、可能重點、關鍵字、易錯觀念與考題預測。</span>
           </p>
+        </section>
+
+        <section class="knowledge-summary-row">
+          <div class="soft-card notes-stat-card">
+            <span data-i18n="knowledgeSummaryFiles">知識文件</span>
+            <strong id="knowledgeSummaryFiles">0</strong>
+          </div>
+          <div class="soft-card notes-stat-card">
+            <span data-i18n="knowledgeSummaryChunks">知識段落</span>
+            <strong id="knowledgeSummaryChunks">0</strong>
+          </div>
+          <div class="soft-card notes-stat-card">
+            <span data-i18n="knowledgeSummarySubjects">目前領域</span>
+            <strong id="knowledgeSummarySubjects">0</strong>
+          </div>
+          <div class="soft-card notes-stat-card knowledge-summary-topics">
+            <span data-i18n="knowledgeSummaryTopTopics">主要主題</span>
+            <p id="knowledgeSummaryTopTopicsText">尚無資料</p>
+          </div>
         </section>
 
         <div class="knowledge-layout">
@@ -554,10 +608,6 @@
             <label class="form-label" for="knowledgeSubjectFilter" data-i18n="subjectLabel">科目</label>
             <select id="knowledgeSubjectFilter" class="input-control">
               <option value="all" data-i18n="allSubjects">全部科目</option>
-              <option value="accounting">會計</option>
-              <option value="sustainableFinance">永續金融</option>
-              <option value="hospitalManagement">醫院管理</option>
-              <option value="other">其他</option>
             </select>
 
             <label class="form-label" for="knowledgeChapterFilter" data-i18n="chapterLabel">章節</label>
@@ -568,12 +618,6 @@
             <label class="form-label" for="knowledgeTagFilter" data-i18n="tagLabel">標籤</label>
             <select id="knowledgeTagFilter" class="input-control">
               <option value="all" data-i18n="allTags">全部標籤</option>
-              <option value="summary" data-i18n="tagSummary">智慧摘要</option>
-              <option value="keyPoints" data-i18n="tagKeyPoints">可能重點</option>
-              <option value="quiz" data-i18n="tagQuiz">考題預測</option>
-              <option value="keywords" data-i18n="tagKeywords">關鍵字</option>
-              <option value="mistakes" data-i18n="tagMistakes">易錯觀念</option>
-              <option value="concepts" data-i18n="tagConcepts">概念連結</option>
             </select>
 
             <label class="form-label" for="knowledgeTypeFilter" data-i18n="typeLabel">類型</label>
@@ -734,10 +778,6 @@
             <label class="form-label" for="myNotesSubjectFilter" data-i18n="subjectLabel">科目</label>
             <select id="myNotesSubjectFilter" class="input-control">
               <option value="all" data-i18n="allSubjects">全部科目</option>
-              <option value="會計">會計</option>
-              <option value="永續金融">永續金融</option>
-              <option value="醫院管理">醫院管理</option>
-              <option value="其他">其他</option>
             </select>
           </div>
 
