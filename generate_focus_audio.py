@@ -29,8 +29,25 @@ def time_axis() -> np.ndarray:
 def normalize(signal: np.ndarray, peak: float = 0.92) -> np.ndarray:
     max_amp = float(np.max(np.abs(signal)))
     if max_amp <= 1e-9:
-      return signal.copy()
+        return signal.copy()
     return signal * (peak / max_amp)
+
+
+def rms(signal: np.ndarray) -> float:
+    return float(np.sqrt(np.mean(np.square(signal))))
+
+
+def normalize_rms(signal: np.ndarray, target_rms: float = 0.17, peak_limit: float = 0.92) -> np.ndarray:
+    current_rms = rms(signal)
+    if current_rms > 1e-9:
+        signal = signal * (target_rms / current_rms)
+    return normalize(signal, peak=peak_limit)
+
+
+def normalize_stereo(stereo_signal: np.ndarray, target_rms: float = 0.17, peak_limit: float = 0.92) -> np.ndarray:
+    left = normalize_rms(stereo_signal[:, 0], target_rms=target_rms, peak_limit=peak_limit)
+    right = normalize_rms(stereo_signal[:, 1], target_rms=target_rms, peak_limit=peak_limit)
+    return stereo(left, right)
 
 
 def stereo(left: np.ndarray, right: np.ndarray | None = None) -> np.ndarray:
@@ -150,69 +167,73 @@ def rain_track(rng: np.random.Generator) -> np.ndarray:
     droplets = random_click_train(rng, 0.06, 0.25, (0.01, 0.04), (1300.0, 4200.0), (0.012, 0.042))
     left = lowpass((bed * lfo) + droplets, 0.09)
     right = lowpass((np.roll(bed, 421) * (0.8 + 0.18 * np.sin(2.0 * np.pi * 0.05 * t - 0.2))) + np.roll(droplets, 170), 0.09)
-    return stereo(normalize(make_loop_friendly(left)), normalize(make_loop_friendly(right)))
+    return normalize_stereo(stereo(make_loop_friendly(left), make_loop_friendly(right)), target_rms=0.155)
 
 
 def white_noise_track(rng: np.random.Generator) -> np.ndarray:
     noise = smooth_noise(rng, TOTAL_SAMPLES, "white")
     left = highpass(noise, 0.03)
     right = highpass(np.roll(noise, 149), 0.03)
-    return stereo(normalize(make_loop_friendly(left)), normalize(make_loop_friendly(right)))
+    return normalize_stereo(stereo(make_loop_friendly(left), make_loop_friendly(right)), target_rms=0.145)
 
 
 def ocean_track(rng: np.random.Generator) -> np.ndarray:
     t = time_axis()
-    sea = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.02)
-    swell = 0.22 + 0.78 * np.maximum(0.0, np.sin(2.0 * np.pi * 0.09 * t - 0.8))
-    undertow = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "brown"), 0.01) * 0.26
-    foam = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.06) * np.power(swell, 2.2) * 0.55
-    left = sea * swell + undertow + foam
-    right = np.roll(sea, 900) * np.roll(swell, 600) + np.roll(undertow, 300) + np.roll(foam, 420)
+    sea = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.018)
+    long_swell = 0.18 + 0.82 * np.maximum(0.0, np.sin(2.0 * np.pi * 0.075 * t - 0.6))
+    short_swell = 0.42 + 0.58 * np.maximum(0.0, np.sin(2.0 * np.pi * 0.16 * t + 0.7))
+    undertow = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "brown"), 0.008) * 0.31
+    foam = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.08) * np.power(long_swell * short_swell, 2.15) * 0.62
+    hiss = bandpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.012, 0.12) * np.power(short_swell, 1.8) * 0.12
+    low_push = np.sin(2.0 * np.pi * 0.075 * t - 1.1) * 0.09
+    left = sea * long_swell + undertow + foam + hiss + low_push
+    right = np.roll(sea, 960) * np.roll(long_swell, 520) + np.roll(undertow, 280) + np.roll(foam, 440) + np.roll(hiss, 210) + np.roll(low_push, 120)
     left = add_echo(left, 0.18, 0.35, repeats=1)
     right = add_echo(right, 0.22, 0.35, repeats=1)
-    return stereo(normalize(make_loop_friendly(left)), normalize(make_loop_friendly(right)))
+    return normalize_stereo(stereo(make_loop_friendly(left), make_loop_friendly(right)), target_rms=0.16)
 
 
 def library_track(rng: np.random.Generator) -> np.ndarray:
-    base = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "brown"), 0.006) * 0.16
-    air = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.018) * 0.05
+    base = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "brown"), 0.0055) * 0.1
+    air = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.014) * 0.028
     pages = np.zeros(TOTAL_SAMPLES, dtype=np.float64)
-    cursor = 3.5
+    cursor = 4.8
     while cursor < DURATION_SECONDS - 1.0:
         start = int(cursor * SAMPLE_RATE)
         length = int(rng.uniform(0.4, 0.9) * SAMPLE_RATE)
         if start + length >= TOTAL_SAMPLES:
             break
         env = np.hanning(length)
-        rustle = highpass(rng.normal(0.0, 0.08, length), 0.08)
-        pages[start:start + length] += rustle * env * rng.uniform(0.18, 0.28)
-        cursor += rng.uniform(5.2, 8.5)
+        rustle = highpass(rng.normal(0.0, 0.05, length), 0.09)
+        pages[start:start + length] += rustle * env * rng.uniform(0.08, 0.15)
+        cursor += rng.uniform(6.8, 10.2)
     left = base + air + pages
     right = np.roll(base, 250) + np.roll(air, 90) + np.roll(pages, 180)
-    return stereo(normalize(make_loop_friendly(left)), normalize(make_loop_friendly(right)))
+    return normalize_stereo(stereo(make_loop_friendly(left), make_loop_friendly(right)), target_rms=0.11)
 
 
 def keyboard_track(rng: np.random.Generator) -> np.ndarray:
-    bed = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.045) * 0.04
+    bed = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.05) * 0.018
     clicks = np.zeros(TOTAL_SAMPLES, dtype=np.float64)
     cursor = 0.4
     while cursor < DURATION_SECONDS:
         start = int(cursor * SAMPLE_RATE)
-        length = int(rng.uniform(0.012, 0.028) * SAMPLE_RATE)
+        length = int(rng.uniform(0.016, 0.034) * SAMPLE_RATE)
         if start + length >= TOTAL_SAMPLES:
             break
-        env = np.exp(-np.linspace(0.0, 8.0, length))
-        freq = rng.uniform(1350.0, 2400.0)
-        switch = np.sin(2.0 * np.pi * freq * np.arange(length) / SAMPLE_RATE)
-        thock = np.sin(2.0 * np.pi * rng.uniform(190.0, 340.0) * np.arange(length) / SAMPLE_RATE) * 0.25
-        clicks[start:start + length] += (switch + thock) * env * rng.uniform(0.24, 0.42)
+        env = np.exp(-np.linspace(0.0, 6.5, length))
+        local_t = np.arange(length) / SAMPLE_RATE
+        switch = np.sin(2.0 * np.pi * rng.uniform(1450.0, 2350.0) * local_t)
+        thock = np.sin(2.0 * np.pi * rng.uniform(160.0, 260.0) * local_t) * 0.42
+        rattle = highpass(rng.normal(0.0, 0.55, length), 0.18) * 0.12
+        clicks[start:start + length] += (switch * 0.58 + thock + rattle) * env * rng.uniform(0.18, 0.32)
         if rng.random() < 0.16:
             cursor += rng.uniform(0.32, 0.65)
         else:
             cursor += rng.uniform(0.07, 0.16)
     left = bed + clicks
     right = np.roll(bed, 60) + np.roll(clicks, 35)
-    return stereo(normalize(make_loop_friendly(left)), normalize(make_loop_friendly(right)))
+    return normalize_stereo(stereo(make_loop_friendly(left), make_loop_friendly(right)), target_rms=0.135)
 
 
 def piano_track(rng: np.random.Generator) -> np.ndarray:
@@ -225,14 +246,17 @@ def piano_track(rng: np.random.Generator) -> np.ndarray:
         length = int(rng.uniform(1.4, 2.1) * SAMPLE_RATE)
         if start + length >= TOTAL_SAMPLES:
             break
-        env = np.exp(-np.linspace(0.0, 5.2, length))
+        env = np.exp(-np.linspace(0.0, 4.9, length))
         base = notes[note_index % len(notes)]
+        local_t = np.arange(length) / SAMPLE_RATE
+        hammer = highpass(rng.normal(0.0, 0.18, length), 0.2) * np.exp(-np.linspace(0.0, 24.0, length))
         body = (
-            0.68 * np.sin(2.0 * np.pi * base * np.arange(length) / SAMPLE_RATE)
-            + 0.22 * np.sin(2.0 * np.pi * base * 2.0 * np.arange(length) / SAMPLE_RATE)
-            + 0.1 * np.sin(2.0 * np.pi * base * 3.0 * np.arange(length) / SAMPLE_RATE)
+            0.61 * np.sin(2.0 * np.pi * base * local_t)
+            + 0.2 * np.sin(2.0 * np.pi * base * 2.01 * local_t)
+            + 0.11 * np.sin(2.0 * np.pi * base * 3.12 * local_t)
+            + 0.08 * np.sin(2.0 * np.pi * base * 4.03 * local_t)
         )
-        phrase[start:start + length] += body * env * 0.18
+        phrase[start:start + length] += (body * env * 0.18) + (hammer * 0.045)
         note_index += 1
         cursor += rng.uniform(1.2, 1.9)
 
@@ -240,7 +264,7 @@ def piano_track(rng: np.random.Generator) -> np.ndarray:
     felt = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.02) * 0.022
     left = phrase + felt
     right = np.roll(phrase, 460) + np.roll(felt, 120)
-    return stereo(normalize(make_loop_friendly(left, 2.5)), normalize(make_loop_friendly(right, 2.5)))
+    return normalize_stereo(stereo(make_loop_friendly(left, 2.5), make_loop_friendly(right, 2.5)), target_rms=0.125)
 
 
 def lofi_harmony(t: np.ndarray, root: float, wobble: float = 0.003) -> np.ndarray:
@@ -274,25 +298,27 @@ def beat_layer(rng: np.random.Generator, kick_interval: float, snare_offset: flo
 
 
 def cafe_track(rng: np.random.Generator) -> np.ndarray:
-    t = time_axis()
     chords = np.zeros(TOTAL_SAMPLES, dtype=np.float64)
-    roots = [220.0, 246.94, 196.0, 261.63]
+    roots = [220.0, 246.94, 196.0, 293.66]
     for bar, start in enumerate(np.arange(0.0, DURATION_SECONDS, 4.0)):
         idx = int(start * SAMPLE_RATE)
         length = int(3.8 * SAMPLE_RATE)
         if idx + length >= TOTAL_SAMPLES:
             break
-        env = np.exp(-np.linspace(0.0, 3.6, length))
+        env = np.exp(-np.linspace(0.0, 2.8, length))
         local_t = np.arange(length) / SAMPLE_RATE
-        chord = lofi_harmony(local_t, roots[bar % len(roots)], wobble=0.0025)
-        chords[idx:idx + length] += chord * env * 0.16
+        chord = lofi_harmony(local_t, roots[bar % len(roots)], wobble=0.0018)
+        sparkle = 0.08 * np.sin(2.0 * np.pi * roots[bar % len(roots)] * 2.5 * local_t)
+        chords[idx:idx + length] += (chord * 0.18 + sparkle) * env
 
-    beat = beat_layer(rng, kick_interval=0.5, snare_offset=0.25, kick_gain=0.14, snare_gain=0.055)
-    hiss = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.03) * 0.03
-    room = bandpass(smooth_noise(rng, TOTAL_SAMPLES, "brown"), 0.0008, 0.01) * 0.018
+    beat = beat_layer(rng, kick_interval=0.5, snare_offset=0.25, kick_gain=0.1, snare_gain=0.035)
+    hiss = lowpass(smooth_noise(rng, TOTAL_SAMPLES, "pink"), 0.03) * 0.02
+    room = bandpass(smooth_noise(rng, TOTAL_SAMPLES, "brown"), 0.0008, 0.01) * 0.01
+    vinyl = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.018) * 0.01
     left = chords + beat + hiss + room
-    right = np.roll(chords, 320) + np.roll(beat, 120) + np.roll(hiss, 70) + np.roll(room, 150)
-    return stereo(normalize(make_loop_friendly(left, 2.2)), normalize(make_loop_friendly(right, 2.2)))
+    right = np.roll(chords, 320) + np.roll(beat, 120) + np.roll(hiss, 70) + np.roll(room, 150) + np.roll(vinyl, 45)
+    left += vinyl
+    return normalize_stereo(stereo(make_loop_friendly(left, 2.2), make_loop_friendly(right, 2.2)), target_rms=0.145)
 
 
 def lofi_track(rng: np.random.Generator) -> np.ndarray:
@@ -304,19 +330,19 @@ def lofi_track(rng: np.random.Generator) -> np.ndarray:
         length = int(3.95 * SAMPLE_RATE)
         if idx + length >= TOTAL_SAMPLES:
             break
-        env = np.exp(-np.linspace(0.0, 2.9, length))
+        env = np.exp(-np.linspace(0.0, 2.3, length))
         local_t = np.arange(length) / SAMPLE_RATE
         chord = lofi_harmony(local_t, roots[bar % len(roots)], wobble=0.004)
-        melody = 0.16 * np.sin(2.0 * np.pi * (roots[bar % len(roots)] * 2.0) * local_t)
-        pad[idx:idx + length] += (chord * 0.16 + melody) * env
+        melody = 0.1 * np.sin(2.0 * np.pi * (roots[bar % len(roots)] * 2.0) * local_t)
+        pad[idx:idx + length] += (chord * 0.18 + melody) * env
 
-    beat = beat_layer(rng, kick_interval=0.5, snare_offset=0.25, kick_gain=0.18, snare_gain=0.08)
-    vinyl = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.02) * 0.018
+    beat = beat_layer(rng, kick_interval=0.5, snare_offset=0.25, kick_gain=0.16, snare_gain=0.06)
+    vinyl = highpass(smooth_noise(rng, TOTAL_SAMPLES, "white"), 0.02) * 0.015
     wobble = 0.012 * np.sin(2.0 * np.pi * 0.08 * t)
-    bass = np.sin(2.0 * np.pi * (87.31 + wobble) * t) * (0.06 + 0.03 * np.sin(2.0 * np.pi * 0.5 * t))
+    bass = np.sin(2.0 * np.pi * (87.31 + wobble) * t) * (0.08 + 0.04 * np.sin(2.0 * np.pi * 0.5 * t))
     left = pad + beat + vinyl + bass
     right = np.roll(pad, 280) + np.roll(beat, 90) + np.roll(vinyl, 40) + np.roll(bass, 120)
-    return stereo(normalize(make_loop_friendly(left, 2.0)), normalize(make_loop_friendly(right, 2.0)))
+    return normalize_stereo(stereo(make_loop_friendly(left, 2.0), make_loop_friendly(right, 2.0)), target_rms=0.15)
 
 
 def generate_all() -> None:

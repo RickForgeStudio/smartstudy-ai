@@ -21,12 +21,17 @@ const parseStatusDetail = getElementByIdSafe("parseStatusDetail");
 const progressPhase = getElementByIdSafe("progressPhase");
 const progressValue = getElementByIdSafe("progressValue");
 const progressFill = getElementByIdSafe("progressFill");
+const pdfPageStartInput = getElementByIdSafe("pdfPageStartInput", "input");
+const pdfPageEndInput = getElementByIdSafe("pdfPageEndInput", "input");
+const uploadPreviewBox = getElementByIdSafe("uploadPreviewBox");
+const uploadPreviewTitle = getElementByIdSafe("uploadPreviewTitle");
+const uploadPreviewMeta = getElementByIdSafe("uploadPreviewMeta");
+const uploadPreviewList = getElementByIdSafe("uploadPreviewList");
 const analyzeButton = getElementByIdSafe("analyzeButton", "button");
 const clearButton = getElementByIdSafe("clearButton", "button");
 const demoButton = getElementByIdSafe("demoButton", "button");
 const refreshQuestionsButton = getElementByIdSafe("refreshQuestionsButton", "button");
 const copyButton = getElementByIdSafe("copyButton", "button");
-const downloadButton = getElementByIdSafe("downloadButton", "button");
 const modeSelect = getElementByIdSafe("modeSelect", "select");
 const analysisEnhancement = getElementByIdSafe("analysisEnhancement", "select");
 const outputLanguage = getElementByIdSafe("outputLanguage", "select");
@@ -184,22 +189,6 @@ const historyToggleText = getElementByIdSafe("historyToggleText");
 const nextStepPanel = getElementByIdSafe("nextStepPanel");
 const studyAgentLoadedTitle = getElementByIdSafe("studyAgentLoadedTitle");
 const studyAgentLoadedMeta = getElementByIdSafe("studyAgentLoadedMeta");
-const focusMusicWidget = getElementByIdSafe("focusMusicWidget");
-const focusMusicToggle = getElementByIdSafe("focusMusicToggle", "button");
-const focusMusicPanel = getElementByIdSafe("focusMusicPanel");
-const focusMusicModeBadge = getElementByIdSafe("focusMusicModeBadge");
-const focusMusicFileName = getElementByIdSafe("focusMusicFileName");
-const focusMusicCloseButton = getElementByIdSafe("focusMusicCloseButton", "button");
-const focusMusicModeMp3 = getElementByIdSafe("focusMusicModeMp3", "button");
-const focusMusicModeSpotify = getElementByIdSafe("focusMusicModeSpotify", "button");
-const focusMusicMp3Section = getElementByIdSafe("focusMusicMp3Section");
-const focusMusicSpotifySection = getElementByIdSafe("focusMusicSpotifySection");
-const focusMusicPlayButton = getElementByIdSafe("focusMusicPlayButton", "button");
-const focusMusicStatus = getElementByIdSafe("focusMusicStatus");
-const focusMusicFileInput = getElementByIdSafe("focusMusicFileInput", "input");
-const focusMusicRemoveButton = getElementByIdSafe("focusMusicRemoveButton", "button");
-const focusMusicVolume = getElementByIdSafe("focusMusicVolume", "input");
-const focusMusicAudio = getElementByIdSafe("focusMusicAudio", "audio");
 const focusSpotifyStateTitle = getElementByIdSafe("focusSpotifyStateTitle");
 const focusSpotifyPremiumBadge = getElementByIdSafe("focusSpotifyPremiumBadge");
 const focusSpotifyStatus = getElementByIdSafe("focusSpotifyStatus");
@@ -253,6 +242,8 @@ const knowledgeSummaryFiles = getElementByIdSafe("knowledgeSummaryFiles");
 const knowledgeSummaryChunks = getElementByIdSafe("knowledgeSummaryChunks");
 const knowledgeSummarySubjects = getElementByIdSafe("knowledgeSummarySubjects");
 const knowledgeSummaryTopTopicsText = getElementByIdSafe("knowledgeSummaryTopTopicsText");
+const knowledgeStructureCount = getElementByIdSafe("knowledgeStructureCount");
+const knowledgeStructureList = getElementByIdSafe("knowledgeStructureList");
 const knowledgeSubjectFilter = getElementByIdSafe("knowledgeSubjectFilter", "select");
 const knowledgeChapterFilter = getElementByIdSafe("knowledgeChapterFilter", "select");
 const knowledgeTagFilter = getElementByIdSafe("knowledgeTagFilter", "select");
@@ -342,7 +333,7 @@ const uiTranslations = {
     analyzeButton: "開始整理筆記",
     clearButton: "清空內容",
     copyButton: "複製結果",
-    downloadButton: "下載筆記",
+    downloadButton: "匯出",
     refreshQuestionsButton: "更新題目",
     clearHistoryButton: "清空歷史",
     charCountLabel: "字數",
@@ -417,16 +408,16 @@ const uiTranslations = {
     generalNotesCardMeta: "段落整理",
     possibleExamPointsCardTitle: "可能重點",
     possibleExamPointsCardMeta: "快速提醒",
-    accountingTermsCardTitle: "關鍵名詞",
-    accountingTermsCardMeta: "中英對照",
+    accountingTermsCardTitle: "關鍵詞 / 重要概念",
+    accountingTermsCardMeta: "概念說明",
     englishExplainCardTitle: "原文句子解釋",
     englishExplainCardMeta: "對照理解",
     questionsCardTitle: "理解問題",
     questionsCardMeta: "快速思考",
     mockExamCardTitle: "延伸練習",
     mockExamCardMeta: "延伸思考",
-    journalCardTitle: "會計分錄題",
-    journalCardMeta: "分錄單獨整理",
+    journalCardTitle: "專門題型",
+    journalCardMeta: "僅在特定領域內容出現時顯示",
     tutorCardTitle: "AI Tutor",
     tutorCardMeta: "根據目前整理內容進行教學問答。",
     tutorDescription: "你可以直接提問，也可以請老師出題；若答錯，AI 會指出錯在哪、重新解釋，並再出一題類似題。",
@@ -457,21 +448,21 @@ const uiTranslations = {
     manualSource: "來源：手動輸入或示範文字",
     sourcePrefix: "來源：",
     notReady: "尚未整理",
-    outputMetaIntro: "依「{mode}」產生摘要、重點、名詞與練習。分析方式：{enhancement}。",
-    outputMetaKnowledge: " 內建 {glossaryCount} 筆詞彙與 {financeCount} 筆規則。",
-    outputMetaJournal: " 若內容含交易或步驟，也會補充對應練習。",
+    outputMetaIntro: "依「{mode}」產生摘要、重點、概念整理與延伸練習。分析方式：{enhancement}。",
+    outputMetaKnowledge: " 內建 {glossaryCount} 筆概念詞彙與 {financeCount} 筆知識規則可作為補充參考。",
+    outputMetaJournal: " 若內容屬於特定專業領域，系統會補充對應的專門練習。",
     outputMetaSource: " 目前來源為 {fileName}。",
     emptySummary: "尚未產生摘要。",
-    emptyFormulas: "尚未產生關鍵公式或結構整理。",
+    emptyFormulas: "尚未產生關鍵結構或整理架構。",
     emptyImportantSentences: "尚未產生重要句子。",
     emptyImportanceReasons: "尚未產生重要度原因。",
     emptyGeneralNotes: "尚未產生一般整理。",
     emptyPossibleExamPoints: "尚未產生可能重點。",
-    emptyAccountingTerms: "尚未偵測到關鍵名詞或專有名詞。",
+    emptyAccountingTerms: "尚未整理出關鍵詞或重要概念。",
     emptyEnglishExplain: "尚未產生原文句子解釋。",
     emptyQuestions: "尚未產生理解問題。",
     emptyMockExam: "尚未產生延伸練習。",
-    emptyJournal: "尚未偵測到分錄相關內容。若資料包含 Debit、Credit、Journal Entry 或交易敘述，系統會產生分錄練習。",
+    emptyJournal: "目前沒有需要額外顯示的專門題型。",
     highlightBadge: "重點"
   },
   en: {
@@ -480,7 +471,7 @@ const uiTranslations = {
     analyzeButton: "Analyze Notes",
     clearButton: "Clear",
     copyButton: "Copy Result",
-    downloadButton: "Download Notes",
+    downloadButton: "Export",
     refreshQuestionsButton: "Refresh Questions",
     clearHistoryButton: "Clear History",
     charCountLabel: "Characters",
@@ -555,16 +546,16 @@ const uiTranslations = {
     generalNotesCardMeta: "Notes",
     possibleExamPointsCardTitle: "Possible Key Points",
     possibleExamPointsCardMeta: "Quick reminders",
-    accountingTermsCardTitle: "Key Terms",
-    accountingTermsCardMeta: "Bilingual list",
+    accountingTermsCardTitle: "Key Terms / Important Concepts",
+    accountingTermsCardMeta: "Concept Notes",
     englishExplainCardTitle: "Original Sentence Explanation",
     englishExplainCardMeta: "Side-by-side view",
     questionsCardTitle: "Questions",
     questionsCardMeta: "Quick thinking",
     mockExamCardTitle: "Extended Practice",
-    mockExamCardMeta: "More practice",
-    journalCardTitle: "Journal Entry Questions",
-    journalCardMeta: "Journal-entry practice",
+    mockExamCardMeta: "Applied review",
+    journalCardTitle: "Specialized Questions",
+    journalCardMeta: "Shown only for domain-specific material",
     tutorCardTitle: "AI Tutor",
     tutorCardMeta: "Ask questions about the current notes and learn in a teacher-style conversation.",
     tutorDescription: "You can ask directly or let the tutor quiz you. If your answer is wrong, the tutor points out the mistake, reteaches it, and gives you a similar question.",
@@ -595,21 +586,21 @@ const uiTranslations = {
     manualSource: "Source: manual input or demo text",
     sourcePrefix: "Source: ",
     notReady: "Not analyzed yet",
-    outputMetaIntro: 'The current mode "{mode}" builds a more focused English view in step 2, including an AI summary, formulas, important sentences, importance reasons, general notes, possible exam points, accounting terms, English explanations, review questions, and mock exam questions. If the source contains English, the system still analyzes it with the built-in front-end pipeline. Analysis mode: {enhancement}.',
-    outputMetaKnowledge: " The system currently includes {glossaryCount} accounting and finance glossary entries and {financeCount} finance/accounting knowledge entries.",
-    outputMetaJournal: " It also includes {journalCount} common journal-entry examples.",
+    outputMetaIntro: 'The current mode "{mode}" builds a focused view with a smart summary, key structure, concept notes, questions, and practice. If the source contains English, the system still analyzes it with the built-in front-end pipeline. Analysis mode: {enhancement}.',
+    outputMetaKnowledge: " The system currently includes {glossaryCount} concept glossary entries and {financeCount} domain knowledge rules for support.",
+    outputMetaJournal: " Domain-specific material may also trigger specialized practice content.",
     outputMetaSource: " Current source: {fileName}.",
     emptySummary: "No summary yet.",
-    emptyFormulas: "No accounting formulas yet.",
+    emptyFormulas: "No key structure or framework notes yet.",
     emptyImportantSentences: "No important sentences yet.",
     emptyImportanceReasons: "No importance reasons yet.",
     emptyGeneralNotes: "No general notes yet.",
-    emptyPossibleExamPoints: "No possible exam points yet.",
-    emptyAccountingTerms: "No accounting terms detected yet.",
+    emptyPossibleExamPoints: "No possible key points yet.",
+    emptyAccountingTerms: "No key terms or important concepts detected yet.",
     emptyEnglishExplain: "No English explanation yet.",
     emptyQuestions: "No questions yet.",
-    emptyMockExam: "No mock exam questions yet.",
-    emptyJournal: "No journal-entry content detected yet. If the material includes Debit, Credit, Journal Entry, or transaction descriptions, the system will generate journal-entry practice.",
+    emptyMockExam: "No extended practice yet.",
+    emptyJournal: "No domain-specific practice is needed for this material.",
     highlightBadge: "Key"
   }
 };
@@ -698,26 +689,21 @@ const KNOWLEDGE_SEED_VERSION_KEY = STORAGE_KEYS.knowledgeSeedVersion;
 const RAG_MODE_STORAGE_KEY = STORAGE_KEYS.ragMode;
 const RAG_TO_TUTOR_STORAGE_KEY = "smartstudy-rag-to-tutor";
 const RAG_TO_STUDY_AGENT_STORAGE_KEY = "smartstudy-rag-to-study-agent";
-const FOCUS_MUSIC_STORAGE_KEY = STORAGE_KEYS.music;
-const FOCUS_MUSIC_EXPANDED_STORAGE_KEY = STORAGE_KEYS.musicExpanded;
-const FOCUS_MUSIC_DB_NAME = "smartstudy-focus-music";
-const FOCUS_MUSIC_STORE_NAME = "tracks";
-const FOCUS_MUSIC_TRACK_ID = "custom-mp3";
-let focusMusicInitialized = false;
 const focusPlayerTracks = [
-  { id: "rain", name: "雨聲", src: "audio/rain.wav" },
-  { id: "whiteNoise", name: "白噪音", src: "audio/white-noise.wav" },
-  { id: "ocean", name: "海浪聲", src: "audio/ocean.wav" },
-  { id: "cafe", name: "咖啡廳", src: "audio/cafe.wav" },
-  { id: "library", name: "圖書館", src: "audio/library.wav" },
-  { id: "keyboard", name: "鍵盤聲", src: "audio/keyboard.wav" },
-  { id: "piano", name: "輕鋼琴", src: "audio/piano.wav" },
-  { id: "lofi", name: "Lo-fi", src: "audio/lofi.wav" }
+  { id: "rain", name: "雨聲", src: "audio/rain.wav", gain: 1 },
+  { id: "whiteNoise", name: "白噪音", src: "audio/white-noise.wav", gain: 1 },
+  { id: "ocean", name: "海浪聲", src: "audio/ocean.wav", gain: 1 },
+  { id: "cafe", name: "咖啡廳", src: "audio/cafe.wav", gain: 1 },
+  { id: "library", name: "圖書館", src: "audio/library.wav", gain: 1 },
+  { id: "keyboard", name: "鍵盤聲", src: "audio/keyboard.wav", gain: 1 },
+  { id: "piano", name: "輕鋼琴", src: "audio/piano.wav", gain: 1 },
+  { id: "lofi", name: "Lo-fi", src: "audio/lofi.wav", gain: 1 }
 ];
 let focusPlayerCurrentTrackIndex = 0;
 let focusPlayerIsPlaying = false;
 const focusPlayerAudio = new Audio(focusPlayerTracks[focusPlayerCurrentTrackIndex].src);
 focusPlayerAudio.loop = true;
+let focusPlayerUserVolume = 0.5;
 focusPlayerAudio.volume = 0.5;
 let focusPlayerInitialized = false;
 let focusPlayerBuiltInAudioUnavailable = false;
@@ -725,6 +711,27 @@ let focusPlayerGeneratedMode = false;
 let focusPlayerAudioContext = null;
 let focusPlayerGeneratedNodes = [];
 let focusPlayerGeneratedIntervals = [];
+let currentUploadedFiles = [];
+
+function clampVolumeValue(value) {
+  return Math.min(1, Math.max(0, Number(value)));
+}
+
+function getCurrentFocusTrack() {
+  return focusPlayerTracks[focusPlayerCurrentTrackIndex] || focusPlayerTracks[0];
+}
+
+function getNormalizedFocusTrackVolume(track = getCurrentFocusTrack()) {
+  return clampVolumeValue(focusPlayerUserVolume * (track?.gain || 1));
+}
+
+function applyFocusPlayerVolume() {
+  const currentTrack = getCurrentFocusTrack();
+  focusPlayerAudio.volume = getNormalizedFocusTrackVolume(currentTrack);
+  if (focusPlayerGeneratedMode && focusPlayerGeneratedNodes[0]?.gain) {
+    focusPlayerGeneratedNodes[0].gain.value = focusPlayerAudio.volume * 0.22;
+  }
+}
 
 function switchPage(pageName) {
   document.querySelectorAll(".page").forEach((page) => {
@@ -862,7 +869,7 @@ function updateTrackLabel() {
     return;
   }
 
-  currentTrackLabel.textContent = `目前：${focusPlayerTracks[focusPlayerCurrentTrackIndex].name}`;
+  currentTrackLabel.textContent = `目前：${getCurrentFocusTrack().name}`;
 }
 
 function clearGeneratedIntervals() {
@@ -1007,7 +1014,7 @@ async function startGeneratedAmbient(track) {
   stopGeneratedAmbient();
 
   const outputGain = registerGeneratedNode(audioContext.createGain());
-  outputGain.gain.value = focusPlayerAudio.volume * 0.22;
+  outputGain.gain.value = getNormalizedFocusTrackVolume(track) * 0.22;
   outputGain.connect(audioContext.destination);
 
   const noiseSource = registerGeneratedNode(audioContext.createBufferSource());
@@ -1098,7 +1105,7 @@ async function startGeneratedAmbient(track) {
 }
 
 async function playCurrentFocusTrack() {
-  const track = focusPlayerTracks[focusPlayerCurrentTrackIndex];
+  const track = getCurrentFocusTrack();
   stopGeneratedAmbient();
   focusPlayerAudio.pause();
 
@@ -1112,6 +1119,7 @@ async function playCurrentFocusTrack() {
 
   focusPlayerAudio.src = track.src;
   focusPlayerAudio.loop = true;
+  applyFocusPlayerVolume();
 
   try {
     await focusPlayerAudio.play();
@@ -1143,7 +1151,7 @@ function saveMusicState() {
 
   saveToStorage(STORAGE_KEYS.music, {
     currentTrackIndex: focusPlayerCurrentTrackIndex,
-    volume: focusPlayerAudio.volume,
+    volume: focusPlayerUserVolume,
     isCollapsed: player ? player.classList.contains("collapsed") : false
   });
 }
@@ -1163,10 +1171,11 @@ function restoreMusicState() {
     }
 
     if (typeof state.volume === "number") {
-      focusPlayerAudio.volume = state.volume;
+      focusPlayerUserVolume = clampVolumeValue(state.volume);
+      applyFocusPlayerVolume();
 
       if (volumeControl) {
-        volumeControl.value = String(state.volume);
+        volumeControl.value = String(focusPlayerUserVolume);
       }
     }
 
@@ -1190,6 +1199,7 @@ function loadTrack(index, shouldPlay = focusPlayerIsPlaying) {
   focusPlayerCurrentTrackIndex = index;
   focusPlayerAudio.src = focusPlayerTracks[focusPlayerCurrentTrackIndex].src;
   focusPlayerAudio.loop = true;
+  applyFocusPlayerVolume();
   stopGeneratedAmbient();
 
   updateTrackLabel();
@@ -1234,11 +1244,8 @@ function playPause() {
 }
 
 function setVolume(value) {
-  const volume = Number(value);
-  focusPlayerAudio.volume = Math.min(1, Math.max(0, volume));
-  if (focusPlayerGeneratedMode && focusPlayerGeneratedNodes[0]?.gain) {
-    focusPlayerGeneratedNodes[0].gain.value = focusPlayerAudio.volume * 0.22;
-  }
+  focusPlayerUserVolume = clampVolumeValue(value);
+  applyFocusPlayerVolume();
   saveMusicState();
 }
 
@@ -1305,6 +1312,17 @@ function initFocusMusicPlayer() {
         updatePlayButton();
       });
     }
+  });
+  focusPlayerAudio.addEventListener("ended", () => {
+    if (!focusPlayerIsPlaying) {
+      return;
+    }
+
+    focusPlayerAudio.currentTime = 0;
+    void focusPlayerAudio.play().catch(() => {
+      focusPlayerIsPlaying = false;
+      updatePlayButton();
+    });
   });
 
   playPauseBtn?.addEventListener("click", playPause);
@@ -1422,6 +1440,14 @@ const i18n = {
     notesInputSettingsSubtitle: "放入你的筆記，選擇整理方式",
     uploadFileLabel: "上傳檔案",
     chooseFile: "選擇檔案",
+    pdfRangeTitle: "PDF 頁數範圍",
+    pdfRangeDescription: "可留空代表整份 PDF；若一次上傳多份 PDF，所有 PDF 會套用同一組頁數範圍。",
+    pdfPageStartLabel: "起始頁",
+    pdfPageEndLabel: "結束頁",
+    pdfPageStartPlaceholder: "例如：1",
+    pdfPageEndPlaceholder: "例如：20",
+    uploadPreviewTitle: "匯入預覽",
+    uploadPreviewMeta: "解析完成後，這裡會顯示目前匯入的檔案與內容區塊概況。",
     pasteTextLabel: "貼上文字",
     noteModesLabel: "整理模式（可複選）",
     outputLanguageLabel: "輸出語言",
@@ -1455,6 +1481,10 @@ const i18n = {
     knowledgeSummaryChunks: "知識段落",
     knowledgeSummarySubjects: "目前領域",
     knowledgeSummaryTopTopics: "主要主題",
+    knowledgeStructureTitle: "知識結構總覽",
+    knowledgeStructureSubtitle: "快速查看目前有哪些領域與子主題",
+    knowledgeStructureEmpty: "目前尚無知識結構資料。",
+    knowledgeStructureTopicsCount: "個主題",
     filtersTitle: "篩選",
     filtersSubtitle: "縮小搜尋範圍",
     subjectLabel: "科目",
@@ -1585,6 +1615,14 @@ const i18n = {
     notesInputSettingsSubtitle: "Add your notes and choose how to organize them.",
     uploadFileLabel: "Upload File",
     chooseFile: "Choose File",
+    pdfRangeTitle: "PDF Page Range",
+    pdfRangeDescription: "Leave these empty to use the whole PDF. If you upload multiple PDFs at once, the same range will be applied to all of them.",
+    pdfPageStartLabel: "Start Page",
+    pdfPageEndLabel: "End Page",
+    pdfPageStartPlaceholder: "Example: 1",
+    pdfPageEndPlaceholder: "Example: 20",
+    uploadPreviewTitle: "Import Preview",
+    uploadPreviewMeta: "After parsing, this area shows the imported files and a quick overview of the extracted content blocks.",
     pasteTextLabel: "Paste Text",
     noteModesLabel: "Organization Modes (Multi-select)",
     outputLanguageLabel: "Output Language",
@@ -1618,6 +1656,10 @@ const i18n = {
     knowledgeSummaryChunks: "Knowledge Chunks",
     knowledgeSummarySubjects: "Active Subjects",
     knowledgeSummaryTopTopics: "Main Topics",
+    knowledgeStructureTitle: "Knowledge Structure",
+    knowledgeStructureSubtitle: "Quickly review the active subjects and subtopics",
+    knowledgeStructureEmpty: "No knowledge structure available yet.",
+    knowledgeStructureTopicsCount: "topics",
     filtersTitle: "Filters",
     filtersSubtitle: "Narrow the search scope",
     subjectLabel: "Subject",
@@ -1842,11 +1884,11 @@ function normalizeLatestStudyResult(result) {
   const possibleExamPoints = normalizePlainList(result.possibleExamPoints || result.chinese?.possibleExamPoints);
   const formulas = normalizePlainList(result.formulas || result.chinese?.formulas);
   const generalNotes = normalizePlainList(result.generalNotes || result.chinese?.generalNotes);
-  const accountingTerms = normalizePlainList(result.accountingTerms || result.chinese?.accountingTerms);
+  const accountingTerms = normalizePlainList(result.keyTerms || result.accountingTerms || result.chinese?.keyTerms || result.chinese?.accountingTerms);
   const englishExplain = normalizePlainList(result.englishExplain || result.englishExplanations || result.chinese?.englishExplanations);
   const questions = normalizeQuestionList(result.questions || result.chinese?.questions);
-  const mockExam = normalizeQuestionList(result.mockExam || result.mockExamQuestions || result.chinese?.mockExamQuestions);
-  const journalQuestions = normalizeQuestionList(result.journalQuestions || result.journalEntryQuestions || result.chinese?.journalEntryQuestions);
+  const mockExam = normalizeQuestionList(result.practiceQuestions || result.mockExam || result.mockExamQuestions || result.chinese?.practiceQuestions || result.chinese?.mockExamQuestions);
+  const journalQuestions = normalizeQuestionList(result.specializedQuestions || result.journalQuestions || result.journalEntryQuestions || result.chinese?.specializedQuestions || result.chinese?.journalEntryQuestions);
 
   return {
     sourceText: normalizeText(result.sourceText || result.cleanedText || ""),
@@ -1901,10 +1943,13 @@ function convertLatestStudyResultToAnalysisResult(result) {
       formulas: buildInfoBlocks(latest.formulas),
       generalNotes: latest.generalNotes.map((text) => ({ text })),
       accountingTerms: latest.accountingTerms.map((text) => ({ label: text, description: "" })),
+      keyTerms: latest.accountingTerms.map((text) => ({ label: text, description: "" })),
       englishExplanations: buildInfoBlocks(latest.englishExplain),
       questions: buildQuestionBlocks(latest.questions),
       mockExamQuestions: buildQuestionBlocks(latest.mockExam),
+      practiceQuestions: buildQuestionBlocks(latest.mockExam),
       journalEntryQuestions: buildQuestionBlocks(latest.journalQuestions),
+      specializedQuestions: buildQuestionBlocks(latest.journalQuestions),
       keywords: latest.accountingTerms.map((text) => ({ text })),
       highlights: latest.possibleExamPoints.map((text) => ({ text }))
     }
@@ -2019,429 +2064,24 @@ function loadJsonStorage(key) {
   return loadFromStorage(key, null);
 }
 
-function normalizeFocusMusicState(value) {
-  const savedVolume = Number(value?.volume);
-  const volume = Number.isFinite(savedVolume)
-    ? Math.min(1, Math.max(0, savedVolume))
-    : 0.25;
-  const persistedExpanded = loadFromStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, false);
-  const expanded = typeof value?.expanded === "boolean"
-    ? value.expanded
-    : Boolean(persistedExpanded);
-
-  return {
-    volume,
-    expanded,
-    fileName: typeof value?.fileName === "string" ? value.fileName : "尚未加入 MP3",
-    mode: value?.mode === "spotify" ? "spotify" : "mp3"
+function debounce(callback, wait = 180) {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, wait);
   };
 }
 
-function loadFocusMusicState() {
-  return normalizeFocusMusicState(loadJsonStorage(FOCUS_MUSIC_STORAGE_KEY));
-}
-
-function saveFocusMusicState(state) {
-  const normalizedState = normalizeFocusMusicState(state);
-  saveToStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, normalizedState.expanded);
-  saveJsonStorage(FOCUS_MUSIC_STORAGE_KEY, normalizedState);
-}
-
-function openFocusMusicWidget() {
-  if (!focusMusicPanel || !focusMusicWidget) {
-    return;
-  }
-  focusMusicPanel.hidden = false;
-  focusMusicWidget.classList.add("is-open");
-  focusMusicToggle?.setAttribute("aria-expanded", "true");
-  saveToStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, true);
-}
-
-function closeFocusMusicWidget() {
-  if (!focusMusicPanel || !focusMusicWidget) {
-    return;
-  }
-  focusMusicPanel.hidden = true;
-  focusMusicWidget.classList.remove("is-open");
-  focusMusicToggle?.setAttribute("aria-expanded", "false");
-  saveToStorage(FOCUS_MUSIC_EXPANDED_STORAGE_KEY, false);
-}
-
-function toggleFocusMusicWidget(event) {
-  event?.stopPropagation();
-  if (!focusMusicPanel) {
-    return;
-  }
-  if (focusMusicPanel.hidden) {
-    openFocusMusicWidget();
-  } else {
-    closeFocusMusicWidget();
-  }
-}
-
-function openFocusMusicDb() {
-  return new Promise((resolve, reject) => {
-    if (!("indexedDB" in window)) {
-      reject(new Error("此瀏覽器不支援 IndexedDB"));
+function yieldToBrowser() {
+  return new Promise((resolve) => {
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(() => resolve());
       return;
     }
-
-    const request = window.indexedDB.open(FOCUS_MUSIC_DB_NAME, 1);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(FOCUS_MUSIC_STORE_NAME)) {
-        db.createObjectStore(FOCUS_MUSIC_STORE_NAME, { keyPath: "id" });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error("無法開啟音樂資料庫"));
+    window.setTimeout(resolve, 0);
   });
-}
-
-function getFocusMusicRecord() {
-  return openFocusMusicDb().then((db) => new Promise((resolve, reject) => {
-    const transaction = db.transaction(FOCUS_MUSIC_STORE_NAME, "readonly");
-    const store = transaction.objectStore(FOCUS_MUSIC_STORE_NAME);
-    const request = store.get(FOCUS_MUSIC_TRACK_ID);
-
-    request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error || new Error("讀取 MP3 失敗"));
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-  }));
-}
-
-function saveFocusMusicRecord(file) {
-  return openFocusMusicDb().then((db) => new Promise((resolve, reject) => {
-    const transaction = db.transaction(FOCUS_MUSIC_STORE_NAME, "readwrite");
-    const store = transaction.objectStore(FOCUS_MUSIC_STORE_NAME);
-    const request = store.put({
-      id: FOCUS_MUSIC_TRACK_ID,
-      name: file.name,
-      type: file.type || "audio/mpeg",
-      blob: file
-    });
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error || new Error("儲存 MP3 失敗"));
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-  }));
-}
-
-function removeFocusMusicRecord() {
-  return openFocusMusicDb().then((db) => new Promise((resolve, reject) => {
-    const transaction = db.transaction(FOCUS_MUSIC_STORE_NAME, "readwrite");
-    const store = transaction.objectStore(FOCUS_MUSIC_STORE_NAME);
-    const request = store.delete(FOCUS_MUSIC_TRACK_ID);
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error || new Error("移除 MP3 失敗"));
-    transaction.oncomplete = () => db.close();
-    transaction.onerror = () => db.close();
-  }));
-}
-
-function initFocusMusicWidget() {
-  if (focusMusicInitialized) {
-    console.warn("Focus music widget already initialized.");
-    return;
-  }
-
-  const widget = document.getElementById("focusMusicWidget");
-  const toggleButton = document.getElementById("focusMusicToggle");
-  const panel = document.getElementById("focusMusicPanel");
-
-  if (!widget || !toggleButton || !panel) {
-    console.warn("Focus music widget elements not found.");
-    return;
-  }
-
-  const fileNameLabel = document.getElementById("focusMusicFileName");
-  const closeButton = document.getElementById("focusMusicCloseButton");
-  const modeMp3Button = document.getElementById("focusMusicModeMp3");
-  const modeSpotifyButton = document.getElementById("focusMusicModeSpotify");
-  const mp3Section = document.getElementById("focusMusicMp3Section");
-  const spotifySection = document.getElementById("focusMusicSpotifySection");
-  const playButton = document.getElementById("focusMusicPlayButton");
-  const fileInput = document.getElementById("focusMusicFileInput");
-  const removeButton = document.getElementById("focusMusicRemoveButton");
-  const volumeRange = document.getElementById("focusMusicVolume");
-  const status = document.getElementById("focusMusicStatus");
-  const audio = document.getElementById("focusMusicAudio");
-
-  if (!toggleButton || !panel || !fileNameLabel || !closeButton || !modeMp3Button || !modeSpotifyButton || !mp3Section || !spotifySection || !playButton || !fileInput || !removeButton || !volumeRange || !status || !audio) {
-    console.warn("Focus music widget elements not found.");
-    return;
-  }
-
-  focusMusicInitialized = true;
-
-  let state = loadFocusMusicState();
-  let currentObjectUrl = "";
-  let isDraggingFocusMusicSlider = false;
-
-  function revokeCurrentObjectUrl() {
-    if (currentObjectUrl) {
-      URL.revokeObjectURL(currentObjectUrl);
-      currentObjectUrl = "";
-    }
-  }
-
-  function persistState() {
-    saveFocusMusicState(state);
-  }
-
-  function setStatus(message, isError = false) {
-    status.textContent = message;
-    status.classList.toggle("is-error", Boolean(isError));
-  }
-
-  function updateModeBadge() {
-    if (!focusMusicModeBadge) {
-      return;
-    }
-    if (state.mode === "spotify") {
-      focusMusicModeBadge.textContent = "Spotify";
-      return;
-    }
-    focusMusicModeBadge.textContent = state.fileName && state.fileName !== "尚未加入 MP3"
-      ? "Ready"
-      : "MP3";
-  }
-
-  function setExpanded(expanded) {
-    if (expanded) {
-      openFocusMusicWidget();
-    } else {
-      closeFocusMusicWidget();
-    }
-    state = { ...state, expanded };
-    persistState();
-  }
-
-  function applyFocusMusicMode(mode) {
-    const nextMode = mode === "spotify" ? "spotify" : "mp3";
-    if (nextMode === "spotify" && !audio.paused) {
-      audio.pause();
-      playButton.textContent = "播放";
-    }
-    mp3Section.hidden = nextMode !== "mp3";
-    spotifySection.hidden = nextMode !== "spotify";
-    modeMp3Button.classList.toggle("active", nextMode === "mp3");
-    modeMp3Button.classList.toggle("is-active", nextMode === "mp3");
-    modeSpotifyButton.classList.toggle("active", nextMode === "spotify");
-    modeSpotifyButton.classList.toggle("is-active", nextMode === "spotify");
-    modeMp3Button.setAttribute("aria-selected", nextMode === "mp3" ? "true" : "false");
-    modeSpotifyButton.setAttribute("aria-selected", nextMode === "spotify" ? "true" : "false");
-    state = { ...state, mode: nextMode };
-    updateModeBadge();
-    persistState();
-  }
-
-  function applyAudioSourceFromRecord(record) {
-    audio.pause();
-    revokeCurrentObjectUrl();
-    audio.removeAttribute("src");
-    audio.load();
-
-    if (!record?.blob) {
-      fileNameLabel.textContent = "尚未加入 MP3";
-      playButton.textContent = "播放";
-      state = { ...state, fileName: "尚未加入 MP3" };
-      updateModeBadge();
-      persistState();
-      return;
-    }
-
-    currentObjectUrl = URL.createObjectURL(record.blob);
-    audio.src = currentObjectUrl;
-    audio.loop = true;
-    audio.volume = state.volume;
-    fileNameLabel.textContent = record.name || "已加入 MP3";
-    state = { ...state, fileName: record.name || "已加入 MP3" };
-    updateModeBadge();
-    persistState();
-  }
-
-  async function hydrateFromIndexedDb() {
-    try {
-      const record = await getFocusMusicRecord();
-      applyAudioSourceFromRecord(record);
-      if (record?.name) {
-        setStatus("音樂已就緒，按下播放即可開始。");
-      } else {
-        setStatus("音樂只會在你按下播放後開始。匯入的 MP3 會儲存在此瀏覽器中。");
-      }
-    } catch (error) {
-      applyAudioSourceFromRecord(null);
-      setStatus("此瀏覽器無法讀取已儲存的 MP3。", true);
-    }
-  }
-
-  toggleButton.addEventListener("click", toggleFocusMusicWidget);
-
-  closeButton.addEventListener("click", (event) => {
-    event.stopPropagation();
-    setExpanded(false);
-  });
-
-  widget.addEventListener("click", (event) => {
-    event.stopPropagation();
-  });
-
-  widget.addEventListener("pointerdown", (event) => {
-    const target = event.target;
-    isDraggingFocusMusicSlider = target instanceof HTMLInputElement
-      && target.type === "range";
-  });
-
-  document.addEventListener("pointerup", () => {
-    window.setTimeout(() => {
-      isDraggingFocusMusicSlider = false;
-    }, 0);
-  });
-
-  document.addEventListener("pointercancel", () => {
-    isDraggingFocusMusicSlider = false;
-  });
-
-  document.addEventListener("click", (event) => {
-    const currentWidget = document.getElementById("focusMusicWidget");
-    const currentPanel = document.getElementById("focusMusicPanel");
-
-    if (!currentWidget || !currentPanel || currentPanel.hidden || isDraggingFocusMusicSlider) {
-      return;
-    }
-
-    if (!currentWidget.contains(event.target)) {
-      closeFocusMusicWidget();
-      state = { ...state, expanded: false };
-      persistState();
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closeFocusMusicWidget();
-      state = { ...state, expanded: false };
-      persistState();
-    }
-  });
-
-  modeMp3Button.addEventListener("click", () => {
-    applyFocusMusicMode("mp3");
-  });
-
-  modeSpotifyButton.addEventListener("click", () => {
-    applyFocusMusicMode("spotify");
-  });
-
-  playButton.addEventListener("click", async () => {
-    if (!audio.src) {
-      setStatus("尚未加入 MP3", true);
-      return;
-    }
-
-    if (!audio.paused) {
-      audio.pause();
-      playButton.textContent = "播放";
-      setStatus("已暫停播放。");
-      return;
-    }
-
-    try {
-      await audio.play();
-      playButton.textContent = "暫停";
-      setStatus(`正在播放：${state.fileName || "自訂 MP3"}`);
-    } catch (error) {
-      playButton.textContent = "播放";
-      setStatus("請再點一次播放", true);
-    }
-  });
-
-  fileInput.addEventListener("change", async () => {
-    const [file] = Array.from(fileInput.files || []);
-    if (!file) {
-      return;
-    }
-
-    try {
-      await saveFocusMusicRecord(file);
-      applyAudioSourceFromRecord({
-        id: FOCUS_MUSIC_TRACK_ID,
-        name: file.name,
-        type: file.type,
-        blob: file
-      });
-      playButton.textContent = "播放";
-      setStatus(`已加入 ${file.name}，按下播放即可開始。`);
-    } catch (error) {
-      setStatus("MP3 儲存失敗，請再試一次。", true);
-    } finally {
-      fileInput.value = "";
-    }
-  });
-
-  removeButton.addEventListener("click", async () => {
-    try {
-      await removeFocusMusicRecord();
-      applyAudioSourceFromRecord(null);
-      setStatus("已移除儲存的 MP3。");
-    } catch (error) {
-      setStatus("移除 MP3 失敗，請再試一次。", true);
-    }
-  });
-
-  volumeRange.addEventListener("input", () => {
-    const volume = Math.min(1, Math.max(0, Number(volumeRange.value) || 0));
-    audio.volume = volume;
-    state = { ...state, volume };
-    persistState();
-  });
-
-  audio.addEventListener("play", () => {
-    playButton.textContent = "暫停";
-    setStatus(`正在播放：${state.fileName || "自訂 MP3"}`);
-    if (window.SmartStudySpotifyPlayer?.pause) {
-      void window.SmartStudySpotifyPlayer.pause();
-    }
-  });
-
-  audio.addEventListener("pause", () => {
-    if (audio.ended) {
-      return;
-    }
-    playButton.textContent = "播放";
-  });
-
-  audio.addEventListener("error", () => {
-    playButton.textContent = "播放";
-    setStatus("音訊載入失敗，請重新加入 MP3。", true);
-  });
-
-  window.addEventListener("beforeunload", () => {
-    revokeCurrentObjectUrl();
-  });
-
-  window.addEventListener("smartstudy:spotify-playing", () => {
-    if (!audio.paused) {
-      audio.pause();
-      playButton.textContent = "播放";
-      setStatus("Spotify 已接手播放，MP3 已自動暫停。");
-    }
-  });
-
-  volumeRange.value = String(state.volume);
-  audio.volume = state.volume;
-  fileNameLabel.textContent = state.fileName || "尚未加入 MP3";
-  setExpanded(state.expanded);
-  applyFocusMusicMode(state.mode);
-  updateModeBadge();
-  void hydrateFromIndexedDb();
-
 }
 
 function loadRagTutorTransfer() {
@@ -2508,347 +2148,24 @@ function saveLocalKnowledgeStore(store) {
   saveToStorage(KNOWLEDGE_CHUNKS_KEY, Array.isArray(store?.chunks) ? store.chunks : []);
 }
 
-const KNOWLEDGE_SEED_VERSION = "2026-05-multidomain-seed-v1";
+const KNOWLEDGE_SEED_VERSION = "2026-05-multidomain-seed-v5";
 
 function buildSeedKnowledgeDocuments() {
-  return [
-    {
-      fileName: "SmartStudy Seed - Python Foundations",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "Python 基礎語法",
-          text: "Python 強調可讀性，常見流程包含變數、條件判斷、迴圈與函式。初學者最容易忽略的是縮排規則與資料型別的差異，例如 list、tuple、dict 在可變性與用途上就不一樣。整理這類筆記時，應先抓語法角色，再用簡短例子說明輸入輸出與常見錯誤。",
-          paragraphNumber: 1
-        },
-        {
-          title: "List Comprehension",
-          text: "List comprehension 是 Python 常見的語法糖，用一行式子把迴圈、條件與輸出列表整合起來。它適合做輕量資料轉換，但如果條件太多，反而會降低可讀性。理解時要先看輸出表達式，再看 for 與 if 的順序，這樣比較不容易混淆。",
-          paragraphNumber: 2
-        },
-        {
-          title: "除錯與可讀性",
-          text: "程式筆記除了記語法，也要記除錯思路，例如先確認輸入、再檢查流程、最後檢查輸出。當程式可以執行不代表容易維護，因此命名、註解與函式切分同樣重要。若要用 AI Tutor 問程式題，最好附上錯誤訊息與你目前的理解。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Data Analysis Notes",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "資料分析流程",
-          text: "資料分析通常從問題定義開始，再進入資料蒐集、清理、探索、建模與解讀。若一開始沒有明確問題，後面就容易變成只有圖表沒有結論。好的分析筆記要把指標、資料來源、限制條件與可行結論一起整理，不要只記分析工具名稱。",
-          paragraphNumber: 1
-        },
-        {
-          title: "Pandas 與表格整理",
-          text: "Pandas 常用於清理缺失值、轉換欄位格式、篩選資料與建立彙整表。學習時要分清楚 row、column、index 的角色，也要理解 copy 與 view 可能帶來的修改副作用。若資料量變大，向量化操作通常會比逐列迴圈穩定。",
-          paragraphNumber: 2
-        },
-        {
-          title: "解讀結果",
-          text: "分析結果不只是在圖上找最高點或最低點，而是要回到原本問題。若看到相關性，不能直接推論因果；若看到平均值，也要注意離群值與分布形狀。整理筆記時，建議把結論、限制與下一步問題分開寫。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Accounting Review",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "金融資產分類",
-          text: "FVTPL 與 FVOCI 的核心差異在於公允價值變動認列位置，以及出售時是否影響損益。理解時不要只背縮寫，應該連同衡量基礎、持有目的與報表影響一起整理。若題目要求比較，通常會考分類依據與後續處理。",
-          paragraphNumber: 1
-        },
-        {
-          title: "分錄思考",
-          text: "會計分錄的重點不是死背借貸方向，而是先判斷交易影響了哪些會計要素。資產增加未必永遠在借方被單獨考，因為題目常會搭配費用、收入或金融資產重分類。整理筆記時，可以把交易事件、分錄結構與原因寫成三欄。",
-          paragraphNumber: 2
-        },
-        {
-          title: "常見易錯點",
-          text: "學生常把 OCI 與損益混在一起，也常忽略出售金融資產時的重分類效果。若只記結論而不記原因，到比較題或綜合題就容易答錯。好的複習方式是把觀念差異、報表位置與出售後處理放在同一張表裡對照。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Hospital Management",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "醫院流程管理",
-          text: "醫院管理不只處理醫療品質，也同時考慮掛號、分流、病床、人力與資訊系統的效率。當流程設計不清楚時，病患等待時間會變長，護理與行政負擔也會上升。整理這類筆記時，應把服務流程、痛點與改善方案分開寫。",
-          paragraphNumber: 1
-        },
-        {
-          title: "病人安全",
-          text: "病人安全的重點在於降低可預防錯誤，例如交接失誤、藥物辨識錯誤與感染控制缺口。這類內容常見考法是情境題，要你判斷哪個環節風險最高，或哪個改善措施最有效。複習時可以從流程、責任角色與指標三個角度整理。",
-          paragraphNumber: 2
-        },
-        {
-          title: "績效指標",
-          text: "醫院績效常同時看品質、成本、效率與病患滿意度。若只追求看診量，可能反而犧牲照護品質，因此管理上需要平衡不同指標。筆記整理時，適合把指標定義、可能衝突與改善工具一起並列。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Daily Observation",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "咖啡廳觀察",
-          text: "在咖啡廳進行觀察時，可以從座位選擇、停留時間、裝置使用與互動模式切入。有人偏好靠窗單人座位，有人則會選插座旁並長時間使用筆電。若要整理成筆記，建議把觀察事實、可能原因與不確定處分開，不要太快下結論。",
-          paragraphNumber: 1
-        },
-        {
-          title: "行為紀錄方法",
-          text: "觀察筆記應先記可見行為，再補自己的推測，例如先寫某人反覆查看手機，再討論可能是等待訊息或分心。這樣能降低主觀判斷直接混入資料本身。若日後要回顧，這種分層記錄會比較清楚。",
-          paragraphNumber: 2
-        },
-        {
-          title: "從觀察到洞見",
-          text: "觀察的價值不只在紀錄細節，而是從重複模式中找出可用的洞見。像是環境噪音、空間配置或背景音樂，都可能影響停留時間與專注程度。整理時可以把模式、例外情況與下一步想驗證的問題一起寫下。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Language Learning",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "單字記憶",
-          text: "背單字不只是看中文意思，而是要連同詞性、常見搭配與使用情境一起記。若只記翻譯，看到題目時容易不知道怎麼真正用在句子裡。整理筆記時，適合把核心意思、例句與常錯用法放在一起。",
-          paragraphNumber: 1
-        },
-        {
-          title: "文法理解",
-          text: "文法學習最怕只記規則名稱，卻不知道它在句子裡解決什麼問題。像是時態、被動語態或關係子句，都應先理解溝通目的，再看形式。若要複習，最好用自己的句子重組一次，而不是只讀課本例句。",
-          paragraphNumber: 2
-        },
-        {
-          title: "輸入與輸出",
-          text: "語言能力提升通常來自穩定輸入與逐步輸出。閱讀與聽力提供範例，寫作與口說則幫助你發現自己還不會的地方。筆記中可以把常見錯誤分類為字彙、文法、搭配與表達邏輯。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Design Thinking",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "設計思考流程",
-          text: "設計思考常從同理開始，再進入定義問題、發想、原型與測試。若一開始沒有真正理解使用者，後面的解法可能只是設計者自己覺得好。整理筆記時，最好把每個階段的目的與輸出物分開記錄。",
-          paragraphNumber: 1
-        },
-        {
-          title: "資訊層級",
-          text: "一個介面是否容易理解，常取決於資訊層級是否清楚。標題、次標、說明與操作按鈕如果都一樣重，使用者就不知道先看哪裡。設計筆記可以把視覺層級、操作流程與內容密度一起整理。",
-          paragraphNumber: 2
-        },
-        {
-          title: "測試與迭代",
-          text: "原型測試不是證明設計師是對的，而是找出使用者哪裡卡住。若多數人都在同一個步驟停下來，問題通常在資訊提示或流程設計。複習時，應記錄觀察到的卡點與後續調整方向。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Biology Basics",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "細胞與功能",
-          text: "細胞是生命系統的基本單位，不同胞器負責不同功能，例如粒線體與能量轉換、核糖體與蛋白質合成有關。學生常把名稱背起來，卻沒有把功能連到整體流程。整理筆記時，適合用結構、功能、關聯三層去記。",
-          paragraphNumber: 1
-        },
-        {
-          title: "恆定與調節",
-          text: "生物體會透過回饋機制維持體內恆定，例如體溫、血糖或水分平衡。這類題目常考負回饋與正回饋差異，因此複習時要把刺激、感受器、反應器與結果串成流程。只背定義通常不夠。",
-          paragraphNumber: 2
-        },
-        {
-          title: "學習重點整理",
-          text: "生物筆記最實用的方式是把概念連成系統，例如細胞功能如何影響組織與器官層級。當不同章節彼此有關聯時，記憶會比單點背誦穩定。若遇到名詞很多的單元，先抓核心流程再補細節比較有效。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Psychology of Learning",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "記憶形成",
-          text: "記憶形成通常涉及注意、編碼、儲存與提取。若學習時沒有足夠專注，後面即使反覆看內容，也可能只是熟悉感增加而不是真的記住。整理筆記時，可以把影響記憶的因素與改善策略並列。",
-          paragraphNumber: 1
-        },
-        {
-          title: "主動回想",
-          text: "主動回想比單純重讀更能鞏固學習，因為它迫使大腦練習提取資訊。像是用小測驗、自問自答或空白回憶法，都比只劃重點更有效。若做成筆記系統，可以把回想題與錯誤概念綁在一起。",
-          paragraphNumber: 2
-        },
-        {
-          title: "分散練習",
-          text: "分散練習通常比短時間密集讀書更能提高長期保留。雖然密集練習當下感覺進步很快，但隔一段時間後忘得也快。規劃讀書計畫時，應把複習拆成多次短區段，而不是一次塞滿。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Presentation Skills",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "簡報結構",
-          text: "一份好的簡報通常先定義問題，再提出重點，最後給出結論與下一步。若一開始資訊太多，聽眾會在還沒抓到主題前就失去焦點。整理報告筆記時，可以用背景、主張、證據、結論的框架。",
-          paragraphNumber: 1
-        },
-        {
-          title: "口語表達",
-          text: "口語簡報的重點不是把投影片文字念完，而是替投影片補上脈絡與轉折。講者若能先告訴聽眾為什麼這張重要，再進入細節，理解會比較順。練習時應注意速度、停頓與段落轉換。",
-          paragraphNumber: 2
-        },
-        {
-          title: "視覺與內容平衡",
-          text: "投影片若塞滿字，通常表示內容還沒有被充分整理。真正有層次的簡報會把重點濃縮，再用口頭補充細節。整理這類筆記時，適合分成訊息主線、圖像支援與聽眾可能提問三欄。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Personal Productivity",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "任務拆解",
-          text: "很多人拖延不是因為懶，而是任務太模糊。當事情只被寫成『完成報告』時，大腦很難立刻開始；但若拆成找資料、列大綱、寫第一段，就比較容易進入行動。整理計畫時要把任務寫到足夠具體。",
-          paragraphNumber: 1
-        },
-        {
-          title: "專注與休息",
-          text: "長時間工作不代表高效率，因為注意力會隨時間下降。番茄鐘或其他節奏化休息方式的重點，不只是休息本身，而是創造清楚的開始與結束。若要提高學習穩定度，應把休息也當成流程的一部分。",
-          paragraphNumber: 2
-        },
-        {
-          title: "回顧機制",
-          text: "生產力系統若沒有回顧，就很難知道哪些方法真的有效。每週回顧可以幫助你發現哪些任務總是延期、哪些時段最專注、哪些工具只是看起來很有效。筆記裡最好留下可回顧的觀察而不只是待辦清單。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - AI in Education",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "AI 與學習支援",
-          text: "AI 可以幫助學生整理筆記、生成問題、提供即時回饋，也能協助教師快速重組教材。但它不是替代思考，而是放大整理與回顧的效率。使用時仍需判斷內容正確性與適用脈絡。",
-          paragraphNumber: 1
-        },
-        {
-          title: "風險與限制",
-          text: "AI 回答可能流暢但不一定正確，也可能忽略題目中的特殊條件。如果學生完全依賴生成內容，反而容易缺少原始理解。整理 AI 學習筆記時，應把便利性、風險與人工檢查原則一起記錄。",
-          paragraphNumber: 2
-        },
-        {
-          title: "實際應用",
-          text: "在教育情境中，AI 最適合用來做第一輪整理、引導提問與個人化複習建議。真正的學習價值來自學生回頭檢查、比較與重述內容。若把 AI 與知識庫結合，就能讓回答更接近使用者自己的材料。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - JavaScript Frontend",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "DOM 與事件",
-          text: "前端 JavaScript 常見核心包括 DOM 選取、事件綁定、狀態更新與畫面重新渲染。若元素很多又分散，事件重複綁定很容易造成按鈕點一次卻觸發多次。整理這類筆記時，最好把元素來源、事件目的與副作用分開記錄。",
-          paragraphNumber: 1
-        },
-        {
-          title: "SPA 思維",
-          text: "單頁式應用的重點不是只有不重整頁面，而是要把狀態、畫面與事件關係整理清楚。若切頁後舊狀態還殘留、播放器被重建、或事件越綁越多，就表示資料流設計還不夠穩。複習時應把頁面切換、共用元件與初始化流程分開理解。",
-          paragraphNumber: 2
-        },
-        {
-          title: "可維護性",
-          text: "前端程式變亂通常不是因為功能太多，而是缺少統一的命名、共用樣式與初始化策略。像 localStorage key、按鈕 class、i18n key 如果各寫一套，後續維護成本會快速上升。整理筆記時要把規則、例外與風險點一起記下。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - UX Research",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "訪談與觀察",
-          text: "使用者研究不只是問對方喜不喜歡某個功能，而是理解他的任務、限制與決策方式。觀察與訪談常要一起看，因為使用者說的和實際做的未必完全一致。整理研究筆記時，應分清楚觀察事實、受訪者原話與研究者推論。",
-          paragraphNumber: 1
-        },
-        {
-          title: "痛點判斷",
-          text: "真正的痛點通常會反覆出現在多位使用者的流程中，而不是單一次抱怨。若一個步驟讓很多人停下來、重試或求助，那就值得優先處理。研究整理時要把高頻卡點、低頻特殊案例與可能原因拆開寫。",
-          paragraphNumber: 2
-        },
-        {
-          title: "從發現到建議",
-          text: "研究成果最常見的問題是只有洞察沒有下一步。好的整理方式會把發現、影響、設計建議與待驗證假設並列。這樣團隊在看研究筆記時，不只知道問題，也知道接下來可以做什麼。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Team Collaboration",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "協作與分工",
-          text: "團隊協作最怕責任邊界不清，因為大家都以為別人會處理。有效分工不是把工作切碎而已，而是明確知道誰擁有哪個模組、哪個決策、哪個交付物。整理這類筆記時，可以用責任、依賴、風險三欄描述。",
-          paragraphNumber: 1
-        },
-        {
-          title: "回饋與同步",
-          text: "好的協作回饋應該具體指出問題、影響與建議，而不是只有模糊意見。同步會議的目標也不是把所有事情講一遍，而是快速對齊阻塞點與下一步。若要複習團隊管理概念，這類對齊機制很值得拆開整理。",
-          paragraphNumber: 2
-        },
-        {
-          title: "決策紀錄",
-          text: "很多團隊反覆討論同一題，不是因為沒有想法，而是沒有留下清楚的決策紀錄。當一個決定的背景、限制與取捨沒有被寫下來，後面的人就很難理解為什麼當時那樣做。整理時應把決策原因和結果一起保存。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Creative Writing",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "敘事節奏",
-          text: "寫作的節奏感來自資訊揭露順序，而不是單靠華麗詞藻。若每段都同樣重，讀者就抓不到真正的轉折。整理寫作筆記時，可以把開場、推進、轉折與收束的功能分別標示出來。",
-          paragraphNumber: 1
-        },
-        {
-          title: "觀點與細節",
-          text: "具體細節能讓文字更有畫面，但若沒有清楚觀點，就容易變成只有堆砌描寫。好的寫作會讓細節服務主題，而不是搶走主題本身。複習時適合把核心觀點與支撐細節對照整理。",
-          paragraphNumber: 2
-        },
-        {
-          title: "修改思路",
-          text: "寫作修改不只是修錯字，而是重新確認每段是否真的有功能。刪掉重複、移動順序、重寫開頭，往往比加更多句子有效。若把修改理由也記下來，會更容易看出自己常見的寫作弱點。",
-          paragraphNumber: 3
-        }
-      ]
-    }
-  ];
+  const rawSeedDocuments = Array.isArray(window.SMARTSTUDY_KNOWLEDGE_SEED_DOCUMENTS)
+    ? window.SMARTSTUDY_KNOWLEDGE_SEED_DOCUMENTS
+    : [];
+
+  return rawSeedDocuments.map((document) => ({
+    ...document,
+    sections: Array.isArray(document.sections)
+      ? document.sections.map((section, index) => ({
+          ...section,
+          paragraphNumber: typeof section.paragraphNumber === "number"
+            ? section.paragraphNumber
+            : index + 1
+        }))
+      : []
+  }));
 }
 
 function ensureSeedKnowledgeBase() {
@@ -4162,7 +3479,7 @@ function cleanSourceContent(text, sourceMeta = null) {
   };
 }
 
-const STRUCTURE_HEADING_LABEL_PATTERN = /(主題定位|核心觀念|關鍵名詞|重點關聯|考試提醒|延伸理解|分段整理)/;
+const STRUCTURE_HEADING_LABEL_PATTERN = /(主題定位|核心觀念|關鍵詞|關鍵名詞|重點關聯|考試提醒|延伸理解|分段整理)/;
 const forbiddenOutputPatterns = [
   /copyright/i,
   /john\s*wiley/i,
@@ -4621,6 +3938,7 @@ function sanitizeFinalSummary(summary) {
 const SUMMARY_SEMANTIC_TITLES = [
   "主題定位",
   "核心觀念",
+  "關鍵詞",
   "關鍵名詞",
   "重點關聯",
   "考試提醒",
@@ -4638,6 +3956,9 @@ function parseSummarySemanticTitle(rawTitle) {
 
   const numberedMatch = title.match(/^([一二三四五六七八九十]+)、\s*(.+)$/);
   const label = normalizeText(numberedMatch ? numberedMatch[2] : title);
+  if (label === "關鍵名詞") {
+    return "關鍵詞";
+  }
   return SUMMARY_SEMANTIC_TITLE_SET.has(label) ? label : "";
 }
 
@@ -4710,14 +4031,14 @@ function sanitizeFinalAnalysisOutput(result) {
       answer: cleanChineseSentenceWithEnding(item.answer || "")
     }))
     .filter((item) => item.question && item.answer);
-  const mockExamQuestions = sanitizeFinalQuestions(cleanOutputList(result.mockExamQuestions || []))
+  const mockExamQuestions = sanitizeFinalQuestions(cleanOutputList(result.practiceQuestions || result.mockExamQuestions || []))
     .map((item) => ({
       ...item,
       question: cleanChineseSentenceWithEnding(item.question || "").replace(/[。！？!?]$/, "？"),
       answer: cleanChineseSentenceWithEnding(item.answer || "")
     }))
     .filter((item) => item.question && item.answer);
-  const journalEntryQuestions = sanitizeFinalQuestions(cleanOutputList(result.journalEntryQuestions || []))
+  const journalEntryQuestions = sanitizeFinalQuestions(cleanOutputList(result.specializedQuestions || result.journalEntryQuestions || []))
     .map((item) => ({
       ...item,
       question: cleanChineseSentenceWithEnding(item.question || "").replace(/[。！？!?]$/, "？"),
@@ -4741,7 +4062,7 @@ function sanitizeFinalAnalysisOutput(result) {
       description: cleanChineseSentenceWithEnding(item.description || "")
     }))
     .filter((item) => item.label || item.description);
-  const accountingTerms = sanitizeFinalInfoBlocks(cleanOutputList(result.accountingTerms || []))
+  const accountingTerms = sanitizeFinalInfoBlocks(cleanOutputList(result.keyTerms || result.accountingTerms || []))
     .map((term) => ({
       ...term,
       label: cleanChineseSentence(term.label || ""),
@@ -4768,10 +4089,13 @@ function sanitizeFinalAnalysisOutput(result) {
     possibleExamPoints,
     generalNotes,
     accountingTerms,
+    keyTerms: accountingTerms,
     englishExplanations,
     questions,
     mockExamQuestions,
-    journalEntryQuestions
+    practiceQuestions: mockExamQuestions,
+    journalEntryQuestions,
+    specializedQuestions: journalEntryQuestions
   };
 }
 
@@ -4837,17 +4161,19 @@ function setBusyState(isBusy) {
   analyzeButton.disabled = isBusy;
   demoButton.disabled = isBusy;
   useKnowledgeBaseCheckbox.disabled = isBusy;
+  pdfPageStartInput.disabled = isBusy;
+  pdfPageEndInput.disabled = isBusy;
 }
 
 function restoreUploadHelp() {
   uploadHelp.textContent = currentLanguage === "en"
-    ? "Supported: TXT, MD, CSV, JSON, HTML, XML, DOCX, PPTX, and PDF. Some scanned PDFs or image-based text require OCR attempts, and results may vary with file quality. Legacy PPT and DOC files are best resaved as PPTX or DOCX first."
-    : "支援：TXT、MD、CSV、JSON、HTML、XML、DOCX、PPTX、PDF。部分掃描型 PDF 或圖片文字需透過 OCR 嘗試辨識，結果可能受檔案品質影響。舊版 PPT、DOC 建議先另存為 PPTX 或 DOCX。";
+    ? "Supported: TXT, MD, CSV, JSON, HTML, XML, DOCX, PPTX, and PDF. You can upload multiple files at once, and PDF page ranges can be limited before parsing. Some scanned PDFs or image-based text require OCR attempts, and results may vary with file quality."
+    : "支援：TXT、MD、CSV、JSON、HTML、XML、DOCX、PPTX、PDF。可一次上傳多份檔案，也可先限制 PDF 頁數範圍再解析。部分掃描型 PDF 或圖片文字需透過 OCR 嘗試辨識，結果可能受檔案品質影響。";
   setParseStatus(
     currentLanguage === "en" ? "File parsing has not started yet" : "文件解析尚未開始",
     currentLanguage === "en"
-      ? "After you upload a file, the system extracts text first, then captures OCR text from images, and finally sends the full content into the study workflow. Core analysis stays in the browser, but parsing dependencies may load from CDN resources."
-      : "上傳檔案後，系統會先抽取文字，再補抓圖片中的文字辨識內容，最後把完整內容帶進整理流程。主要分析流程在瀏覽器端完成，但檔案解析依賴的前端套件可能會透過 CDN 載入。",
+      ? "After you upload files, the system extracts text first, then captures OCR text from images, and finally sends the merged content into the study workflow. Core analysis stays in the browser, but parsing dependencies may load from CDN resources."
+      : "上傳檔案後，系統會先抽取文字，再補抓圖片中的文字辨識內容，最後把合併後的完整內容帶進整理流程。主要分析流程在瀏覽器端完成，但檔案解析依賴的前端套件可能會透過 CDN 載入。",
     0,
     currentLanguage === "en" ? "Waiting for upload" : "等待上傳"
   );
@@ -4874,6 +4200,82 @@ function syncSourceContextUI() {
 
   restoreUploadHelp();
   fileStatus.textContent = currentLanguage === "en" ? "No file selected" : "尚未選擇檔案";
+  resetUploadPreview();
+}
+
+function resetUploadPreview() {
+  uploadPreviewBox.classList.add("hidden");
+  uploadPreviewTitle.textContent = currentLanguage === "en" ? "Import Preview" : "匯入預覽";
+  uploadPreviewMeta.textContent = currentLanguage === "en"
+    ? "After parsing, an overview of the imported files and sections will appear here."
+    : "解析完成後，這裡會顯示目前匯入的檔案與內容區塊概況。";
+  uploadPreviewList.innerHTML = "";
+}
+
+function renderUploadPreview(result) {
+  if (!result?.sourceMeta) {
+    resetUploadPreview();
+    return;
+  }
+
+  const meta = result.sourceMeta;
+  const fileItems = Array.isArray(meta.files) && meta.files.length ? meta.files : [{
+    name: meta.fileName || "",
+    sectionCount: meta.sectionCount || 0,
+    imageCount: meta.imageCount || 0
+  }];
+  const sections = Array.isArray(result.sections) ? result.sections.slice(0, 6) : [];
+
+  uploadPreviewTitle.textContent = currentLanguage === "en" ? "Import Preview" : "匯入預覽";
+  uploadPreviewMeta.textContent = currentLanguage === "en"
+    ? `Imported ${fileItems.length} file(s), ${meta.sectionCount || 0} sections, and ${meta.imageCount || 0} OCR text blocks before note generation.`
+    : `已匯入 ${fileItems.length} 份檔案、${meta.sectionCount || 0} 個內容區塊，並抓到 ${meta.imageCount || 0} 筆 OCR 圖片文字；你可以先檢查再開始整理。`;
+
+  uploadPreviewList.innerHTML = "";
+
+  fileItems.slice(0, 4).forEach((item) => {
+    const pageRangeText = item.pageRange
+      ? (currentLanguage === "en"
+        ? `, pages ${item.pageRange.startPage}-${item.pageRange.endPage}`
+        : `，頁數 ${item.pageRange.startPage}-${item.pageRange.endPage}`)
+      : "";
+    const card = document.createElement("div");
+    card.className = "upload-preview-item";
+    card.innerHTML = `
+      <strong>${escapeHTML(item.name || (currentLanguage === "en" ? "Untitled file" : "未命名檔案"))}</strong>
+      <span>${escapeHTML(currentLanguage === "en"
+        ? `${item.sectionCount || 0} sections, ${item.imageCount || 0} OCR blocks${pageRangeText}`
+        : `${item.sectionCount || 0} 個區塊，${item.imageCount || 0} 筆 OCR 文字${pageRangeText}`)}</span>
+    `;
+    uploadPreviewList.appendChild(card);
+  });
+
+  if (sections.length) {
+    const sectionCard = document.createElement("div");
+    sectionCard.className = "upload-preview-item";
+    sectionCard.innerHTML = `
+      <strong>${escapeHTML(currentLanguage === "en" ? "Previewed sections" : "內容區塊預覽")}</strong>
+      <span>${escapeHTML(sections.map((section) => section.title || "").filter(Boolean).join(" / "))}</span>
+    `;
+    uploadPreviewList.appendChild(sectionCard);
+  }
+
+  uploadPreviewBox.classList.remove("hidden");
+}
+
+function getPdfPageRangeOptions() {
+  const startRaw = Number.parseInt(String(pdfPageStartInput.value || "").trim(), 10);
+  const endRaw = Number.parseInt(String(pdfPageEndInput.value || "").trim(), 10);
+  const startPage = Number.isFinite(startRaw) && startRaw > 0 ? startRaw : null;
+  const endPage = Number.isFinite(endRaw) && endRaw > 0 ? endRaw : null;
+
+  if (startPage && endPage && startPage > endPage) {
+    throw new Error(currentLanguage === "en"
+      ? "The PDF start page cannot be greater than the end page."
+      : "PDF 起始頁不可大於結束頁。");
+  }
+
+  return { startPage, endPage };
 }
 
 function splitSentences(text) {
@@ -5230,7 +4632,7 @@ function buildDetailedSummary(sentences, keywordScores, highlights, accountingTe
       .slice(0, 4)
       .map((term) => `${term.en}（${term.zh}）`)
       .join("、");
-    pushNote("關鍵名詞", `這份內容反覆聚焦在 ${topTerms}，代表這些名詞是理解全文與準備考試時最應優先掌握的核心概念。`);
+    pushNote("關鍵詞", `這份內容反覆聚焦在 ${topTerms}，代表這些概念是理解全文與後續複習時最應優先掌握的核心內容。`);
   }
 
   if (criticalHighlights.length >= 2) {
@@ -5869,7 +5271,7 @@ function buildPossibleExamPoints(highlights, accountingTerms, accountingTopic, l
       return;
     }
     const hint = termTopicHints[accountingTopic] || termTopicHints.general;
-    pushPoint(`${label}是這份內容中的高頻關鍵名詞。${hint}`);
+    pushPoint(`${label}是這份內容中的高頻關鍵概念。${hint}`);
   });
 
   return points.slice(0, limit);
@@ -6864,7 +6266,7 @@ function translateSentenceToChineseIfNeeded(sentence) {
 }
 
 function getModeConfig() {
-  return modeConfigs[modeSelect.value] || modeConfigs.exam;
+  return modeConfigs[getLegacyModeFromSelectedNoteModes()] || modeConfigs.exam;
 }
 
 function getModeLabel(mode) {
@@ -7907,6 +7309,7 @@ function renderMyNotes() {
     return;
   }
 
+  const fragment = document.createDocumentFragment();
   notes.forEach((note) => {
     const card = document.createElement("article");
     card.className = "app-card my-note-card";
@@ -7956,8 +7359,10 @@ function renderMyNotes() {
       card.querySelector(".export-trigger").dataset.exportBound = "true";
     }
 
-    myNotesGrid.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  myNotesGrid.appendChild(fragment);
 }
 
 function buildKnowledgeTags(item) {
@@ -8037,7 +7442,7 @@ function addKnowledgeItemToTodayTasks(item) {
   tasks.unshift(task);
   saveJsonStorage(STORAGE_KEYS.tasks, tasks);
   refreshAfterTasksChanged();
-  alert(currentLanguage === "en" ? "Added to today's tasks." : "已加入今日待辦。");
+  setProcessStateText(currentLanguage === "en" ? "Added to today's tasks" : "已加入今日待辦");
 }
 
 function openKnowledgeDetail(item) {
@@ -8079,7 +7484,7 @@ async function copyKnowledgeItem(item) {
 
   try {
     await navigator.clipboard.writeText(text);
-    alert(currentLanguage === "en" ? "Content copied." : "已複製內容。");
+    setProcessStateText(currentLanguage === "en" ? "Content copied" : "已複製內容");
   } catch (error) {
     console.error(error);
     alert(currentLanguage === "en" ? "Copy failed. Please select the content manually." : "複製失敗，請手動選取內容。");
@@ -8109,6 +7514,7 @@ function renderKnowledgeResults(items) {
     return;
   }
 
+  const fragment = document.createDocumentFragment();
   items.forEach((item) => {
     const card = document.createElement("article");
     card.className = "app-card knowledge-result-card";
@@ -8183,8 +7589,10 @@ function renderKnowledgeResults(items) {
       card.querySelector(".export-trigger").dataset.exportBound = "true";
     }
 
-    knowledgeResults.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  knowledgeResults.appendChild(fragment);
 }
 
 function updateKnowledgeResults() {
@@ -8266,6 +7674,11 @@ function populatePlannerNoteSelect() {
 
 function initPlannerDragAndDrop() {
   document.querySelectorAll(".kanban-column").forEach((column) => {
+    if (column.dataset.dragBound === "true") {
+      return;
+    }
+    column.dataset.dragBound = "true";
+
     column.addEventListener("dragover", (event) => {
       event.preventDefault();
       column.classList.add("drag-over");
@@ -8311,7 +7724,7 @@ function handleGenerateStudyPlan() {
   const tasks = getStudyTasks();
   saveStudyTasks([...newTasks, ...tasks]);
   refreshAfterTasksChanged();
-  alert(currentLanguage === "en" ? "Study plan tasks created." : "已產生讀書計畫任務。");
+  setProcessStateText(currentLanguage === "en" ? "Study plan tasks created" : "已產生讀書計畫任務");
 }
 
 function setAccordionContent(section, preview, detailHtml) {
@@ -8330,13 +7743,31 @@ function setAccordionContent(section, preview, detailHtml) {
   }
 }
 
+function getResultKeyTerms(result) {
+  return Array.isArray(result?.keyTerms) && result.keyTerms.length
+    ? result.keyTerms
+    : (result?.accountingTerms || []);
+}
+
+function getResultPracticeQuestions(result) {
+  return Array.isArray(result?.practiceQuestions) && result.practiceQuestions.length
+    ? result.practiceQuestions
+    : (result?.mockExamQuestions || []);
+}
+
+function getResultSpecializedQuestions(result) {
+  return Array.isArray(result?.specializedQuestions) && result.specializedQuestions.length
+    ? result.specializedQuestions
+    : (result?.journalEntryQuestions || []);
+}
+
 function normalizeNoteResult(rawResult) {
   const result = rawResult?.chinese || {};
   const summaryText = translateDisplayText(result.summary || "");
   const keyPointItems = translateDisplayListItems(result.possibleExamPoints || result.importantSentences || []);
-  const quizItems = translateDisplayQuestions(result.questions || result.mockExamQuestions || []);
-  const keywordItems = Array.isArray(result.accountingTerms) && result.accountingTerms.length
-    ? result.accountingTerms.map((item) => `${item.label}：${item.description}`)
+  const quizItems = translateDisplayQuestions(result.questions || getResultPracticeQuestions(result) || []);
+  const keywordItems = Array.isArray(getResultKeyTerms(result)) && getResultKeyTerms(result).length
+    ? getResultKeyTerms(result).map((item) => `${item.label}：${item.description}`)
     : (result.keywords || []);
   const mistakeItems = translateDisplayInfoBlocks(result.importanceReasons || [])
     .map((item) => `${item.label || item.text}${item.description ? `：${item.description}` : ""}`);
@@ -9004,12 +8435,12 @@ function formatHtmlExport(result) {
     importanceReasons: isEnglish ? translateDisplayInfoBlocks(result.chinese.importanceReasons || []) : (result.chinese.importanceReasons || []),
     generalNotes: isEnglish ? translateDisplayListItems(result.chinese.generalNotes || []) : (result.chinese.generalNotes || []),
     possibleExamPoints: isEnglish ? translateDisplayListItems(result.chinese.possibleExamPoints || []) : (result.chinese.possibleExamPoints || []),
-    accountingTerms: result.chinese.accountingTerms || [],
+    keyTerms: getResultKeyTerms(result.chinese),
     englishExplanations: isEnglish ? translateDisplayInfoBlocks(result.chinese.englishExplanations || []) : (result.chinese.englishExplanations || []),
     questions: isEnglish ? translateDisplayQuestions(result.chinese.questions || []) : (result.chinese.questions || []),
-    mockExamQuestions: isEnglish ? translateDisplayQuestions(result.chinese.mockExamQuestions || []) : (result.chinese.mockExamQuestions || []),
+    practiceQuestions: isEnglish ? translateDisplayQuestions(getResultPracticeQuestions(result.chinese) || []) : (getResultPracticeQuestions(result.chinese) || []),
     highlights: isEnglish ? translateDisplayListItems(result.chinese.highlights || []) : (result.chinese.highlights || []),
-    journalEntryQuestions: isEnglish ? translateDisplayQuestions(result.chinese.journalEntryQuestions || []) : (result.chinese.journalEntryQuestions || [])
+    specializedQuestions: isEnglish ? translateDisplayQuestions(getResultSpecializedQuestions(result.chinese) || []) : (getResultSpecializedQuestions(result.chinese) || [])
   };
 
   const summary = safeExportLine(displayResult.summary) || safeExportLine(getUiText("emptySummary"));
@@ -9050,7 +8481,7 @@ function formatHtmlExport(result) {
     return `<li>${escapeHtml(text)}</li>`;
   });
 
-  const termsHtml = formatList(displayResult.accountingTerms, (item) => {
+  const termsHtml = formatList(displayResult.keyTerms, (item) => {
     const label = safeExportLine(item?.label || "");
     const description = safeExportLine(item?.description || "");
     if (!label || !description) return "";
@@ -9071,14 +8502,14 @@ function formatHtmlExport(result) {
     return `<li>${question ? `<p><strong>${escapeHtml(isEnglish ? "Question" : "題目")}</strong>：${escapeHtml(question)}</p>` : ""}${answer ? `<p><strong>${escapeHtml(isEnglish ? "Answer" : "答案")}</strong>：${escapeHtml(answer)}</p>` : ""}</li>`;
   });
 
-  const mockHtml = formatList(displayResult.mockExamQuestions, (item) => {
+  const mockHtml = formatList(displayResult.practiceQuestions, (item) => {
     const question = safeExportLine(item?.question || "");
     const answer = safeExportLine(item?.answer || "");
     if (!question && !answer) return "";
     return `<li>${question ? `<p><strong>${escapeHtml(isEnglish ? "Question" : "題目")}</strong>：${escapeHtml(question)}</p>` : ""}${answer ? `<p><strong>${escapeHtml(isEnglish ? "Answer" : "答案")}</strong>：${escapeHtml(answer)}</p>` : ""}</li>`;
   });
 
-  const journalHtml = formatList(displayResult.journalEntryQuestions, (item) => {
+  const journalHtml = formatList(displayResult.specializedQuestions, (item) => {
     const question = safeExportLine(item?.question || "");
     const answer = safeExportLine(item?.answer || "");
     if (!question && !answer) return "";
@@ -9166,7 +8597,7 @@ function formatHtmlExport(result) {
     <h2>${escapeHtml(isEnglish ? "Smart Summary" : "智慧摘要")}</h2>
     <div class="summary">${escapeHtml(summary)}</div>
 
-    <h2>${escapeHtml(isEnglish ? "Key Formulas / Structure" : "關鍵公式 / 結構")}</h2>
+    <h2>${escapeHtml(isEnglish ? "Key Structure / Framework" : "關鍵結構 / 架構")}</h2>
     <ul>${formulasHtml || `<li>${escapeHtml(getUiText("emptyFormulas"))}</li>`}</ul>
 
     <h2>${escapeHtml(isEnglish ? "Important Sentences" : "重要句子")}</h2>
@@ -9181,7 +8612,7 @@ function formatHtmlExport(result) {
     <h2>${escapeHtml(isEnglish ? "Possible Key Points" : "可能重點")}</h2>
     <ol>${examHtml || `<li>${escapeHtml(getUiText("emptyPossibleExamPoints"))}</li>`}</ol>
 
-    <h2>${escapeHtml(isEnglish ? "Key Terms / Glossary" : "關鍵名詞 / 專有名詞")}</h2>
+    <h2>${escapeHtml(isEnglish ? "Key Terms / Important Concepts" : "關鍵詞 / 重要概念")}</h2>
     <ul>${termsHtml || `<li>${escapeHtml(getUiText("emptyAccountingTerms"))}</li>`}</ul>
 
     <h2>${escapeHtml(isEnglish ? "Original Sentence Explanation" : "原文句子解釋")}</h2>
@@ -9193,7 +8624,7 @@ function formatHtmlExport(result) {
     <h2>${escapeHtml(isEnglish ? "Extended Practice" : "延伸練習")}</h2>
     <ol>${mockHtml || `<li>${escapeHtml(getUiText("emptyMockExam"))}</li>`}</ol>
 
-    ${journalHtml ? `<h2>${escapeHtml(isEnglish ? "Journal Entry Questions" : "會計分錄題")}</h2><ol>${journalHtml}</ol>` : ""}
+    ${journalHtml ? `<h2>${escapeHtml(isEnglish ? "Specialized Questions" : "專門題型")}</h2><ol>${journalHtml}</ol>` : ""}
   </main>
 </body>
 </html>`;
@@ -9208,12 +8639,12 @@ function formatMarkdownExport(result) {
     importanceReasons: isEnglish ? translateDisplayInfoBlocks(result.chinese.importanceReasons || []) : (result.chinese.importanceReasons || []),
     generalNotes: isEnglish ? translateDisplayListItems(result.chinese.generalNotes || []) : (result.chinese.generalNotes || []),
     possibleExamPoints: isEnglish ? translateDisplayListItems(result.chinese.possibleExamPoints || []) : (result.chinese.possibleExamPoints || []),
-    accountingTerms: result.chinese.accountingTerms || [],
+    keyTerms: getResultKeyTerms(result.chinese),
     englishExplanations: isEnglish ? translateDisplayInfoBlocks(result.chinese.englishExplanations || []) : (result.chinese.englishExplanations || []),
     questions: isEnglish ? translateDisplayQuestions(result.chinese.questions || []) : (result.chinese.questions || []),
-    mockExamQuestions: isEnglish ? translateDisplayQuestions(result.chinese.mockExamQuestions || []) : (result.chinese.mockExamQuestions || []),
+    practiceQuestions: isEnglish ? translateDisplayQuestions(getResultPracticeQuestions(result.chinese) || []) : (getResultPracticeQuestions(result.chinese) || []),
     highlights: isEnglish ? translateDisplayListItems(result.chinese.highlights || []) : (result.chinese.highlights || []),
-    journalEntryQuestions: isEnglish ? translateDisplayQuestions(result.chinese.journalEntryQuestions || []) : (result.chinese.journalEntryQuestions || [])
+    specializedQuestions: isEnglish ? translateDisplayQuestions(getResultSpecializedQuestions(result.chinese) || []) : (getResultSpecializedQuestions(result.chinese) || [])
   };
   const summary = safeExportLine(displayResult.summary) || safeExportLine(getUiText("emptySummary"));
   const importantLines = (displayResult.importantSentences || [])
@@ -9253,7 +8684,7 @@ function formatMarkdownExport(result) {
       return `- **${label}**: ${description}`;
     })
     .filter(Boolean);
-  const accountingTermLines = (displayResult.accountingTerms || [])
+  const accountingTermLines = (displayResult.keyTerms || [])
     .map((item, index) => {
       const label = safeExportLine(item?.label || "");
       const description = safeExportLine(item?.description || "");
@@ -9279,7 +8710,7 @@ function formatMarkdownExport(result) {
       ];
     })
     .filter(Boolean);
-  const mockExamLines = (displayResult.mockExamQuestions || [])
+  const mockExamLines = (displayResult.practiceQuestions || [])
     .flatMap((item, index) => {
       const question = safeExportLine(item?.question || "");
       const answer = safeExportLine(item?.answer || "");
@@ -9296,7 +8727,7 @@ function formatMarkdownExport(result) {
       return `${index + 1}. ${text}`;
     })
     .filter(Boolean);
-  const journalLines = (displayResult.journalEntryQuestions || [])
+  const journalLines = (displayResult.specializedQuestions || [])
     .flatMap((item, index) => {
       const question = safeExportLine(item?.question || "");
       const answer = safeExportLine(item?.answer || "");
@@ -9328,19 +8759,18 @@ function formatMarkdownExport(result) {
     safeExportLine(isEnglish ? `- Mode: ${localizeModeLabel(result.modeLabel)}` : `- 整理模式：${result.modeLabel}`),
     safeExportLine(isEnglish ? `- Generated at: ${formatDateTime(result.analyzedAt)}` : `- 整理時間：${formatDateTime(result.analyzedAt)}`),
     ...sourceLines,
-    safeExportLine(isEnglish ? `- Accounting topic: ${result.chinese.accountingTopic || "general"}` : `- 會計主題判斷：${result.chinese.accountingTopic || "general"}`),
     "",
     safeExportLine(isEnglish ? "## English View" : "## 中文結果"),
     safeExportLine(
       isEnglish
-        ? "> Note: This export follows the current English display view. The accounting terms section remains unchanged for bilingual review."
+        ? "> Note: This export follows the current English display view and keeps the same overall learning structure."
         : (result.fromEnglishTranslation ? "> 註記：此區先將英文內容翻成中文，再與原始內容一起分析。" : "> 註記：此區直接根據原始中文內容分析。")
     ),
     "",
     safeExportLine(isEnglish ? "### Smart Summary" : "### 智慧摘要"),
     summary,
     "",
-    safeExportLine(isEnglish ? "### Key Formulas / Structure" : "### 關鍵公式 / 結構"),
+    safeExportLine(isEnglish ? "### Key Structure / Framework" : "### 關鍵結構 / 架構"),
     ...formulaLines,
     "",
     safeExportLine(isEnglish ? "### Important Sentences" : "### 重要句子"),
@@ -9355,7 +8785,7 @@ function formatMarkdownExport(result) {
     safeExportLine(isEnglish ? "### Possible Key Points" : "### 可能重點"),
     ...examPointLines,
     "",
-    safeExportLine(isEnglish ? "### Key Terms / Glossary" : "### 關鍵名詞 / 專有名詞"),
+    safeExportLine(isEnglish ? "### Key Terms / Important Concepts" : "### 關鍵詞 / 重要概念"),
     ...accountingTermLines,
     "",
     safeExportLine(isEnglish ? "### Original Sentence Explanation" : "### 原文句子解釋"),
@@ -9373,7 +8803,7 @@ function formatMarkdownExport(result) {
     ...(journalLines.length
       ? [
           "",
-          safeExportLine(isEnglish ? "### Journal Entry Questions" : "### 會計分錄題"),
+          safeExportLine(isEnglish ? "### Specialized Questions" : "### 專門題型"),
           ...journalLines
         ]
       : [])
@@ -9409,176 +8839,6 @@ function renderList(element, items, emptyText) {
     }
     element.appendChild(li);
   });
-}
-
-function renderImportantSentences(items) {
-  const list = document.getElementById("importantSentencesResult");
-  if (!list) {
-    return;
-  }
-
-  list.innerHTML = "";
-
-  if (!items || !items.length) {
-    const li = document.createElement("li");
-    li.className = "empty-state";
-    li.textContent = getUiText("emptyImportantSentences");
-    list.appendChild(li);
-    return;
-  }
-
-  items.forEach((item) => {
-    const text = typeof item === "string" ? item : item.text || "";
-    const level = typeof item === "string"
-      ? (currentLanguage === "en" ? "High" : "高")
-      : item.level || (currentLanguage === "en" ? "High" : "高");
-    const reasons = typeof item === "string"
-      ? []
-      : Array.isArray(item.reasons)
-        ? item.reasons
-        : [];
-
-    if (!text) {
-      return;
-    }
-
-    const li = document.createElement("li");
-    li.className = "highlight-item critical";
-
-    const badge = document.createElement("span");
-    badge.className = "highlight-badge";
-    badge.textContent = currentLanguage === "en" ? "Important" : "重要";
-
-    const textWrap = document.createElement("span");
-    textWrap.className = "highlight-text";
-    textWrap.textContent = text;
-
-    const reason = document.createElement("small");
-    reason.className = "importance-reason";
-    reason.textContent = reasons.length
-      ? (currentLanguage === "en"
-          ? `Priority: ${level} | Reason: ${reasons.join(", ")}`
-          : `重要度：${level}｜原因：${reasons.join("、")}`)
-      : (currentLanguage === "en" ? `Priority: ${level}` : `重要度：${level}`);
-
-    textWrap.appendChild(reason);
-    li.append(badge, textWrap);
-    list.appendChild(li);
-  });
-}
-
-function renderSummaryContent(element, text, emptyText) {
-  if (!element) {
-    return;
-  }
-  element.innerHTML = "";
-  const content = text ? reindexSummaryHeadings(text) : emptyText;
-  if (!text) {
-    element.textContent = content;
-    return;
-  }
-
-  const blocks = content
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  if (!blocks.length) {
-    element.textContent = content;
-    return;
-  }
-
-  const mergedBlocks = [];
-  const blockMap = new Map();
-
-  blocks.forEach((block) => {
-    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
-    const title = lines[0] || "";
-    const body = lines.slice(1).join("\n").trim();
-
-    if (!title) {
-      return;
-    }
-
-    const key = title.replace(/[：:]+$/, "");
-    if (!blockMap.has(key)) {
-      const entry = {
-        title: key,
-        bodies: body ? [body] : []
-      };
-      blockMap.set(key, entry);
-      mergedBlocks.push(entry);
-      return;
-    }
-
-    if (body) {
-      const entry = blockMap.get(key);
-      if (!entry.bodies.includes(body)) {
-        entry.bodies.push(body);
-      }
-    }
-  });
-
-  let summaryTitleIndex = 0;
-  mergedBlocks.forEach((block) => {
-    const summaryBlock = document.createElement("section");
-    summaryBlock.className = "summary-block";
-    const semanticTitle = parseSummarySemanticTitle(block.title);
-    const title = semanticTitle
-      ? formatSummaryDisplayTitle(summaryTitleIndex++, semanticTitle)
-      : block.title;
-    const body = block.bodies.join("\n");
-
-    if (body) {
-      const titleElement = document.createElement("strong");
-      titleElement.className = "summary-block-title";
-      titleElement.textContent = title;
-
-      const bodyParts = body
-        .split(/\n+|(?<=。)|(?<=！)|(?<=？)|；/g)
-        .map((part) => part.trim())
-        .filter(Boolean);
-
-      if (bodyParts.length > 1) {
-        const list = document.createElement("ul");
-        list.className = "summary-points";
-        bodyParts.forEach((part) => {
-          const item = document.createElement("li");
-          item.textContent = part;
-          list.appendChild(item);
-        });
-        summaryBlock.append(titleElement, list);
-      } else {
-        const bodyElement = document.createElement("span");
-        bodyElement.className = "summary-block-text";
-        bodyElement.textContent = body;
-        summaryBlock.append(titleElement, bodyElement);
-      }
-    } else {
-      const bodyElement = document.createElement("span");
-      bodyElement.className = "summary-block-text";
-      bodyElement.textContent = title;
-      summaryBlock.append(bodyElement);
-    }
-
-    element.appendChild(summaryBlock);
-  });
-}
-
-function renderSummary(summary) {
-  const container = document.getElementById("summaryResult");
-  if (!container) return false;
-
-  const rawSummary = normalizeText(String(summary || ""));
-  const cleanSummary = cleanOutputText(rawSummary);
-
-  if (!cleanSummary || isForbiddenOutputText(cleanSummary)) {
-    container.textContent = "本份資料已整理出核心內容與重點脈絡，建議搭配下方的重要句子、關鍵結構與專有名詞一起閱讀。";
-    return true;
-  }
-
-  renderSummaryContent(container, rawSummary, getUiText("emptySummary"));
-  return true;
 }
 
 function renderInfoBlocks(element, items, emptyText) {
@@ -9632,36 +8892,6 @@ function renderKeywordList(element, items, emptyText) {
   });
 }
 
-function renderAccountingTerms(element, items, emptyText) {
-  if (!element) {
-    return;
-  }
-  element.innerHTML = "";
-  if (!items.length) {
-    const li = document.createElement("li");
-    li.className = "empty-state";
-    li.textContent = emptyText;
-    element.appendChild(li);
-    return;
-  }
-
-  items.forEach((item) => {
-    const li = document.createElement("li");
-    li.className = "term-item";
-
-    const label = document.createElement("strong");
-    label.className = "term-title";
-    label.textContent = item.label;
-
-    const detail = document.createElement("span");
-    detail.className = "term-description";
-    detail.textContent = item.description;
-
-    li.append(label, detail);
-    element.appendChild(li);
-  });
-}
-
 function renderGeneralNotes(items) {
   renderList(generalNotesResult, items || [], getUiText("emptyGeneralNotes"));
 }
@@ -9672,52 +8902,6 @@ function renderPossibleExamPoints(items) {
 
 function renderEnglishExplanations(items) {
   renderInfoBlocks(englishExplainResult, items || [], getUiText("emptyEnglishExplain"));
-}
-
-function renderQuestions(element, items, emptyText) {
-  element.innerHTML = "";
-  if (!items.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = emptyText;
-    element.appendChild(empty);
-    return;
-  }
-
-  items.forEach((item, index) => {
-    const quizItem = document.createElement("article");
-    quizItem.className = "quiz-item";
-
-    const question = document.createElement("p");
-    question.className = "quiz-question";
-    question.textContent = `${index + 1}. ${item.question}`;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "ghost-button";
-    button.textContent = getUiText("showAnswer");
-
-    const answer = document.createElement("div");
-    answer.className = "quiz-answer";
-    answer.hidden = true;
-    answer.textContent = item.answer;
-
-    button.addEventListener("click", () => {
-      answer.hidden = !answer.hidden;
-      button.textContent = answer.hidden ? getUiText("showAnswer") : getUiText("hideAnswer");
-    });
-
-    quizItem.append(question, button, answer);
-    element.appendChild(quizItem);
-  });
-}
-
-function renderReviewQuestions(items) {
-  renderQuestions(questionsResult, items || [], getUiText("emptyQuestions"));
-}
-
-function renderMockExam(items) {
-  renderQuestions(mockExamResult, items || [], getUiText("emptyMockExam"));
 }
 
 function toggleCard(card, shouldShow) {
@@ -9817,7 +9001,7 @@ function getTutorContextPayload(result) {
     summary: result?.chinese?.summary || "",
     importantSentences: (result?.chinese?.importantSentences || []).map((item) => item.text || "").filter(Boolean).slice(0, 8),
     possibleExamPoints: (result?.chinese?.possibleExamPoints || []).map((item) => item.text || "").filter(Boolean).slice(0, 8),
-    accountingTerms: (result?.chinese?.accountingTerms || [])
+    accountingTerms: getResultKeyTerms(result?.chinese || {})
       .map((item) => item.label || item.text || "")
       .filter(Boolean)
       .slice(0, 10)
@@ -10537,7 +9721,7 @@ function buildLatestNoteKnowledgeDocument(latestResult) {
     { title: "智慧摘要", text: latestResult.summary || "" },
     { title: "重要句子", text: (latestResult.importantSentences || []).join("\n") },
     { title: "可能重點", text: (latestResult.possibleExamPoints || []).join("\n") },
-    { title: "關鍵名詞", text: (latestResult.accountingTerms || []).join("\n") },
+    { title: "關鍵詞 / 重要概念", text: ((latestResult.keyTerms || latestResult.accountingTerms) || []).join("\n") },
     { title: "理解問題", text: (latestResult.questions || []).join("\n") }
   ]
     .map((section, index) => ({
@@ -11078,6 +10262,72 @@ function refreshKnowledgeStats() {
       ? topTopics.join(currentLanguage === "en" ? ", " : "、")
       : (currentLanguage === "en" ? "No data yet" : "尚無資料");
   }
+
+  if (knowledgeStructureCount) {
+    knowledgeStructureCount.textContent = String(subjects.length);
+  }
+
+  if (knowledgeStructureList) {
+    knowledgeStructureList.innerHTML = "";
+
+    if (!knowledgeItems.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = getUiText("knowledgeStructureEmpty");
+      knowledgeStructureList.appendChild(empty);
+      return;
+    }
+
+    const grouped = new Map();
+    knowledgeItems.forEach((item) => {
+      const subject = normalizeText(item.subject) || (currentLanguage === "en" ? "Other" : "其他");
+      const chapter = normalizeText(item.chapter) || (currentLanguage === "en" ? "Uncategorized" : "未分類");
+      if (!grouped.has(subject)) {
+        grouped.set(subject, new Map());
+      }
+      const chapterMap = grouped.get(subject);
+      chapterMap.set(chapter, (chapterMap.get(chapter) || 0) + 1);
+    });
+
+    const fragment = document.createDocumentFragment();
+    Array.from(grouped.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], currentLanguage === "en" ? "en" : "zh-Hant"))
+      .forEach(([subject, chapterMap]) => {
+        const item = document.createElement("article");
+        item.className = "knowledge-structure-item";
+
+        const header = document.createElement("div");
+        header.className = "knowledge-structure-item-header";
+
+        const subjectTitle = document.createElement("strong");
+        subjectTitle.textContent = subject;
+
+        const meta = document.createElement("span");
+        meta.textContent = `${chapterMap.size} ${getUiText("knowledgeStructureTopicsCount")}`;
+
+        header.appendChild(subjectTitle);
+        header.appendChild(meta);
+
+        const chipRow = document.createElement("div");
+        chipRow.className = "knowledge-topic-chip-row";
+
+        Array.from(chapterMap.entries())
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], currentLanguage === "en" ? "en" : "zh-Hant"))
+          .slice(0, 8)
+          .forEach(([chapter, count]) => {
+            const chip = document.createElement("span");
+            chip.className = "knowledge-topic-chip";
+            chip.textContent = `${chapter} · ${count}`;
+            chipRow.appendChild(chip);
+          });
+
+        item.appendChild(header);
+        item.appendChild(chipRow);
+        fragment.appendChild(item);
+      });
+
+    knowledgeStructureList.appendChild(fragment);
+  }
 }
 
 function clearFrontendKnowledgeBase() {
@@ -11272,7 +10522,7 @@ function buildStudyAgentContext() {
     noteText,
     summary: activeResult?.chinese?.summary || latestResult?.summary || "",
     possibleExamPoints: (activeResult?.chinese?.possibleExamPoints || []).map((item) => item.text || "").filter(Boolean).slice(0, 8),
-    accountingTerms: (activeResult?.chinese?.accountingTerms || []).map((item) => item.label || "").filter(Boolean).slice(0, 10),
+    accountingTerms: getResultKeyTerms(activeResult?.chinese || {}).map((item) => item.label || "").filter(Boolean).slice(0, 10),
     wrongQuestions: normalizeText(wrongQuestionsInput?.value || ""),
     examDate: examDateInput?.value || "",
     studyHoursPerDay: Number(studyHoursInput?.value || 0)
@@ -11334,7 +10584,7 @@ function buildLocalStudyPlan(context) {
     },
     {
       label: "第 2-3 天",
-      description: "重看最常出題的重點與關鍵名詞。"
+      description: "重看最常出題的重點與關鍵詞。"
     },
     {
       label: "第 4-5 天",
@@ -11359,7 +10609,7 @@ function buildLocalStudyPlan(context) {
       description: point
     })),
     ...(context.accountingTerms || []).slice(0, 3).map((term, index) => ({
-      label: `關鍵名詞 ${index + 1}`,
+      label: `關鍵詞 ${index + 1}`,
       description: term
     }))
   ];
@@ -11510,22 +10760,6 @@ function renderCurrentResult(result = null) {
       nextStepPanel.hidden = true;
     }
     resetResultsView();
-    renderKeywordList(keywordsResult, [], "尚未產生關鍵字。");
-    renderList(highlightsResult, [], "尚未產生重點。");
-    toggleCard(summaryCard, false);
-    toggleCard(formulasCard, false);
-    toggleCard(importantSentencesCard, false);
-    toggleCard(importanceReasonsCard, false);
-    toggleCard(generalNotesCard, false);
-    toggleCard(possibleExamPointsCard, false);
-    toggleCard(accountingTermsCard, false);
-    toggleCard(englishExplainCard, false);
-    toggleCard(questionsCard, false);
-    toggleCard(mockExamCard, false);
-    if (journalCard) {
-      journalCard.hidden = true;
-    }
-    renderQuestions(journalQuestionsResult, [], getUiText("emptyJournal"));
     syncTutorSession(result);
     syncNotesAccordionResult(null);
     return;
@@ -11535,49 +10769,7 @@ function renderCurrentResult(result = null) {
     nextStepPanel.hidden = false;
   }
 
-  const displayResult = {
-    summary: translateDisplayText(result.chinese?.summary || ""),
-    formulas: translateDisplayInfoBlocks(result.chinese?.formulas || []),
-    importantSentences: translateDisplayListItems(result.chinese?.importantSentences || []),
-    importanceReasons: translateDisplayInfoBlocks(result.chinese?.importanceReasons || []),
-    generalNotes: translateDisplayListItems(result.chinese?.generalNotes || []),
-    possibleExamPoints: translateDisplayListItems(result.chinese?.possibleExamPoints || []),
-    accountingTerms: result.chinese?.accountingTerms || [],
-    englishExplanations: translateDisplayInfoBlocks(result.chinese?.englishExplanations || []),
-    questions: translateDisplayQuestions(result.chinese?.questions || []),
-    mockExamQuestions: translateDisplayQuestions(result.chinese?.mockExamQuestions || []),
-    highlights: translateDisplayListItems(result.chinese?.highlights || []),
-    journalEntryQuestions: translateDisplayQuestions(result.chinese?.journalEntryQuestions || [])
-  };
-
   resultTimestamp.textContent = formatDateTime(result.analyzedAt);
-  const hasSummary = renderSummary(displayResult.summary);
-  renderInfoBlocks(formulasResult, displayResult.formulas, getUiText("emptyFormulas"));
-  renderImportantSentences(displayResult.importantSentences);
-  renderInfoBlocks(importanceReasonsResult, displayResult.importanceReasons, getUiText("emptyImportanceReasons"));
-  renderGeneralNotes(displayResult.generalNotes);
-  renderPossibleExamPoints(displayResult.possibleExamPoints);
-  renderAccountingTerms(accountingTermsResult, displayResult.accountingTerms, getUiText("emptyAccountingTerms"));
-  renderEnglishExplanations(displayResult.englishExplanations);
-  renderKeywordList(keywordsResult, result.chinese?.keywords || [], "尚未產生關鍵字。");
-  renderList(highlightsResult, displayResult.highlights, "尚未產生重點。");
-  renderReviewQuestions(displayResult.questions);
-  renderMockExam(displayResult.mockExamQuestions);
-  toggleCard(summaryCard, hasSummary);
-  toggleCard(formulasCard, displayResult.formulas.length > 0);
-  toggleCard(importantSentencesCard, displayResult.importantSentences.length > 0);
-  toggleCard(importanceReasonsCard, displayResult.importanceReasons.length > 0);
-  toggleCard(generalNotesCard, displayResult.generalNotes.length > 0);
-  toggleCard(possibleExamPointsCard, displayResult.possibleExamPoints.length > 0);
-  toggleCard(accountingTermsCard, displayResult.accountingTerms.length > 0);
-  toggleCard(englishExplainCard, displayResult.englishExplanations.length > 0);
-  toggleCard(questionsCard, displayResult.questions.length > 0);
-  toggleCard(mockExamCard, displayResult.mockExamQuestions.length > 0);
-  const journalQuestions = displayResult.journalEntryQuestions;
-  if (journalCard) {
-    journalCard.hidden = journalQuestions.length === 0;
-  }
-  renderQuestions(journalQuestionsResult, journalQuestions, getUiText("emptyJournal"));
   syncTutorSession(result);
   syncNotesAccordionResult(result);
 }
@@ -11602,6 +10794,7 @@ function restoreLatestWorkspaceFromHistory() {
 
   const latestAnalysis = loadLatestAnalysis();
   if (latestAnalysis) {
+    currentOpenedNotePayload = null;
     currentAnalysisResult = latestAnalysis;
     sourceText.value = latestAnalysis.sourceText || "";
     lastSourceMeta = latestAnalysis.sourceMeta || null;
@@ -11615,6 +10808,7 @@ function restoreLatestWorkspaceFromHistory() {
     if (latestAnalysis.analysisEnhancement && enhancementConfigs[latestAnalysis.analysisEnhancement]) {
       analysisEnhancement.value = latestAnalysis.analysisEnhancement;
     }
+    syncVisibleNoteModeFromLegacyMode();
     return;
   }
 
@@ -11623,6 +10817,7 @@ function restoreLatestWorkspaceFromHistory() {
     return;
   }
 
+  currentOpenedNotePayload = null;
   currentAnalysisResult = latest.result || null;
   sourceText.value = latest.sourceText || "";
   lastSourceMeta = latest.sourceMeta || null;
@@ -11636,6 +10831,7 @@ function restoreLatestWorkspaceFromHistory() {
   if (latest.result?.analysisEnhancement && enhancementConfigs[latest.result.analysisEnhancement]) {
     analysisEnhancement.value = latest.result.analysisEnhancement;
   }
+  syncVisibleNoteModeFromLegacyMode();
 }
 
 function buildHistoryPreview(result) {
@@ -11776,7 +10972,6 @@ function applyInterfaceLanguage() {
   analyzeButton.textContent = getUiText("analyzeButton");
   clearButton.textContent = getUiText("clearButton");
   copyButton.textContent = getUiText("copyButton");
-  downloadButton.textContent = getUiText("downloadButton");
   refreshQuestionsButton.textContent = getUiText("refreshQuestionsButton");
   clearHistoryButton.textContent = getUiText("clearHistoryButton");
   charCountLabel.textContent = getUiText("charCountLabel");
@@ -11858,13 +11053,14 @@ function applyInterfaceLanguage() {
 
 function updateModeUI() {
   const modeConfig = getModeConfig();
+  const activeLegacyMode = getLegacyModeFromSelectedNoteModes();
   const enhancement = enhancementConfigs[getSelectedEnhancement()] || enhancementConfigs.local;
   modeDescription.textContent = currentLanguage === "en"
     ? {
         exam: "Focus on key points and review questions for quick exam preparation.",
         report: "Emphasize topic organization and paragraph structure for presentations and reports.",
         simple: "Provide a lighter summary for quick browsing and initial understanding."
-      }[modeSelect.value] || modeConfig.description
+      }[activeLegacyMode] || modeConfig.description
     : modeConfig.description;
   if (analysisEnhancementDescription) {
     analysisEnhancementDescription.textContent = currentLanguage === "en"
@@ -11938,7 +11134,10 @@ function buildLanguageAnalysis(sentences, mode, modeConfig, questionBuilder, opt
   const baseSummary = pickSummary(sentences, keywordScores, modeConfig) || sentences[0] || "";
   const highlights = buildHighlights(sentences, keywordScores, modeConfig);
   const directAccountingTerms = findAccountingTerms(rawText);
-  const fallbackAccountingTerms = buildAccountingTermsFromReference(`${rawText}\n${baseSummary}\n${highlights.map((item) => item.fullText || item.text || item.core).join("\n")}`);
+  const financeDetected = isFinanceContent(rawText, words);
+  const fallbackAccountingTerms = financeDetected
+    ? buildAccountingTermsFromReference(`${rawText}\n${baseSummary}\n${highlights.map((item) => item.fullText || item.text || item.core).join("\n")}`)
+    : [];
   const accountingTerms = directAccountingTerms.length ? directAccountingTerms : fallbackAccountingTerms;
   const accountingTopic = detectAccountingTopic(accountingTerms, rawText);
   const summary = buildDetailedSummary(
@@ -11987,6 +11186,7 @@ function buildLanguageAnalysis(sentences, mode, modeConfig, questionBuilder, opt
 function buildAnalysisInputContext(text, mode, modeConfig) {
   const cleaned = cleanSourceContent(text, lastSourceMeta);
   const analysisText = cleaned.cleanedText || text;
+  const financeDetected = isFinanceContent(analysisText, tokenize(analysisText));
   const rawSentences = splitSentences(text);
   const originalSentences = rawSentences
     .map((sentence) => normalizeStudySentence(sentence))
@@ -11994,6 +11194,9 @@ function buildAnalysisInputContext(text, mode, modeConfig) {
     .filter((sentence) => {
       if (isLikelyMeaningfulSentence(sentence, lastSourceMeta)) {
         return true;
+      }
+      if (!financeDetected) {
+        return false;
       }
       return findAccountingTerms(sentence).length > 0 || getJournalEntryMatches(sentence).length > 0;
     });
@@ -12395,7 +11598,7 @@ async function renderPdfPageToCanvas(page, scale = 1.4) {
   return canvas;
 }
 
-async function extractPdfText(file) {
+async function extractPdfText(file, options = {}) {
   if (!pdfjsLib) {
     throw new Error("PDF 解析器尚未載入");
   }
@@ -12404,10 +11607,16 @@ async function extractPdfText(file) {
   const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
   const sections = [];
   const imageTexts = [];
+  const requestedStart = options.startPage || 1;
+  const requestedEnd = options.endPage || pdf.numPages;
+  const startPage = Math.max(1, Math.min(pdf.numPages, requestedStart));
+  const endPage = Math.max(startPage, Math.min(pdf.numPages, requestedEnd));
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+  for (let pageNumber = startPage; pageNumber <= endPage; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
-    const textPercent = 15 + ((pageNumber - 1) / Math.max(pdf.numPages, 1)) * 25;
+    const pageOffset = pageNumber - startPage;
+    const totalPages = Math.max(endPage - startPage + 1, 1);
+    const textPercent = 15 + (pageOffset / totalPages) * 25;
     const textContent = await page.getTextContent();
     const pageText = textContent.items.map((item) => item.str).join(" ");
     sections.push({
@@ -12417,7 +11626,7 @@ async function extractPdfText(file) {
     });
 
     setParseStatus("PDF 文字抽取中", `已完成第 ${pageNumber} 頁文字層讀取`, textPercent, "抽取頁面文字");
-    const ocrPercent = 48 + ((pageNumber - 1) / Math.max(pdf.numPages, 1)) * 34;
+    const ocrPercent = 48 + (pageOffset / totalPages) * 34;
     setParseStatus("PDF 圖片文字辨識中", `正在辨識第 ${pageNumber} 頁影像中的文字`, ocrPercent, "圖片文字辨識");
     const canvas = await renderPdfPageToCanvas(page);
     const ocrText = await extractImageText(canvas, `PDF 第 ${pageNumber} 頁附加圖片文字`);
@@ -12435,13 +11644,14 @@ async function extractPdfText(file) {
     sourceMeta: {
       fileName: file.name,
       extension: "pdf",
+      pageRange: { startPage, endPage, totalPages: pdf.numPages },
       sectionCount: sections.length,
       imageCount: dedupedImageTexts.length
     }
   };
 }
 
-async function extractFileContent(file) {
+async function extractFileContent(file, options = {}) {
   const extension = getFileExtension(file.name);
   if (legacyExtensions.has(extension)) {
     throw new Error(`舊版 ${extension.toUpperCase()} 檔不支援直接解析，請先轉成 ${extension === "ppt" ? "PPTX" : "DOCX"}。`);
@@ -12456,9 +11666,34 @@ async function extractFileContent(file) {
     return extractDocxText(file);
   }
   if (extension === "pdf") {
-    return extractPdfText(file);
+    return extractPdfText(file, options.pdfPageRange || {});
   }
   throw new Error("目前不支援這個檔案格式的內容解析。");
+}
+
+function mergeParsedFileResults(results, files) {
+  const sections = results.flatMap((result) => result.sections || []);
+  const imageTexts = dedupeImageTexts(results.flatMap((result) => result.imageTexts || []));
+  const filesMeta = results.map((result, index) => ({
+    name: result.sourceMeta?.fileName || files[index]?.name || "",
+    extension: result.sourceMeta?.extension || getFileExtension(files[index]?.name || ""),
+    sectionCount: result.sourceMeta?.sectionCount || 0,
+    imageCount: result.sourceMeta?.imageCount || 0,
+    pageRange: result.sourceMeta?.pageRange || null
+  }));
+
+  return {
+    rawText: mergeSections(sections, imageTexts),
+    sections,
+    imageTexts,
+    sourceMeta: {
+      fileName: files.length === 1 ? (files[0]?.name || "") : `${files.length} 份檔案`,
+      extension: files.length === 1 ? getFileExtension(files[0]?.name || "") : "multi",
+      sectionCount: sections.length,
+      imageCount: imageTexts.length,
+      files: filesMeta
+    }
+  };
 }
 
 function setStructuredTextResult(result) {
@@ -12471,8 +11706,13 @@ function setStructuredTextResult(result) {
   renderCurrentResult();
   updateCounts();
   updateModeUI();
-  fileStatus.textContent = `已完成解析：${result.sourceMeta.fileName} (${result.sourceMeta.extension.toUpperCase()})`;
-  uploadHelp.textContent = `已抽取 ${result.sourceMeta.sectionCount} 個內容區塊，並擷取 ${result.sourceMeta.imageCount} 筆圖片文字辨識內容。`;
+  const fileCount = Array.isArray(result.sourceMeta.files) ? result.sourceMeta.files.length : 1;
+  fileStatus.textContent = currentLanguage === "en"
+    ? `Parsed: ${result.sourceMeta.fileName} (${fileCount} file${fileCount > 1 ? "s" : ""})`
+    : `已完成解析：${result.sourceMeta.fileName}（共 ${fileCount} 份檔案）`;
+  uploadHelp.textContent = currentLanguage === "en"
+    ? `Extracted ${result.sourceMeta.sectionCount} content sections and ${result.sourceMeta.imageCount} OCR text blocks. Review the preview below before organizing.`
+    : `已抽取 ${result.sourceMeta.sectionCount} 個內容區塊，並擷取 ${result.sourceMeta.imageCount} 筆圖片文字辨識內容；可先查看下方預覽再開始整理。`;
   setParseStatus(
     "文件解析完成",
     `已匯入 ${result.sourceMeta.fileName} 的完整文字內容，可直接開始整理或再補充修改文字。`,
@@ -12480,25 +11720,61 @@ function setStructuredTextResult(result) {
     "完成"
   );
   setProcessStateText("已完成文件匯入");
+  renderUploadPreview(result);
   refreshKnowledgeAssistPreviewFromCurrentInput();
 }
 
-async function handleFileUpload(file) {
+async function handleFileUpload(files) {
+  const fileList = Array.isArray(files) ? files : [files];
+  if (!fileList.length) {
+    return;
+  }
+  currentOpenedNotePayload = null;
+  const pdfPageRange = getPdfPageRangeOptions();
   setBusyState(true);
-  fileStatus.textContent = `正在處理：${file.name} (${formatFileSize(file.size)})`;
+  currentUploadedFiles = fileList.map((file) => ({
+    name: file.name,
+    size: file.size
+  }));
+  fileStatus.textContent = currentLanguage === "en"
+    ? `Processing ${fileList.length} file(s)...`
+    : `正在處理 ${fileList.length} 份檔案…`;
   setProcessStateText("解析中");
-  setParseStatus("開始處理檔案", `已選擇 ${file.name}，準備初始化解析流程`, 2, "初始化");
+  setParseStatus("開始處理檔案", `已選擇 ${fileList.length} 份檔案，準備初始化解析流程`, 2, "初始化");
   try {
-    const result = await extractFileContent(file);
-    setStructuredTextResult(result);
+    const parsedResults = [];
+    for (let index = 0; index < fileList.length; index += 1) {
+      if (index > 0) {
+        await yieldToBrowser();
+      }
+      const file = fileList[index];
+      setParseStatus(
+        currentLanguage === "en" ? "Preparing file parsing" : "開始處理檔案",
+        currentLanguage === "en"
+          ? `Processing file ${index + 1} of ${fileList.length}: ${file.name}`
+          : `正在處理第 ${index + 1} / ${fileList.length} 份檔案：${file.name}`,
+        Math.min(10, 2 + index),
+        currentLanguage === "en" ? "Initialize" : "初始化"
+      );
+      const result = await extractFileContent(file, { pdfPageRange });
+      parsedResults.push(result);
+      await yieldToBrowser();
+    }
+    const mergedResult = mergeParsedFileResults(parsedResults, fileList);
+    setStructuredTextResult(mergedResult);
   } catch (error) {
     lastSourceMeta = null;
     lastSourceSections = [];
-    const extension = getFileExtension(file.name);
-    fileStatus.textContent = `無法解析：${file.name}`;
+    currentUploadedFiles = [];
+    const firstFile = fileList[0];
+    const extension = getFileExtension(firstFile?.name || "");
+    fileStatus.textContent = currentLanguage === "en"
+      ? `Unable to parse ${firstFile?.name || "selected file"}`
+      : `無法解析：${firstFile?.name || "已選檔案"}`;
     uploadHelp.textContent = error.message;
     setParseStatus("解析失敗", error.message, 100, "失敗");
     setProcessStateText(legacyExtensions.has(extension) ? "舊格式需轉檔" : "解析失敗");
+    resetUploadPreview();
   } finally {
     setBusyState(false);
   }
@@ -12543,7 +11819,7 @@ async function handleGenerateNotes() {
 async function analyzeText(options = {}) {
   const { saveToHistory = true } = options;
   const text = normalizeAccountingRawText(normalizeText(sourceText.value));
-  const mode = modeSelect.value;
+  const mode = getLegacyModeFromSelectedNoteModes();
   const modeConfig = getModeConfig();
   const enhancement = getSelectedEnhancement();
   const analysisMode = analysisEnhancement?.value || "local";
@@ -12716,13 +11992,13 @@ chooseFileButton.addEventListener("click", (event) => {
 });
 
 fileInput.addEventListener("change", () => {
-  const file = fileInput.files?.[0];
-  if (!file) {
+  const files = [...(fileInput.files || [])];
+  if (!files.length) {
     fileStatus.textContent = currentLanguage === "en" ? "No file selected" : "尚未選擇檔案";
     restoreUploadHelp();
     return;
   }
-  handleFileUpload(file);
+  handleFileUpload(files);
 });
 
 chooseKnowledgeFilesButton?.addEventListener("click", (event) => {
@@ -12743,6 +12019,18 @@ knowledgeFileInput?.addEventListener("change", () => {
   updateKnowledgeSelectionUI();
 });
 
+const debouncedRefreshKnowledgeAssistPreview = debounce(() => {
+  refreshKnowledgeAssistPreviewFromCurrentInput();
+}, 180);
+
+const debouncedUpdateKnowledgeResults = debounce(() => {
+  updateKnowledgeResults();
+}, 180);
+
+const debouncedRenderMyNotes = debounce(() => {
+  renderMyNotes();
+}, 180);
+
 ragQuickQuestions?.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-question]");
   if (!button || !ragQuestionInput) {
@@ -12754,6 +12042,7 @@ ragQuickQuestions?.addEventListener("click", (event) => {
 
   sourceText.addEventListener("input", () => {
   if (!isParsingFile) {
+    currentOpenedNotePayload = null;
     lastSourceMeta = null;
     lastSourceSections = [];
     currentAnalysisResult = null;
@@ -12763,7 +12052,7 @@ ragQuickQuestions?.addEventListener("click", (event) => {
     updateModeUI();
   }
   updateCounts();
-  refreshKnowledgeAssistPreviewFromCurrentInput();
+  debouncedRefreshKnowledgeAssistPreview();
 });
 
 analyzeButton.addEventListener("click", handleGenerateNotes);
@@ -12771,6 +12060,8 @@ analyzeButton.addEventListener("click", handleGenerateNotes);
 clearButton.addEventListener("click", () => {
   sourceText.value = "";
   fileInput.value = "";
+  currentUploadedFiles = [];
+  currentOpenedNotePayload = null;
   lastSourceMeta = null;
   lastSourceSections = [];
   currentAnalysisResult = null;
@@ -12782,6 +12073,7 @@ clearButton.addEventListener("click", () => {
   renderCurrentResult();
   updateCounts();
   updateModeUI();
+  resetUploadPreview();
   refreshKnowledgeAssistPreviewFromCurrentInput();
 });
 
@@ -12797,6 +12089,8 @@ knowledgeAssistPreviewToggle?.addEventListener("click", () => {
 
 demoButton.addEventListener("click", () => {
   sourceText.value = demoText;
+  currentUploadedFiles = [];
+  currentOpenedNotePayload = null;
   fileStatus.textContent = currentLanguage === "en" ? "Demo content loaded" : "已載入示範內容";
   uploadHelp.textContent = currentLanguage === "en"
     ? "The demo text is loaded. You can also upload TXT, PPTX, DOCX, or PDF files."
@@ -12806,6 +12100,7 @@ demoButton.addEventListener("click", () => {
   resetStudyPlanView();
   setStudyAgentStatus(getUiText("studyAgentStatusTitle"), getUiText("studyAgentStatusDetail"));
   setProcessStateText("示範內容已載入");
+  resetUploadPreview();
   setParseStatus(
     currentLanguage === "en" ? "Demo text loaded" : "示範文字已載入",
     currentLanguage === "en"
@@ -12836,12 +12131,6 @@ ragModeSelect?.addEventListener("change", () => {
 });
 
 copyButton.addEventListener("click", copyResult);
-downloadButton.addEventListener("click", () => {
-  openExportModal({
-    source: "notes",
-    payload: getExportPayloadBySource("notes")
-  });
-});
 refreshQuestionsButton?.addEventListener("click", refreshQuestions);
 tutorAskButton?.addEventListener("click", handleTutorAsk);
 tutorQuizButton?.addEventListener("click", handleTutorQuiz);
@@ -12862,7 +12151,7 @@ refreshQuestionsBtn?.addEventListener("click", () => {
   generateAndRenderRecommendedQuestions();
 });
 knowledgeSearchBtn?.addEventListener("click", updateKnowledgeResults);
-knowledgeSearchInput?.addEventListener("input", updateKnowledgeResults);
+knowledgeSearchInput?.addEventListener("input", debouncedUpdateKnowledgeResults);
 [
   knowledgeSubjectFilter,
   knowledgeChapterFilter,
@@ -12896,7 +12185,7 @@ generateStudyPlanButton?.addEventListener("click", generateStudyPlan);
   myNotesSort,
   myNotesTypeFilter
 ].forEach((element) => {
-  element?.addEventListener("input", renderMyNotes);
+  element?.addEventListener("input", debouncedRenderMyNotes);
   element?.addEventListener("change", renderMyNotes);
 });
 closeExportModalButton?.addEventListener("click", closeExportModal);
@@ -13072,11 +12361,13 @@ historyList.addEventListener("click", (event) => {
     }
     lastSourceMeta = entry.sourceMeta || null;
     lastSourceSections = Array.isArray(entry.result?.sourceSections) ? entry.result.sourceSections.map((section) => ({ ...section })) : [];
+    currentOpenedNotePayload = null;
     currentAnalysisResult = entry.result || null;
     saveLatestAnalysis(currentAnalysisResult);
     resetStudyPlanView();
     setStudyAgentStatus(getUiText("studyAgentStatusTitle"), getUiText("studyAgentStatusDetail"));
     updateCounts();
+    syncVisibleNoteModeFromLegacyMode();
     updateModeUI();
     renderCurrentResult(currentAnalysisResult);
     setProcessStateText("已載入歷史紀錄");

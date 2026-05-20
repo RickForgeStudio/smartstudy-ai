@@ -142,12 +142,28 @@
               type="file"
               id="fileInput"
               class="input-control"
+              multiple
               accept=".txt,.md,.csv,.json,.rtf,.html,.htm,.xml,.ppt,.pptx,.doc,.docx,.pdf,text/plain,text/markdown,text/csv,application/json,application/rtf,text/html,application/xml,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             >
 
             <div class="file-hint">
               <span id="fileStatus">尚未選擇檔案</span>
               <p id="uploadHelp">支援常見文字檔、DOCX、PPTX、PDF；掃描型文件會嘗試 OCR。</p>
+            </div>
+
+            <div class="soft-card pdf-range-card">
+              <strong data-i18n="pdfRangeTitle">PDF 頁數範圍</strong>
+              <p data-i18n="pdfRangeDescription">可留空代表整份 PDF；若一次上傳多份 PDF，所有 PDF 會套用同一組頁數範圍。</p>
+              <div class="pdf-range-grid">
+                <label>
+                  <span data-i18n="pdfPageStartLabel">起始頁</span>
+                  <input id="pdfPageStartInput" type="number" min="1" step="1" class="input-control" data-i18n-placeholder="pdfPageStartPlaceholder" placeholder="例如：1">
+                </label>
+                <label>
+                  <span data-i18n="pdfPageEndLabel">結束頁</span>
+                  <input id="pdfPageEndInput" type="number" min="1" step="1" class="input-control" data-i18n-placeholder="pdfPageEndPlaceholder" placeholder="例如：20">
+                </label>
+              </div>
             </div>
 
             <div class="notes-inline-actions">
@@ -166,6 +182,12 @@
                   <div class="progress-fill" id="progressFill"></div>
                 </div>
               </div>
+            </div>
+
+            <div class="soft-card upload-preview-box hidden" id="uploadPreviewBox" aria-live="polite">
+              <strong id="uploadPreviewTitle" data-i18n="uploadPreviewTitle">匯入預覽</strong>
+              <p id="uploadPreviewMeta" data-i18n="uploadPreviewMeta">解析完成後，這裡會顯示目前匯入的檔案與內容區塊概況。</p>
+              <div class="upload-preview-list" id="uploadPreviewList"></div>
             </div>
 
             <label class="form-label" id="sourceTextLabel" for="sourceText" data-i18n="pasteTextLabel">貼上文字</label>
@@ -255,7 +277,6 @@
 
             <div class="notes-inline-actions notes-inline-actions-bottom">
               <button class="secondary-btn" id="clearButton" type="button">清空內容</button>
-              <button class="secondary-btn" id="downloadButton" type="button">匯出</button>
             </div>
 
             <p class="helper-text">
@@ -447,16 +468,16 @@
               <span id="generalNotesCardMeta">段落整理</span>
               <span id="possibleExamPointsCardTitle">可能重點</span>
               <span id="possibleExamPointsCardMeta">快速提醒</span>
-              <span id="accountingTermsCardTitle">關鍵名詞</span>
-              <span id="accountingTermsCardMeta">中英對照</span>
+              <span id="accountingTermsCardTitle">關鍵詞 / 重要概念</span>
+              <span id="accountingTermsCardMeta">概念說明</span>
               <span id="englishExplainCardTitle">原文句子解釋</span>
               <span id="englishExplainCardMeta">對照理解</span>
               <span id="questionsCardTitle">理解問題</span>
               <span id="questionsCardMeta">快速思考</span>
               <span id="mockExamCardTitle">延伸練習</span>
               <span id="mockExamCardMeta">延伸思考</span>
-              <span id="journalCardTitle">會計分錄題</span>
-              <span id="journalCardMeta">分錄單獨整理</span>
+              <span id="journalCardTitle">專門題型</span>
+              <span id="journalCardMeta">僅在特定領域內容出現時顯示</span>
             </div>
           </section>
         </div>
@@ -595,6 +616,20 @@
             <p id="knowledgeSummaryTopTopicsText">尚無資料</p>
           </div>
         </section>
+
+        <details class="app-card knowledge-structure-card" id="knowledgeStructureCard">
+          <summary class="knowledge-structure-summary">
+            <div>
+              <strong data-i18n="knowledgeStructureTitle">知識結構總覽</strong>
+              <p data-i18n="knowledgeStructureSubtitle">快速查看目前有哪些領域與子主題</p>
+            </div>
+            <span class="soft-badge" id="knowledgeStructureCount">0</span>
+          </summary>
+
+          <div id="knowledgeStructureList" class="knowledge-structure-list">
+            <div class="empty-state">目前尚無知識結構資料。</div>
+          </div>
+        </details>
 
         <div class="knowledge-layout">
           <aside class="app-card filter-panel">
@@ -1034,6 +1069,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script defer src="./finance-knowledge.js"></script>
+  <script defer src="./data/knowledge-seed.js"></script>
   <script defer src="./spotify-player.js"></script>
   <script defer src="./app.js"></script>
 </body>
