@@ -820,6 +820,12 @@ const STORAGE_KEYS = {
   ragMode: "smartstudy-rag-mode",
   musicExpanded: "smartstudy.focusMusic.expanded"
 };
+const IS_STATIC_PAGES_MODE = Boolean(
+  globalThis.location && (
+    globalThis.location.protocol === "file:" ||
+    /github\.io$/i.test(globalThis.location.hostname || "")
+  )
+);
 
 const HISTORY_STORAGE_KEY = STORAGE_KEYS.history;
 const HISTORY_LIMIT = 8;
@@ -3164,6 +3170,10 @@ function persistEnhancementPreference() {
 }
 
 function restoreEnhancementPreference() {
+  if (IS_STATIC_PAGES_MODE && analysisEnhancement) {
+    analysisEnhancement.value = "local";
+    return;
+  }
   const saved = loadFromStorage(ANALYSIS_ENHANCEMENT_STORAGE_KEY, null);
   if (saved === "hybrid" && analysisEnhancement) {
     analysisEnhancement.value = "local";
@@ -3198,6 +3208,26 @@ function persistDisplayLanguagePreference() {
   saveToStorage(DISPLAY_LANGUAGE_STORAGE_KEY, currentLanguage);
 }
 
+function syncPagesCompatibleOptions() {
+  const futureAiOption = analysisEnhancement?.querySelector('option[value="future-ai"]');
+  if (futureAiOption) {
+    futureAiOption.disabled = IS_STATIC_PAGES_MODE;
+    futureAiOption.hidden = IS_STATIC_PAGES_MODE;
+  }
+  if (IS_STATIC_PAGES_MODE && analysisEnhancement) {
+    analysisEnhancement.value = "local";
+  }
+
+  const advancedRagOption = ragModeSelect?.querySelector('option[value="advanced"]');
+  if (advancedRagOption) {
+    advancedRagOption.disabled = IS_STATIC_PAGES_MODE;
+    advancedRagOption.hidden = IS_STATIC_PAGES_MODE;
+  }
+  if (IS_STATIC_PAGES_MODE && ragModeSelect) {
+    ragModeSelect.value = "local";
+  }
+}
+
 function getSelectedRagMode() {
   return ragModeSelect?.value === "advanced" ? "advanced" : "local";
 }
@@ -3207,6 +3237,10 @@ function persistRagModePreference() {
 }
 
 function restoreRagModePreference() {
+  if (IS_STATIC_PAGES_MODE && ragModeSelect) {
+    ragModeSelect.value = "local";
+    return;
+  }
   const saved = loadFromStorage(RAG_MODE_STORAGE_KEY, null);
   if ((saved === "local" || saved === "advanced") && ragModeSelect) {
     ragModeSelect.value = saved;
@@ -10454,6 +10488,11 @@ function setTutorBusyState(isBusy) {
 }
 
 async function getApiHealth(forceRefresh = false) {
+  if (IS_STATIC_PAGES_MODE) {
+    throw new Error(currentLanguage === "en"
+      ? "GitHub Pages cannot run the backend API. This site is currently using front-end-compatible features only."
+      : "GitHub Pages 無法直接執行後端 API，目前網站會使用前端可相容的功能。");
+  }
   if (apiHealthCache && !forceRefresh) {
     return apiHealthCache;
   }
@@ -11044,7 +11083,11 @@ function updateRagModeUI() {
     advancedOption.textContent = getUiText("ragModeAdvanced");
   }
 
-  ragModeDescription.textContent = isAdvanced
+  ragModeDescription.textContent = IS_STATIC_PAGES_MODE
+    ? (currentLanguage === "en"
+      ? "GitHub Pages uses the front-end keyword RAG mode. Advanced vector indexing needs a separate backend deployment."
+      : "GitHub Pages 會使用前端關鍵字 RAG 模式；進階向量索引需要另外部署後端。")
+    : isAdvanced
     ? getUiText("ragModeDescriptionAdvanced")
     : getUiText("ragModeDescriptionLocal");
 }
@@ -12632,7 +12675,11 @@ function updateModeUI() {
       }[activeLegacyMode] || modeConfig.description
     : modeConfig.description;
   if (analysisEnhancementDescription) {
-    analysisEnhancementDescription.textContent = currentLanguage === "en"
+    analysisEnhancementDescription.textContent = IS_STATIC_PAGES_MODE
+      ? (currentLanguage === "en"
+        ? "This GitHub Pages version runs in front-end mode by default. Advanced AI requires a separate backend deployment."
+        : "這個 GitHub Pages 版本會預設使用前端可運作模式；進階 AI 需要另外部署後端。")
+      : currentLanguage === "en"
       ? {
           local: "This mode uses local rules, keyword weighting, and the topic vocabulary library to organize the material without calling an external API.",
           "future-ai": "This mode sends the content to the backend and uses the OpenAI API for richer summaries, key points, terms, and practice. If the API is unavailable, Smart Rule Analysis is used automatically."
@@ -14078,6 +14125,7 @@ function initHomeGuide() {
 }
 
 function initApp() {
+  syncPagesCompatibleOptions();
   ensureSeedKnowledgeBase();
   restoreEnhancementPreference();
   resetNotesPageStateOnLoad();
