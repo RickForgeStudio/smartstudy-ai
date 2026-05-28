@@ -7,9 +7,27 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+  <div id="brandIntro" class="brand-intro" aria-hidden="true">
+    <div class="brand-intro-mark">
+      <span class="brand-intro-line"></span>
+      <strong>SmartStudy AI</strong>
+      <span class="brand-intro-line"></span>
+    </div>
+    <h1>Learn in Motion</h1>
+    <p>Organize. Understand. Recall.</p>
+  </div>
+
   <div class="page-shell">
     <header class="top-nav" aria-label="主要功能導覽">
-      <div class="brand">SmartStudy AI</div>
+      <div class="brand" aria-label="SmartStudy AI">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-mark-core"></span>
+        </span>
+        <div class="brand-stack">
+          <strong>SmartStudy AI</strong>
+          <span>AI Study Operating System</span>
+        </div>
+      </div>
       <nav class="nav-pills" aria-label="主要導覽">
         <button class="nav-pill active" data-page="home" data-i18n="navHome" type="button">首頁</button>
         <button class="nav-pill" data-page="notes" data-i18n="navNotes" type="button">筆記整理</button>
@@ -29,14 +47,127 @@
 
     <main class="app-shell">
       <section id="homePage" class="page active">
-        <div class="home-hero">
-          <p class="eyebrow">SmartStudy AI</p>
-          <h1 data-i18n="homeTitle">讓 AI 成為你的學習助教</h1>
-          <p data-i18n="homeSubtitle">今天要整理筆記、複習重點，還是問 AI 老師？</p>
+        <div class="home-hero home-hero-grid">
+          <div class="home-hero-copy">
+            <p class="eyebrow">SmartStudy AI</p>
+            <p class="hero-kicker">AI Study Operating System</p>
+            <h1 data-i18n="homeTitle">讓 AI 成為你的學習助教</h1>
+            <p class="hero-signature">Organize faster. Understand deeper. Remember longer.</p>
+            <p class="home-hero-brief" data-i18n="homeSubtitle">把資料整理、提問理解與複習安排，收進同一個學習工作流。</p>
+            <div class="home-hero-actions">
+              <button class="primary-btn" data-page="notes" type="button">開始整理筆記</button>
+              <button class="secondary-btn" data-page="myNotes" type="button">查看最近筆記</button>
+            </div>
+            <div class="hero-proofline" aria-hidden="true">
+              <span>Upload once</span>
+              <span>Ask better</span>
+              <span>Review faster</span>
+            </div>
+          </div>
+
+          <aside class="app-card home-snapshot-card">
+            <div class="card-header">
+              <div>
+                <h2>今日儀表板</h2>
+                <p class="card-subtitle">快速看目前累積內容與最值得先做的事。</p>
+              </div>
+              <span class="soft-badge">Live</span>
+            </div>
+
+            <div class="home-snapshot-list">
+              <div class="home-snapshot-item">
+                <span>累積筆記</span>
+                <strong id="homeSnapshotNotes">0</strong>
+              </div>
+              <div class="home-snapshot-item">
+                <span>今日待辦</span>
+                <strong id="homeSnapshotTasks">0</strong>
+              </div>
+              <div class="home-snapshot-item">
+                <span>知識條目</span>
+                <strong id="homeSnapshotKnowledge">0</strong>
+              </div>
+            </div>
+
+            <div class="soft-card home-snapshot-focus">
+              <span class="activity-label">目前焦點</span>
+              <strong id="homeSnapshotFocus">先建立第一份可複習筆記。</strong>
+            </div>
+          </aside>
         </div>
 
+        <section class="hero-marquee" aria-hidden="true">
+          <div class="hero-marquee-track">
+            <span>SmartStudy AI</span>
+            <span>Upload</span>
+            <span>Organize</span>
+            <span>Ask</span>
+            <span>Recall</span>
+            <span>Plan</span>
+            <span>SmartStudy AI</span>
+            <span>Upload</span>
+            <span>Organize</span>
+            <span>Ask</span>
+            <span>Recall</span>
+            <span>Plan</span>
+          </div>
+        </section>
+
+        <section class="page-spotlight-card">
+          <div class="page-spotlight-grid">
+            <div>
+              <span class="activity-label">01 Upload</span>
+              <strong>上傳檔案或貼文字</strong>
+              <p>支援 PDF、DOCX、PPTX 與純文字，先把原始資料放進來。</p>
+            </div>
+            <div>
+              <span class="activity-label">02 Organize</span>
+              <strong>整理成可讀筆記</strong>
+              <p>先看一句摘要，再展開重點、考題與易錯觀念。</p>
+            </div>
+            <div>
+              <span class="activity-label">03 Apply</span>
+              <strong>接 Tutor 或讀書計畫</strong>
+              <p>把整理結果直接延伸成問答、知識搜尋與任務安排。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="home-activity-card">
+          <div class="card-header">
+            <div>
+              <h2>最近進度</h2>
+              <p class="card-subtitle">快速回到你上次整理的內容與下一步。</p>
+            </div>
+            <span class="soft-badge">Productivity</span>
+          </div>
+
+          <div class="home-activity-grid">
+            <div class="home-activity-block">
+              <span class="activity-label">最近整理</span>
+              <strong id="homeLatestNoteTitle">尚未建立筆記</strong>
+              <p id="homeLatestNoteMeta">先到筆記整理頁上傳資料，完成後這裡會顯示最近一次內容。</p>
+            </div>
+
+            <div class="home-activity-block">
+              <span class="activity-label">建議下一步</span>
+              <strong id="homeNextActionTitle">開始第一次整理</strong>
+              <p id="homeNextActionMeta">上傳 PDF、DOCX、PPTX 或直接貼上文字，先產生一份可複習筆記。</p>
+            </div>
+
+            <div class="home-activity-block">
+              <span class="activity-label">快速入口</span>
+              <div class="home-activity-links">
+                <button class="link-btn" data-page="tutor" type="button">問 AI Tutor</button>
+                <button class="link-btn" data-page="knowledge" type="button">查知識庫</button>
+                <button class="link-btn" data-page="planner" type="button">安排讀書計畫</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="home-grid">
-          <article class="app-card ai-suggestion-card">
+          <article class="ai-suggestion-card">
             <div class="card-header">
               <div>
                 <h2 data-i18n="aiTodaySuggestion">AI 今日建議</h2>
@@ -48,31 +179,34 @@
             <div class="suggestion-list">
               <div class="suggestion-block">
                 <p class="label" data-i18n="suggestReviewLabel">今天建議先複習</p>
-                <h3>FVTPL 與 FVOCI 差異</h3>
-                <p>先掌握公允價值變動進入損益或 OCI 的差別。</p>
+                <h3 data-i18n="homeSuggestionReviewTitle">今天先複習核心概念與主線</h3>
+                <p data-i18n="homeSuggestionReviewDesc">先整理今天最重要的概念，再回頭補細節與例子。</p>
               </div>
 
               <div class="suggestion-block">
                 <p class="label" data-i18n="possibleQuestionLabel">可能考題</p>
-                <h3>公允價值變動如何認列？</h3>
-                <p>題目可能要求你判斷分類、認列位置與出售時處理。</p>
+                <h3 data-i18n="homeSuggestionQuestionTitle">這份內容最可能怎麼被提問？</h3>
+                <p data-i18n="homeSuggestionQuestionDesc">想想老師會要求你解釋、比較，還是應用到情境裡。</p>
               </div>
 
               <div class="suggestion-block">
                 <p class="label" data-i18n="todayTaskLabel">今日任務</p>
-                <h3>完成 3 題練習題</h3>
-                <p>建議先做選擇題，再回頭整理錯誤觀念。</p>
+                <h3 data-i18n="homeSuggestionTaskTitle">完成一組小型回顧任務</h3>
+                <p data-i18n="homeSuggestionTaskDesc">先做短題或自我測試，再整理今天最容易忘記的地方。</p>
               </div>
             </div>
           </article>
 
-          <article class="app-card quick-start-card">
+          <article class="quick-start-card">
             <div class="card-header">
               <div>
                 <h2 data-i18n="quickStart">快速開始</h2>
                 <p class="card-subtitle" data-i18n="quickStartSubtitle">依照你現在的需求選擇功能</p>
               </div>
-              <span class="soft-badge" data-i18n="startLearning">開始學習</span>
+              <div class="card-header-actions">
+                <span class="soft-badge" data-i18n="startLearning">開始學習</span>
+                <button id="openGuideModalButton" class="secondary-btn guide-trigger-btn" data-i18n="guideButton" type="button">功能說明</button>
+              </div>
             </div>
 
             <div class="quick-action-list">
@@ -103,7 +237,62 @@
           </article>
         </div>
 
-        <section class="app-card today-tasks">
+        <section class="home-guide-card">
+          <div class="card-header">
+            <div>
+              <h2 data-i18n="guideSectionTitle">這個網站可以幫你做什麼？</h2>
+              <p class="card-subtitle" data-i18n="guideSectionSubtitle">如果你第一次使用，可以先看這裡，再決定從哪個功能開始。</p>
+            </div>
+          </div>
+
+          <div class="feature-guide-grid">
+            <article class="feature-guide-card">
+              <span class="feature-guide-tag" data-i18n="guideTagStart">開始用</span>
+              <h3 data-i18n="guideNotesTitle">筆記整理</h3>
+              <p data-i18n="guideNotesDesc">把原始資料變成摘要、重點、關鍵字和複習內容。</p>
+              <ol class="mini-steps">
+                <li data-i18n="guideNotesStep1">貼上文字或上傳 PDF、DOCX、PPTX。</li>
+                <li data-i18n="guideNotesStep2">選擇整理模式與輸出語言。</li>
+                <li data-i18n="guideNotesStep3">按開始整理，右側會出現可展開的結果。</li>
+              </ol>
+            </article>
+
+            <article class="feature-guide-card">
+              <span class="feature-guide-tag" data-i18n="guideTagAsk">理解內容</span>
+              <h3 data-i18n="guideTutorTitle">AI Tutor</h3>
+              <p data-i18n="guideTutorDesc">像老師一樣回答你，幫你把某份筆記真正搞懂。</p>
+              <ol class="mini-steps">
+                <li data-i18n="guideTutorStep1">先選一份筆記當作回答依據。</li>
+                <li data-i18n="guideTutorStep2">點推薦問題，或直接輸入你想問的內容。</li>
+                <li data-i18n="guideTutorStep3">系統會用重點、解釋和可能問法回答你。</li>
+              </ol>
+            </article>
+
+            <article class="feature-guide-card">
+              <span class="feature-guide-tag" data-i18n="guideTagFind">查資料</span>
+              <h3 data-i18n="guideKnowledgeTitle">知識庫</h3>
+              <p data-i18n="guideKnowledgeDesc">把整理過的內容集中起來，之後可以用關鍵字快速搜尋。</p>
+              <ol class="mini-steps">
+                <li data-i18n="guideKnowledgeStep1">整理過的筆記會成為可搜尋的內容。</li>
+                <li data-i18n="guideKnowledgeStep2">用關鍵字、科目、章節和類型縮小範圍。</li>
+                <li data-i18n="guideKnowledgeStep3">找到結果後可繼續問 AI Tutor 或加入任務。</li>
+              </ol>
+            </article>
+
+            <article class="feature-guide-card">
+              <span class="feature-guide-tag" data-i18n="guideTagPlan">安排進度</span>
+              <h3 data-i18n="guidePlannerTitle">讀書計畫</h3>
+              <p data-i18n="guidePlannerDesc">把複習需求拆成今天、本週和已完成任務，減少臨時抱佛腳。</p>
+              <ol class="mini-steps">
+                <li data-i18n="guidePlannerStep1">填入考試日期、可讀時間與範圍。</li>
+                <li data-i18n="guidePlannerStep2">系統會建立可追蹤的任務卡片。</li>
+                <li data-i18n="guidePlannerStep3">完成後可以移動任務，首頁也會同步更新。</li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
+        <section class="today-tasks">
           <div class="card-header">
             <div>
               <h2 data-i18n="todayTodo">今日待辦</h2>
@@ -124,6 +313,10 @@
 
       <section id="notesPage" class="page">
         <div class="page-title">
+          <div class="page-title-meta">
+            <span class="page-kicker">Notes Studio</span>
+            <span class="page-trace">Capture → Structure → Review</span>
+          </div>
           <h1 data-i18n="notesTitle">AI 筆記整理</h1>
           <p data-i18n="notesSubtitle">上傳或貼上課堂內容，讓 AI 幫你整理成可複習的學習筆記。</p>
         </div>
@@ -166,8 +359,15 @@
               </div>
             </div>
 
-            <div class="notes-inline-actions">
-              <button class="secondary-btn" id="chooseFileButton" data-i18n="chooseFile" type="button">選擇檔案</button>
+            <div id="uploadDropzone" class="soft-card upload-dropzone" tabindex="0" role="button" aria-label="上傳檔案拖放區">
+              <div class="upload-dropzone-copy">
+                <strong>拖曳檔案到這裡</strong>
+                <p>或點一下開啟檔案選擇器，支援一次放入多份 PDF、DOCX、PPTX 與文字檔。</p>
+              </div>
+              <div class="notes-inline-actions">
+                <button class="secondary-btn" id="chooseFileButton" data-i18n="chooseFile" type="button">選擇檔案</button>
+              </div>
+              <div id="selectedFilesList" class="selected-files-list" aria-live="polite"></div>
             </div>
 
             <div class="parse-status notes-parse-status" id="parseStatusBox" aria-live="polite">
@@ -184,6 +384,28 @@
               </div>
             </div>
 
+            <div class="soft-card upload-diagnostics" id="uploadDiagnostics">
+              <div class="upload-diagnostics-head">
+                <strong>匯入狀態</strong>
+                <span id="uploadDiagnosticsBadge" class="soft-badge">待上傳</span>
+              </div>
+              <div class="upload-diagnostics-grid">
+                <div class="upload-diagnostic-item">
+                  <span>檔案數</span>
+                  <strong id="uploadFileCount">0</strong>
+                </div>
+                <div class="upload-diagnostic-item">
+                  <span>內容區塊</span>
+                  <strong id="uploadSectionCount">0</strong>
+                </div>
+                <div class="upload-diagnostic-item">
+                  <span>OCR 狀態</span>
+                  <strong id="uploadOcrStatus">尚未啟動</strong>
+                </div>
+              </div>
+              <p id="uploadDiagnosticsMessage">選擇檔案後，這裡會告訴你目前是讀到文字層、OCR 略過，還是完整解析完成。</p>
+            </div>
+
             <div class="soft-card upload-preview-box hidden" id="uploadPreviewBox" aria-live="polite">
               <strong id="uploadPreviewTitle" data-i18n="uploadPreviewTitle">匯入預覽</strong>
               <p id="uploadPreviewMeta" data-i18n="uploadPreviewMeta">解析完成後，這裡會顯示目前匯入的檔案與內容區塊概況。</p>
@@ -198,7 +420,42 @@
               placeholder="請貼上課堂筆記、講義內容、老師上課重點或你想整理的資料..."
             ></textarea>
 
-            <label class="form-label" data-i18n="noteModesLabel">整理模式（可複選）</label>
+            <label class="form-label" data-i18n="strategyPresetLabel">學習策略</label>
+            <div class="study-strategy-grid" role="group" aria-label="學習策略">
+              <button class="strategy-btn active" data-strategy="quickCapture" type="button">
+                <strong data-i18n="strategyQuickTitle">快速整理</strong>
+                <span data-i18n="strategyQuickDesc">先抓大意與主線</span>
+              </button>
+
+              <button class="strategy-btn" data-strategy="examSprint" type="button">
+                <strong data-i18n="strategyExamTitle">考前衝刺</strong>
+                <span data-i18n="strategyExamDesc">聚焦常考與易錯點</span>
+              </button>
+
+              <button class="strategy-btn" data-strategy="deepFocus" type="button">
+                <strong data-i18n="strategyDeepTitle">深入理解</strong>
+                <span data-i18n="strategyDeepDesc">強化脈絡與概念解釋</span>
+              </button>
+
+              <button class="strategy-btn" data-strategy="reportBuild" type="button">
+                <strong data-i18n="strategyReportTitle">報告架構</strong>
+                <span data-i18n="strategyReportDesc">整理論點與段落結構</span>
+              </button>
+
+              <button class="strategy-btn" data-strategy="knowledgeBuild" type="button">
+                <strong data-i18n="strategyKnowledgeTitle">知識累積</strong>
+                <span data-i18n="strategyKnowledgeDesc">兼顧摘要與概念連結</span>
+              </button>
+            </div>
+
+            <div class="soft-card strategy-summary">
+              <span class="activity-label" data-i18n="strategySummaryTitle">目前策略</span>
+              <strong id="strategyBadge">快速整理</strong>
+              <p id="strategyDescription">適合先把一份新資料整理成可以快速吸收的版本，再決定要不要往下深挖。</p>
+              <div id="strategyFocus" class="strategy-focus-list" aria-live="polite"></div>
+            </div>
+
+            <label class="form-label" data-i18n="strategyRefinementLabel">加強方向（可複選）</label>
             <div class="mode-grid" role="group" aria-label="整理模式">
               <button class="mode-btn active" data-mode="quick" type="button">
                 <strong>快速摘要</strong>
@@ -312,7 +569,29 @@
             </div>
 
             <div class="result-status" id="notesResultStatus">
-              目前尚未產生整理結果。請先在左側放入筆記並按下「開始整理」。
+              目前筆記整理區是空白狀態。請先在左側貼上文字、上傳檔案，或手動開啟舊筆記後再開始整理。
+            </div>
+
+            <div class="result-overview-shell">
+              <div class="soft-card result-overview-primary">
+                <span class="result-overview-label">一句核心摘要</span>
+                <strong id="resultOverviewSummary">整理完成後，這裡會先顯示最核心的一句總結。</strong>
+              </div>
+              <div class="result-overview-secondary">
+                <div class="soft-card result-overview-card">
+                  <span class="result-overview-label">最重要考點</span>
+                  <p id="resultOverviewKeyPoint">整理完成後，這裡會顯示第一個重點。</p>
+                </div>
+                <div class="soft-card result-overview-card">
+                  <span class="result-overview-label">最值得追問</span>
+                  <p id="resultOverviewQuestion">整理完成後，這裡會顯示最適合丟給 Tutor 的問題。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="result-quick-actions">
+              <button id="sendSummaryToTutorBtn" class="secondary-btn" type="button">用摘要問 AI Tutor</button>
+              <button id="sendKeyPointToTutorBtn" class="secondary-btn" type="button">針對重點繼續追問</button>
             </div>
 
             <div class="accordion-list" id="notesAccordionList">
@@ -448,7 +727,7 @@
               <article id="importanceReasonsCard"><ul id="importanceReasonsResult"></ul></article>
               <article id="possibleExamPointsCard"><ul id="possibleExamPointsResult"></ul></article>
               <article id="generalNotesCard"><ul id="generalNotesResult"></ul></article>
-              <article id="accountingTermsCard"><ul id="accountingTermsResult"></ul></article>
+              <article id="keyTermsCard"><ul id="keyTermsResult"></ul></article>
               <article id="englishExplainCard"><ul id="englishExplainResult"></ul></article>
               <div id="keywordsResult"></div>
               <ul id="highlightsResult"></ul>
@@ -468,8 +747,8 @@
               <span id="generalNotesCardMeta">段落整理</span>
               <span id="possibleExamPointsCardTitle">可能重點</span>
               <span id="possibleExamPointsCardMeta">快速提醒</span>
-              <span id="accountingTermsCardTitle">關鍵詞 / 重要概念</span>
-              <span id="accountingTermsCardMeta">概念說明</span>
+              <span id="keyTermsCardTitle">關鍵詞 / 重要概念</span>
+              <span id="keyTermsCardMeta">概念說明</span>
               <span id="englishExplainCardTitle">原文句子解釋</span>
               <span id="englishExplainCardMeta">對照理解</span>
               <span id="questionsCardTitle">理解問題</span>
@@ -485,6 +764,10 @@
 
       <section id="tutorPage" class="page">
         <div class="page-title">
+          <div class="page-title-meta">
+            <span class="page-kicker">Tutor Console</span>
+            <span class="page-trace">Ask → Explain → Clarify</span>
+          </div>
           <h1 data-i18n="tutorTitle">AI Tutor 問答老師</h1>
           <p data-i18n="tutorSubtitle">根據你目前選取的筆記內容回答問題，並用教學方式幫你理解觀念。</p>
         </div>
@@ -504,6 +787,37 @@
               <p id="currentTutorSourceMeta">
                 請先從「我的筆記」或「知識庫」選擇一份資料。
               </p>
+            </div>
+
+            <div class="soft-card tutor-context-helper">
+              <strong>提問建議</strong>
+              <p id="tutorContextHelperText">先從摘要或最重要重點開始追問，Tutor 的回答會更聚焦。</p>
+            </div>
+
+            <div class="tutor-mode-panel">
+              <span class="activity-label" data-i18n="tutorModeLabel">Tutor 模式</span>
+              <div class="tutor-mode-grid" role="group" aria-label="Tutor 模式">
+                <button class="tutor-mode-btn active" data-tutor-mode="quickExplain" type="button">
+                  <strong data-i18n="tutorModeQuickTitle">快速解釋</strong>
+                  <span data-i18n="tutorModeQuickDesc">先講核心重點</span>
+                </button>
+                <button class="tutor-mode-btn" data-tutor-mode="deepTeach" type="button">
+                  <strong data-i18n="tutorModeDeepTitle">深入教學</strong>
+                  <span data-i18n="tutorModeDeepDesc">補脈絡與例子</span>
+                </button>
+                <button class="tutor-mode-btn" data-tutor-mode="examCoach" type="button">
+                  <strong data-i18n="tutorModeExamTitle">考前問答</strong>
+                  <span data-i18n="tutorModeExamDesc">偏考點與常見問法</span>
+                </button>
+                <button class="tutor-mode-btn" data-tutor-mode="answerDrill" type="button">
+                  <strong data-i18n="tutorModeDrillTitle">作答演練</strong>
+                  <span data-i18n="tutorModeDrillDesc">更常追問與批改</span>
+                </button>
+              </div>
+              <div class="soft-card tutor-mode-summary">
+                <strong id="tutorModeBadge">快速解釋</strong>
+                <p id="tutorModeDescription">先用最短路徑講清楚核心概念，再補一個最值得追問的方向。</p>
+              </div>
             </div>
 
             <div class="tutor-source-actions">
@@ -558,7 +872,7 @@
                 id="tutorInput"
                 class="input-control"
                 data-i18n-placeholder="tutorInputPlaceholderSimple"
-                placeholder="輸入你的問題，例如：FVTPL 和 FVOCI 差在哪？"
+                placeholder="輸入你的問題，例如：這段內容的核心概念是什麼？"
               >
               <button id="sendTutorMessage" class="primary-btn" data-i18n="send" type="button">
                 送出
@@ -570,9 +884,27 @@
 
       <section id="knowledgePage" class="page">
         <div class="page-title">
+          <div class="page-title-meta">
+            <span class="page-kicker">Knowledge Archive</span>
+            <span class="page-trace">Search → Connect → Reuse</span>
+          </div>
           <h1 data-i18n="knowledgeTitle">我的知識庫</h1>
           <p data-i18n="knowledgeSubtitle">搜尋你整理過的筆記、摘要與重點，快速找到相關考點。</p>
         </div>
+
+        <section class="page-insight-grid">
+          <article class="app-card page-insight-card">
+            <span class="activity-label">Library Status</span>
+            <strong id="knowledgeInsightTitle">知識庫還是空的，先從第一份筆記開始累積。</strong>
+            <p id="knowledgeInsightMeta">整理過的筆記與知識片段會集中在這裡，之後可以用關鍵字快速找回。</p>
+          </article>
+
+          <article class="app-card page-insight-card">
+            <span class="activity-label">Best Use</span>
+            <strong>找舊筆記時，不用回想檔名。</strong>
+            <p>直接用關鍵字、章節或重點語句搜尋，再決定要問 Tutor、加入今日任務，或匯出成新材料。</p>
+          </article>
+        </section>
 
         <section class="app-card knowledge-search-card">
           <div class="knowledge-search-row">
@@ -580,7 +912,7 @@
               id="knowledgeSearchInput"
               class="input-control"
               data-i18n-placeholder="knowledgeSearchPlaceholder"
-              placeholder="輸入關鍵字、問題或考點，例如：FVTPL、OCI、公允價值..."
+              placeholder="輸入關鍵字、問題或主題，例如：Python、設計思考、學習策略..."
             >
             <button id="knowledgeSearchBtn" class="primary-btn" data-i18n="search" type="button">
               搜尋
@@ -679,13 +1011,55 @@
                   目前顯示 0 筆結果
                 </p>
               </div>
+              <span id="knowledgeActiveQuery" class="soft-badge">尚未輸入關鍵字</span>
             </div>
 
-            <div id="knowledgeResults" class="knowledge-results">
-              <div class="app-card empty-state-card">
-                <h2>尚無搜尋結果</h2>
-                <p>請先到「筆記整理」產生筆記，或在上方輸入關鍵字搜尋。</p>
+            <div class="knowledge-workspace">
+              <div id="knowledgeResults" class="knowledge-results">
+                <div class="app-card empty-state-card">
+                  <h2>尚無搜尋結果</h2>
+                  <p>請先到「筆記整理」產生筆記，或在上方輸入關鍵字搜尋。</p>
+                </div>
               </div>
+
+              <aside class="app-card knowledge-preview-panel">
+                <div class="card-header">
+                  <div>
+                    <h2>結果預覽</h2>
+                    <p class="card-subtitle">選一筆結果後，在右側快速看完整內容。</p>
+                  </div>
+                  <span id="knowledgePreviewType" class="soft-badge">Preview</span>
+                </div>
+
+                <div class="knowledge-preview-body">
+                  <span id="knowledgePreviewSubject" class="activity-label">尚未選擇結果</span>
+                  <strong id="knowledgePreviewTitle">先從左側選一筆搜尋結果。</strong>
+                  <p id="knowledgePreviewMeta">這裡會顯示科目、章節、整理類型與對應內容，讓你不用一直切換頁面。</p>
+
+                  <div class="meta-row" id="knowledgePreviewTags"></div>
+
+                  <div class="knowledge-preview-sections">
+                    <div class="soft-card knowledge-preview-section">
+                      <span class="result-overview-label">摘要</span>
+                      <p id="knowledgePreviewSummary">整理過的摘要會出現在這裡。</p>
+                    </div>
+                    <div class="soft-card knowledge-preview-section">
+                      <span class="result-overview-label">可能重點</span>
+                      <p id="knowledgePreviewKeyPoints">重點、易考觀念或你搜尋到的片段會在這裡預覽。</p>
+                    </div>
+                    <div class="soft-card knowledge-preview-section">
+                      <span class="result-overview-label">延伸問法</span>
+                      <p id="knowledgePreviewQuestion">選取結果後，這裡會顯示最適合丟給 Tutor 的問題。</p>
+                    </div>
+                  </div>
+
+                  <div class="knowledge-preview-actions">
+                    <button id="knowledgePreviewTutorBtn" class="primary-btn" type="button">問 AI Tutor</button>
+                    <button id="knowledgePreviewTaskBtn" class="secondary-btn" type="button">加入今日待辦</button>
+                    <button id="knowledgePreviewExportBtn" class="secondary-btn" type="button">匯出這筆內容</button>
+                  </div>
+                </div>
+              </aside>
             </div>
           </section>
         </div>
@@ -693,9 +1067,33 @@
 
       <section id="plannerPage" class="page">
         <div class="page-title">
+          <div class="page-title-meta">
+            <span class="page-kicker">Planning Board</span>
+            <span class="page-trace">Prioritize → Schedule → Finish</span>
+          </div>
           <h1 data-i18n="plannerTitle">讀書計畫</h1>
           <p data-i18n="plannerSubtitle">根據考試日期、讀書時間與筆記內容，建立可追蹤的複習任務。</p>
         </div>
+
+        <section class="page-insight-grid planner-insight-grid">
+          <article class="app-card page-insight-card">
+            <span class="activity-label">Today</span>
+            <strong id="plannerInsightToday">0 個今日任務</strong>
+            <p>先把今天一定要做的內容縮到最小，完成率通常會更高。</p>
+          </article>
+
+          <article class="app-card page-insight-card">
+            <span class="activity-label">This Week</span>
+            <strong id="plannerInsightWeek">0 個本週任務</strong>
+            <p>把較大的主題先丟到本週，再慢慢拆進今天，會比一次排滿更穩。</p>
+          </article>
+
+          <article class="app-card page-insight-card">
+            <span class="activity-label">Completion</span>
+            <strong id="plannerInsightDone">0 個已完成任務</strong>
+            <p id="plannerInsightFocus">先建立一組小任務，首頁與看板就會開始同步顯示。</p>
+          </article>
+        </section>
 
         <section class="app-card planner-form">
           <div class="card-header">
@@ -794,9 +1192,27 @@
 
       <section id="myNotesPage" class="page">
         <div class="page-title">
+          <div class="page-title-meta">
+            <span class="page-kicker">Notes Library</span>
+            <span class="page-trace">Browse → Resume → Export</span>
+          </div>
           <h1 data-i18n="myNotesTitle">我的筆記</h1>
           <p data-i18n="myNotesSubtitle">管理、查看、重新開啟、匯出或刪除你整理過的筆記。</p>
         </div>
+
+        <section class="page-insight-grid my-notes-insight-grid">
+          <article class="app-card page-insight-card">
+            <span class="activity-label">Library Focus</span>
+            <strong id="myNotesInsightTitle">目前還沒有筆記庫內容。</strong>
+            <p id="myNotesInsightMeta">完成第一份整理後，這裡會告訴你最近最值得回頭看的那份筆記。</p>
+          </article>
+
+          <article class="app-card page-insight-card">
+            <span class="activity-label">Coverage</span>
+            <strong id="myNotesInsightSubjects">0 個主題領域</strong>
+            <p>這裡會根據你的筆記科目與主題慢慢形成自己的複習資料庫。</p>
+          </article>
+        </section>
 
         <section class="app-card note-manager-toolbar">
           <div class="note-search-wrap">
@@ -899,6 +1315,9 @@
         <option value="examReview" data-i18n="templateExamReview">考前複習模板</option>
         <option value="autoPresentation" data-i18n="templateAutoPresentation">自動報告簡報模板</option>
       </select>
+      <div class="export-template-hint" id="exportTemplateHint">
+        讀書筆記模板會保留摘要、重點與複習內容，適合之後重新複習。
+      </div>
 
       <label class="form-label" data-i18n="exportIncludeLabel">包含內容</label>
       <div class="checkbox-list">
@@ -953,6 +1372,62 @@
         <button id="startExportBtn" class="primary-btn" type="button">
           <span data-i18n="startExport">開始匯出</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="guideModal" class="modal hidden" aria-label="功能說明">
+    <div class="modal-backdrop" id="guideModalBackdrop"></div>
+
+    <div class="modal-content app-card guide-modal-content">
+      <div class="card-header">
+        <div>
+          <h2 data-i18n="guideModalTitle">SmartStudy AI 操作說明</h2>
+          <p class="card-subtitle" data-i18n="guideModalSubtitle">第一次使用時，照著下面的順序操作會最容易上手。</p>
+        </div>
+
+        <button id="closeGuideModal" class="icon-btn" type="button" aria-label="關閉說明視窗">
+          ✕
+        </button>
+      </div>
+
+      <div class="guide-modal-grid">
+        <article class="soft-card guide-modal-block">
+          <h3 data-i18n="guideModalStep1Title">1. 先把資料放進來</h3>
+          <p data-i18n="guideModalStep1Desc">到「筆記整理」上傳 PDF、DOCX、PPTX，或直接貼上文字內容。</p>
+        </article>
+
+        <article class="soft-card guide-modal-block">
+          <h3 data-i18n="guideModalStep2Title">2. 讓 AI 幫你整理</h3>
+          <p data-i18n="guideModalStep2Desc">選整理模式後按開始整理，系統會產生摘要、重點、關鍵字與複習內容。</p>
+        </article>
+
+        <article class="soft-card guide-modal-block">
+          <h3 data-i18n="guideModalStep3Title">3. 有看不懂的地方就問 AI Tutor</h3>
+          <p data-i18n="guideModalStep3Desc">把某份筆記設成目前資料後，就能像問老師一樣追問觀念、比較差異和練習題。</p>
+        </article>
+
+        <article class="soft-card guide-modal-block">
+          <h3 data-i18n="guideModalStep4Title">4. 想找舊內容時用知識庫</h3>
+          <p data-i18n="guideModalStep4Desc">如果你已經整理過很多筆記，可以到知識庫用關鍵字搜尋，再接回 Tutor 或讀書計畫。</p>
+        </article>
+
+        <article class="soft-card guide-modal-block">
+          <h3 data-i18n="guideModalStep5Title">5. 想安排複習時用讀書計畫</h3>
+          <p data-i18n="guideModalStep5Desc">把考試日期和可讀時間輸入後，系統會幫你拆成今日、本週與已完成任務。</p>
+        </article>
+
+        <article class="soft-card guide-modal-block">
+          <h3 data-i18n="guideModalStep6Title">6. 所有整理結果都會留在我的筆記</h3>
+          <p data-i18n="guideModalStep6Desc">之後你可以從「我的筆記」重新開啟、匯出或刪除整理過的內容。</p>
+        </article>
+      </div>
+
+      <div class="modal-actions">
+        <button id="guideModalGoNotes" class="primary-btn" data-page="notes" data-i18n="guidePrimaryAction" type="button">前往筆記整理開始使用</button>
+        <button id="guideModalCloseAction" class="secondary-btn" data-i18n="closeGuideButton" type="button">我知道了</button>
       </div>
     </div>
   </div>
@@ -1069,7 +1544,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script defer src="./finance-knowledge.js"></script>
-  <script defer src="./data/knowledge-seed.js"></script>
+  <script defer src="./knowledge-seed.js"></script>
   <script defer src="./spotify-player.js"></script>
   <script defer src="./app.js"></script>
 </body>

@@ -42,27 +42,6 @@ window.SMARTSTUDY_KNOWLEDGE_SEED_DOCUMENTS = [
       ]
     },
     {
-      fileName: "SmartStudy Seed - Accounting Review",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "金融資產分類",
-          text: "FVTPL 與 FVOCI 的核心差異在於公允價值變動認列位置，以及出售時是否影響損益。理解時不要只背縮寫，應該連同衡量基礎、持有目的與報表影響一起整理。若題目要求比較，通常會考分類依據與後續處理。",
-          paragraphNumber: 1
-        },
-        {
-          title: "分錄思考",
-          text: "會計分錄的重點不是死背借貸方向，而是先判斷交易影響了哪些會計要素。資產增加未必永遠在借方被單獨考，因為題目常會搭配費用、收入或金融資產重分類。整理筆記時，可以把交易事件、分錄結構與原因寫成三欄。",
-          paragraphNumber: 2
-        },
-        {
-          title: "常見易錯點",
-          text: "學生常把 OCI 與損益混在一起，也常忽略出售金融資產時的重分類效果。若只記結論而不記原因，到比較題或綜合題就容易答錯。好的複習方式是把觀念差異、報表位置與出售後處理放在同一張表裡對照。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
       fileName: "SmartStudy Seed - Hospital Management",
       extension: "smartstudy-seed",
       sections: [
@@ -898,27 +877,6 @@ window.SMARTSTUDY_KNOWLEDGE_SEED_DOCUMENTS = [
         {
           title: "區域差異",
           text: "不同地區的地理條件會塑造不同的生活方式與經濟活動，例如農業、觀光或都市發展模式。若只記表面特色，容易忘記背後的原因。整理時可用區域比較表幫助理解。",
-          paragraphNumber: 3
-        }
-      ]
-    },
-    {
-      fileName: "SmartStudy Seed - Personal Finance Basics",
-      extension: "smartstudy-seed",
-      sections: [
-        {
-          title: "收支與預算",
-          text: "個人理財的起點通常是清楚知道收入、固定支出與可調整支出。若沒有基本收支概念，再談投資或資產配置通常會失去基礎。整理筆記時，應先把現金流、目標與限制列出來。",
-          paragraphNumber: 1
-        },
-        {
-          title: "儲蓄與風險",
-          text: "儲蓄不只是把錢留下來，也是在為未來的不確定性建立緩衝。緊急預備金、保險與長期目標之間常需要平衡。複習時可把時間範圍、風險承受度與工具選擇一起理解。",
-          paragraphNumber: 2
-        },
-        {
-          title: "理財不是投機",
-          text: "很多人把理財直接等同於追求高報酬，但真正的理財更重視目標、紀律與風險管理。若只看短期報酬，容易忽略資金用途與承擔能力。整理時應把目的、策略與風險提醒一起寫。",
           paragraphNumber: 3
         }
       ]

@@ -43,7 +43,7 @@ const analysisSchema = {
           required: ["text", "level", "reasons"]
         }
       },
-      accountingTerms: {
+      keyTerms: {
         type: "array",
         items: {
           type: "object",
@@ -71,7 +71,7 @@ const analysisSchema = {
           required: ["question", "answer"]
         }
       },
-      mockExamQuestions: {
+      practiceQuestions: {
         type: "array",
         items: {
           type: "object",
@@ -87,10 +87,10 @@ const analysisSchema = {
     required: [
       "summary",
       "importantSentences",
-      "accountingTerms",
+      "keyTerms",
       "possibleExamPoints",
       "questions",
-      "mockExamQuestions"
+      "practiceQuestions"
     ]
   }
 };
@@ -247,6 +247,19 @@ function normalizeArray(items) {
 }
 
 function normalizeAnalysisPayload(payload) {
+  const keyTerms = normalizeArray(payload?.keyTerms || payload?.accountingTerms)
+    .map((item) => ({
+      label: normalizeString(item?.label),
+      description: normalizeString(item?.description)
+    }))
+    .filter((item) => item.label && item.description);
+  const practiceQuestions = normalizeArray(payload?.practiceQuestions || payload?.mockExamQuestions)
+    .map((item) => ({
+      question: normalizeString(item?.question),
+      answer: normalizeString(item?.answer)
+    }))
+    .filter((item) => item.question && item.answer);
+
   return {
     summary: normalizeString(payload?.summary),
     importantSentences: normalizeArray(payload?.importantSentences)
@@ -256,12 +269,8 @@ function normalizeAnalysisPayload(payload) {
         reasons: normalizeArray(item?.reasons).map(normalizeString).filter(Boolean)
       }))
       .filter((item) => item.text),
-    accountingTerms: normalizeArray(payload?.accountingTerms)
-      .map((item) => ({
-        label: normalizeString(item?.label),
-        description: normalizeString(item?.description)
-      }))
-      .filter((item) => item.label && item.description),
+    keyTerms,
+    accountingTerms: keyTerms,
     possibleExamPoints: normalizeArray(payload?.possibleExamPoints)
       .map(normalizeString)
       .filter(Boolean),
@@ -271,12 +280,8 @@ function normalizeAnalysisPayload(payload) {
         answer: normalizeString(item?.answer)
       }))
       .filter((item) => item.question && item.answer),
-    mockExamQuestions: normalizeArray(payload?.mockExamQuestions)
-      .map((item) => ({
-        question: normalizeString(item?.question),
-        answer: normalizeString(item?.answer)
-      }))
-      .filter((item) => item.question && item.answer)
+    practiceQuestions,
+    mockExamQuestions: practiceQuestions
   };
 }
 
@@ -290,7 +295,7 @@ function normalizeTutorContext(context = {}) {
     summary: clipText(context.summary || "", 1800),
     importantSentences: normalizeArray(context.importantSentences).map((item) => clipText(item, 220)).filter(Boolean).slice(0, 8),
     possibleExamPoints: normalizeArray(context.possibleExamPoints).map((item) => clipText(item, 220)).filter(Boolean).slice(0, 8),
-    accountingTerms: normalizeArray(context.accountingTerms).map((item) => clipText(item, 120)).filter(Boolean).slice(0, 10)
+    keyTerms: normalizeArray(context.keyTerms || context.accountingTerms).map((item) => clipText(item, 120)).filter(Boolean).slice(0, 10)
   };
 }
 
@@ -299,7 +304,7 @@ function normalizeStudyAgentRequest(payload = {}) {
     noteText: clipText(payload.noteText || "", 16000),
     summary: clipText(payload.summary || "", 2200),
     possibleExamPoints: normalizeArray(payload.possibleExamPoints).map((item) => clipText(item, 220)).filter(Boolean).slice(0, 10),
-    accountingTerms: normalizeArray(payload.accountingTerms).map((item) => clipText(item, 120)).filter(Boolean).slice(0, 12),
+    keyTerms: normalizeArray(payload.keyTerms || payload.accountingTerms).map((item) => clipText(item, 120)).filter(Boolean).slice(0, 12),
     wrongQuestions: clipText(payload.wrongQuestions || "", 5000),
     examDate: normalizeString(payload.examDate || ""),
     studyHoursPerDay: Number(payload.studyHoursPerDay) || 0
@@ -368,8 +373,8 @@ function buildTutorContextBlock(noteContext = {}) {
   if (noteContext.possibleExamPoints.length) {
     sections.push(`可能重點：${noteContext.possibleExamPoints.join("；")}`);
   }
-  if (noteContext.accountingTerms.length) {
-    sections.push(`關鍵名詞：${noteContext.accountingTerms.join("、")}`);
+  if (noteContext.keyTerms.length) {
+    sections.push(`關鍵詞／重要概念：${noteContext.keyTerms.join("、")}`);
   }
   if (noteContext.sourceText) {
     sections.push(`原始筆記內容：${noteContext.sourceText}`);
@@ -423,14 +428,14 @@ function buildPrompt(text, modeLabel) {
     "請閱讀使用者提供的內容，並以繁體中文輸出結構化整理結果。",
     `目前整理模式：${modeLabel || "一般整理模式"}`,
     "請聚焦於文件解釋與複習用途，不要加入版權聲明、教材頁碼、出版社資訊或雜訊標題。",
-    "請回傳：智慧摘要、重要句子、關鍵名詞、可能考點、理解問題、延伸練習。",
+    "請回傳：智慧摘要、重要句子、關鍵詞／重要概念、可能考點、理解問題、延伸練習。",
     "重要句子請挑真正重要的原句或高度貼近原意的句子，並附上重要原因。",
-    "關鍵名詞可包含任何學科或文章中的專有名詞，不限會計。",
+    "關鍵詞／重要概念可包含任何學科或文章中的專有名詞，不限特定領域。",
     "可能考點不要使用固定罐頭句，例如不要每一點都以「這段內容可能會被考成」開頭。",
     "每個可能考點都要有具體內容，可以指出核心概念、常見考法、容易混淆處、判斷邏輯或作答方向。",
     "如果某個重點一句話就能說清楚，就只寫一句；不要為了湊字數而重複說明。",
     "請避免中英文夾雜。除非原文沒有合適中文譯名，否則名詞請優先使用繁體中文。",
-    "不要輸出 Fair Value（公允價值）這種中英文並列格式，請直接寫「公允價值」。",
+    "除非原文必要，否則不要把同一個名詞寫成中英文並列格式。",
     "理解問題與延伸練習都要附答案，答案要簡潔但具體。",
     "",
     "以下是要分析的內容：",
@@ -516,7 +521,7 @@ function buildStudyAgentPrompt(request) {
     `每日可讀書時間：${request.studyHoursPerDay} 小時`,
     "",
     `錯題 / 脆弱觀念：${request.wrongQuestions || "目前未提供額外錯題"}`,
-    `關鍵名詞：${request.accountingTerms.join("、") || "目前未整理"}`,
+    `關鍵詞／重要概念：${request.keyTerms.join("、") || "目前未整理"}`,
     `可能考點：${request.possibleExamPoints.join("；") || "目前未整理"}`,
     `摘要：${request.summary || "目前未整理摘要"}`,
     "",

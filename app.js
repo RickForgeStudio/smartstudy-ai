@@ -1,18 +1,107 @@
+const missingElementAudit = [];
+const OPTIONAL_LEGACY_UI_IDS = new Set([
+  "tutorCard",
+  "tutorCardTitle",
+  "tutorCardMeta",
+  "tutorStatus",
+  "tutorDescription",
+  "tutorLoadedTitle",
+  "tutorLoadedMeta",
+  "tutorContextPreview",
+  "tutorMessages",
+  "tutorEmptyState",
+  "tutorAskButton",
+  "tutorQuizButton",
+  "tutorAnswerButton",
+  "knowledgeSectionKicker",
+  "knowledgeSectionTitle",
+  "knowledgeMeta",
+  "knowledgeFileInput",
+  "chooseKnowledgeFilesButton",
+  "buildKnowledgeBaseButton",
+  "knowledgeFileStatus",
+  "knowledgeUploadDescription",
+  "ragModeSelect",
+  "ragModeDescription",
+  "addLatestNoteToKnowledgeButton",
+  "knowledgeStatusTitle",
+  "knowledgeStatusDetail",
+  "knowledgeStats",
+  "knowledgeStatsText",
+  "clearKnowledgeBaseButton",
+  "ragQuestionInput",
+  "ragQuickQuestions",
+  "askKnowledgeBaseButton",
+  "ragAnswerTitle",
+  "ragAnswerMeta",
+  "ragAnswerResult",
+  "ragExamFocusResult",
+  "sendRagToTutorButton",
+  "sendRagToStudyAgentButton",
+  "makeRagExamFocusButton",
+  "ragSourcesTitle",
+  "ragSourcesMeta",
+  "ragSourcesResult",
+  "studyAgentSectionKicker",
+  "studyAgentSectionTitle",
+  "studyAgentMeta",
+  "wrongQuestionsLabel",
+  "wrongQuestionsInput",
+  "examDateLabel",
+  "studyHoursLabel",
+  "generateStudyPlanButton",
+  "studyAgentStatusTitle",
+  "studyAgentStatusDetail",
+  "studyPlanOverviewTitle",
+  "studyPlanOverviewMeta",
+  "studyPlanOverviewResult",
+  "todayTasksTitle",
+  "todayTasksMeta",
+  "todayTasksResult",
+  "dailyPlanTitle",
+  "dailyPlanMeta",
+  "dailyPlanResult",
+  "weeklyProgressTitle",
+  "weeklyProgressMeta",
+  "weeklyProgressResult",
+  "priorityFocusTitle",
+  "priorityFocusMeta",
+  "priorityFocusResult",
+  "riskAlertsTitle",
+  "riskAlertsMeta",
+  "riskAlertsResult",
+  "sprintModeTitle",
+  "sprintModeMeta",
+  "sprintModeResult",
+  "studyAgentLoadedTitle",
+  "studyAgentLoadedMeta"
+]);
+const BRAND_INTRO_SESSION_KEY = "smartstudy.brandIntroSeen";
+
 function getElementByIdSafe(id, tagName = "div") {
   const element = document.getElementById(id);
   if (element) {
     return element;
   }
 
+  const isOptionalLegacy = OPTIONAL_LEGACY_UI_IDS.has(id);
+  if (!isOptionalLegacy) {
+    missingElementAudit.push({ id, tagName });
+    console.warn(`[SmartStudy UI Audit] Missing element #${id} <${tagName}> in index.html`);
+  }
+
   const fallback = document.createElement(tagName);
   fallback.value = "";
   fallback.hidden = true;
   fallback.disabled = true;
+  fallback.dataset.missingId = id;
   return fallback;
 }
 
 const sourceText = getElementByIdSafe("sourceText", "textarea");
 const fileInput = getElementByIdSafe("fileInput", "input");
+const uploadDropzone = getElementByIdSafe("uploadDropzone");
+const selectedFilesList = getElementByIdSafe("selectedFilesList");
 const chooseFileButton = getElementByIdSafe("chooseFileButton", "button");
 const fileStatus = getElementByIdSafe("fileStatus");
 const uploadHelp = getElementByIdSafe("uploadHelp");
@@ -27,6 +116,11 @@ const uploadPreviewBox = getElementByIdSafe("uploadPreviewBox");
 const uploadPreviewTitle = getElementByIdSafe("uploadPreviewTitle");
 const uploadPreviewMeta = getElementByIdSafe("uploadPreviewMeta");
 const uploadPreviewList = getElementByIdSafe("uploadPreviewList");
+const uploadDiagnosticsBadge = getElementByIdSafe("uploadDiagnosticsBadge");
+const uploadFileCount = getElementByIdSafe("uploadFileCount");
+const uploadSectionCount = getElementByIdSafe("uploadSectionCount");
+const uploadOcrStatus = getElementByIdSafe("uploadOcrStatus");
+const uploadDiagnosticsMessage = getElementByIdSafe("uploadDiagnosticsMessage");
 const analyzeButton = getElementByIdSafe("analyzeButton", "button");
 const clearButton = getElementByIdSafe("clearButton", "button");
 const demoButton = getElementByIdSafe("demoButton", "button");
@@ -46,6 +140,9 @@ const knowledgeAssistPreviewSubtitle = getElementByIdSafe("knowledgeAssistPrevie
 const analysisEnhancementDescription = getElementByIdSafe("analysisEnhancementDescription");
 const modeDescription = getElementByIdSafe("modeDescription");
 const modeBadge = getElementByIdSafe("modeBadge");
+const strategyBadge = getElementByIdSafe("strategyBadge");
+const strategyDescription = getElementByIdSafe("strategyDescription");
+const strategyFocus = getElementByIdSafe("strategyFocus");
 const outputMeta = getElementByIdSafe("outputMeta");
 const charCount = getElementByIdSafe("charCount");
 const sentenceCount = getElementByIdSafe("sentenceCount");
@@ -62,8 +159,8 @@ const possibleExamPointsResult = getElementByIdSafe("possibleExamPointsResult");
 const possibleExamPointsCard = getElementByIdSafe("possibleExamPointsCard");
 const generalNotesResult = getElementByIdSafe("generalNotesResult");
 const generalNotesCard = getElementByIdSafe("generalNotesCard");
-const accountingTermsResult = getElementByIdSafe("accountingTermsResult");
-const accountingTermsCard = getElementByIdSafe("accountingTermsCard");
+const keyTermsResult = getElementByIdSafe("keyTermsResult");
+const keyTermsCard = getElementByIdSafe("keyTermsCard");
 const englishExplainResult = getElementByIdSafe("englishExplainResult");
 const englishExplainCard = getElementByIdSafe("englishExplainCard");
 const keywordsResult = getElementByIdSafe("keywordsResult");
@@ -173,8 +270,8 @@ const generalNotesCardTitle = getElementByIdSafe("generalNotesCardTitle");
 const generalNotesCardMeta = getElementByIdSafe("generalNotesCardMeta");
 const possibleExamPointsCardTitle = getElementByIdSafe("possibleExamPointsCardTitle");
 const possibleExamPointsCardMeta = getElementByIdSafe("possibleExamPointsCardMeta");
-const accountingTermsCardTitle = getElementByIdSafe("accountingTermsCardTitle");
-const accountingTermsCardMeta = getElementByIdSafe("accountingTermsCardMeta");
+const keyTermsCardTitle = getElementByIdSafe("keyTermsCardTitle");
+const keyTermsCardMeta = getElementByIdSafe("keyTermsCardMeta");
 const englishExplainCardTitle = getElementByIdSafe("englishExplainCardTitle");
 const englishExplainCardMeta = getElementByIdSafe("englishExplainCardMeta");
 const questionsCardTitle = getElementByIdSafe("questionsCardTitle");
@@ -224,11 +321,24 @@ const spotifyBtn = getElementByIdSafe("spotifyBtn", "button");
 const trackMenu = getElementByIdSafe("trackMenu");
 const spotifyPanel = getElementByIdSafe("spotifyPanel");
 const closeSpotifyPanelBtn = getElementByIdSafe("closeSpotifyPanelBtn", "button");
+const homeSnapshotNotes = getElementByIdSafe("homeSnapshotNotes");
+const homeSnapshotTasks = getElementByIdSafe("homeSnapshotTasks");
+const homeSnapshotKnowledge = getElementByIdSafe("homeSnapshotKnowledge");
+const homeSnapshotFocus = getElementByIdSafe("homeSnapshotFocus");
+const brandIntro = getElementByIdSafe("brandIntro");
 const notesResultStatus = getElementByIdSafe("notesResultStatus");
+const resultOverviewSummary = getElementByIdSafe("resultOverviewSummary");
+const resultOverviewKeyPoint = getElementByIdSafe("resultOverviewKeyPoint");
+const resultOverviewQuestion = getElementByIdSafe("resultOverviewQuestion");
+const sendSummaryToTutorBtn = getElementByIdSafe("sendSummaryToTutorBtn", "button");
+const sendKeyPointToTutorBtn = getElementByIdSafe("sendKeyPointToTutorBtn", "button");
 const notesAccordionList = getElementByIdSafe("notesAccordionList");
 const notesExportTrigger = getElementByIdSafe("notesExportTrigger", "button");
 const currentTutorSourceTitle = getElementByIdSafe("currentTutorSourceTitle");
 const currentTutorSourceMeta = getElementByIdSafe("currentTutorSourceMeta");
+const tutorContextHelperText = getElementByIdSafe("tutorContextHelperText");
+const tutorModeBadge = getElementByIdSafe("tutorModeBadge");
+const tutorModeDescription = getElementByIdSafe("tutorModeDescription");
 const chooseTutorSourceBtn = getElementByIdSafe("chooseTutorSourceBtn", "button");
 const clearTutorSourceBtn = getElementByIdSafe("clearTutorSourceBtn", "button");
 const refreshQuestionsBtn = getElementByIdSafe("refreshQuestionsBtn", "button");
@@ -242,6 +352,9 @@ const knowledgeSummaryFiles = getElementByIdSafe("knowledgeSummaryFiles");
 const knowledgeSummaryChunks = getElementByIdSafe("knowledgeSummaryChunks");
 const knowledgeSummarySubjects = getElementByIdSafe("knowledgeSummarySubjects");
 const knowledgeSummaryTopTopicsText = getElementByIdSafe("knowledgeSummaryTopTopicsText");
+const knowledgeInsightTitle = getElementByIdSafe("knowledgeInsightTitle");
+const knowledgeInsightMeta = getElementByIdSafe("knowledgeInsightMeta");
+const knowledgeActiveQuery = getElementByIdSafe("knowledgeActiveQuery");
 const knowledgeStructureCount = getElementByIdSafe("knowledgeStructureCount");
 const knowledgeStructureList = getElementByIdSafe("knowledgeStructureList");
 const knowledgeSubjectFilter = getElementByIdSafe("knowledgeSubjectFilter", "select");
@@ -251,10 +364,25 @@ const knowledgeTypeFilter = getElementByIdSafe("knowledgeTypeFilter", "select");
 const resetKnowledgeFiltersBtn = getElementByIdSafe("resetKnowledgeFiltersBtn", "button");
 const knowledgeResultCount = getElementByIdSafe("knowledgeResultCount");
 const knowledgeResults = getElementByIdSafe("knowledgeResults");
+const knowledgePreviewType = getElementByIdSafe("knowledgePreviewType");
+const knowledgePreviewSubject = getElementByIdSafe("knowledgePreviewSubject");
+const knowledgePreviewTitle = getElementByIdSafe("knowledgePreviewTitle");
+const knowledgePreviewMeta = getElementByIdSafe("knowledgePreviewMeta");
+const knowledgePreviewTags = getElementByIdSafe("knowledgePreviewTags");
+const knowledgePreviewSummary = getElementByIdSafe("knowledgePreviewSummary");
+const knowledgePreviewKeyPoints = getElementByIdSafe("knowledgePreviewKeyPoints");
+const knowledgePreviewQuestion = getElementByIdSafe("knowledgePreviewQuestion");
+const knowledgePreviewTutorBtn = getElementByIdSafe("knowledgePreviewTutorBtn", "button");
+const knowledgePreviewTaskBtn = getElementByIdSafe("knowledgePreviewTaskBtn", "button");
+const knowledgePreviewExportBtn = getElementByIdSafe("knowledgePreviewExportBtn", "button");
 const examScopeInput = getElementByIdSafe("examScopeInput", "input");
 const plannerNoteSelect = getElementByIdSafe("plannerNoteSelect", "select");
 const generateStudyPlanBtn = getElementByIdSafe("generateStudyPlanBtn", "button");
 const clearPlannerFormBtn = getElementByIdSafe("clearPlannerFormBtn", "button");
+const plannerInsightToday = getElementByIdSafe("plannerInsightToday");
+const plannerInsightWeek = getElementByIdSafe("plannerInsightWeek");
+const plannerInsightDone = getElementByIdSafe("plannerInsightDone");
+const plannerInsightFocus = getElementByIdSafe("plannerInsightFocus");
 const myNotesSearch = getElementByIdSafe("myNotesSearch", "input");
 const myNotesSubjectFilter = getElementByIdSafe("myNotesSubjectFilter", "select");
 const myNotesSort = getElementByIdSafe("myNotesSort", "select");
@@ -263,14 +391,29 @@ const myNotesGrid = getElementByIdSafe("myNotesGrid");
 const myNotesTotalCount = getElementByIdSafe("myNotesTotalCount");
 const myNotesLatestDate = getElementByIdSafe("myNotesLatestDate");
 const myNotesFilteredCount = getElementByIdSafe("myNotesFilteredCount");
+const myNotesInsightTitle = getElementByIdSafe("myNotesInsightTitle");
+const myNotesInsightMeta = getElementByIdSafe("myNotesInsightMeta");
+const myNotesInsightSubjects = getElementByIdSafe("myNotesInsightSubjects");
 const exportModal = getElementByIdSafe("exportModal");
 const exportModalBackdrop = getElementByIdSafe("exportModalBackdrop");
 const closeExportModalButton = getElementByIdSafe("closeExportModal", "button");
 const exportFormat = getElementByIdSafe("exportFormat", "select");
 const exportTemplate = getElementByIdSafe("exportTemplate", "select");
 const exportPreviewText = getElementByIdSafe("exportPreviewText");
+const exportTemplateHint = getElementByIdSafe("exportTemplateHint");
 const cancelExportBtn = getElementByIdSafe("cancelExportBtn", "button");
 const startExportBtn = getElementByIdSafe("startExportBtn", "button");
+const toastStack = getElementByIdSafe("toastStack");
+const guideModal = getElementByIdSafe("guideModal");
+const guideModalBackdrop = getElementByIdSafe("guideModalBackdrop");
+const openGuideModalButton = getElementByIdSafe("openGuideModalButton", "button");
+const closeGuideModalButton = getElementByIdSafe("closeGuideModal", "button");
+const guideModalCloseAction = getElementByIdSafe("guideModalCloseAction", "button");
+const guideModalGoNotes = getElementByIdSafe("guideModalGoNotes", "button");
+const homeLatestNoteTitle = getElementByIdSafe("homeLatestNoteTitle");
+const homeLatestNoteMeta = getElementByIdSafe("homeLatestNoteMeta");
+const homeNextActionTitle = getElementByIdSafe("homeNextActionTitle");
+const homeNextActionMeta = getElementByIdSafe("homeNextActionMeta");
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
@@ -366,7 +509,7 @@ const uiTranslations = {
     studyAgentSectionTitle: "AI Study Agent",
     studyAgentMeta: "根據目前筆記、錯題、考試日期與每日可讀書時間，自動生成可調整的讀書計畫。",
     wrongQuestionsLabel: "錯題 / 容易卡住的觀念",
-    wrongQuestionsPlaceholder: "例如：流動比率和速動比率常常搞混、每股盈餘公式容易寫錯",
+    wrongQuestionsPlaceholder: "例如：這兩個概念常常搞混、公式容易寫錯、關鍵定義記不住",
     examDateLabel: "考試日期",
     studyHoursLabel: "每日可讀書時間（小時）",
     generateStudyPlanButton: "生成讀書計畫",
@@ -408,8 +551,8 @@ const uiTranslations = {
     generalNotesCardMeta: "段落整理",
     possibleExamPointsCardTitle: "可能重點",
     possibleExamPointsCardMeta: "快速提醒",
-    accountingTermsCardTitle: "關鍵詞 / 重要概念",
-    accountingTermsCardMeta: "概念說明",
+    keyTermsCardTitle: "關鍵詞 / 重要概念",
+    keyTermsCardMeta: "概念說明",
     englishExplainCardTitle: "原文句子解釋",
     englishExplainCardMeta: "對照理解",
     questionsCardTitle: "理解問題",
@@ -546,8 +689,8 @@ const uiTranslations = {
     generalNotesCardMeta: "Notes",
     possibleExamPointsCardTitle: "Possible Key Points",
     possibleExamPointsCardMeta: "Quick reminders",
-    accountingTermsCardTitle: "Key Terms / Important Concepts",
-    accountingTermsCardMeta: "Concept Notes",
+    keyTermsCardTitle: "Key Terms / Important Concepts",
+    keyTermsCardMeta: "Concept Notes",
     englishExplainCardTitle: "Original Sentence Explanation",
     englishExplainCardMeta: "Side-by-side view",
     questionsCardTitle: "Questions",
@@ -657,6 +800,7 @@ let apiHealthCache = null;
 let currentRagAnswerPayload = null;
 let currentRagTutorContext = null;
 let currentRagStudyAgentContext = null;
+let currentKnowledgePreviewId = "";
 
 const STORAGE_KEYS = {
   notes: "smartstudy_notes",
@@ -751,6 +895,51 @@ function switchPage(pageName) {
     top: 0,
     behavior: "smooth"
   });
+
+  triggerPageReveal();
+}
+
+function triggerPageReveal() {
+  document.body.classList.remove("page-reveal");
+  window.requestAnimationFrame(() => {
+    document.body.classList.add("page-reveal");
+  });
+}
+
+function animateNumericText(element, nextValue) {
+  if (!element || element.dataset.missingId) {
+    return;
+  }
+
+  const targetValue = Number(nextValue) || 0;
+  const currentValue = Number(element.dataset.animatedValue || element.textContent || 0) || 0;
+
+  if (currentValue === targetValue) {
+    element.textContent = String(targetValue);
+    element.dataset.animatedValue = String(targetValue);
+    return;
+  }
+
+  const start = performance.now();
+  const duration = 420;
+  const delta = targetValue - currentValue;
+
+  const tick = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const value = Math.round(currentValue + delta * eased);
+    element.textContent = String(value);
+
+    if (progress < 1) {
+      window.requestAnimationFrame(tick);
+      return;
+    }
+
+    element.textContent = String(targetValue);
+    element.dataset.animatedValue = String(targetValue);
+  };
+
+  window.requestAnimationFrame(tick);
 }
 
 function bindPageNavigation() {
@@ -768,8 +957,84 @@ function bindPageNavigation() {
   });
 }
 
+function reportMissingUiElements() {
+  if (!missingElementAudit.length) {
+    return;
+  }
+
+  const grouped = missingElementAudit.reduce((accumulator, item) => {
+    const feature = item.id.includes("knowledge") || item.id.includes("rag")
+      ? "knowledge"
+      : item.id.includes("study") || item.id.includes("planner") || item.id.includes("exam")
+        ? "planner"
+        : item.id.includes("tutor")
+          ? "tutor"
+          : "other";
+
+    if (!accumulator[feature]) {
+      accumulator[feature] = [];
+    }
+    accumulator[feature].push(item.id);
+    return accumulator;
+  }, {});
+
+  console.warn("[SmartStudy UI Audit] Missing UI elements detected:", grouped);
+}
+
+function reportCoreUiReadiness() {
+  const coreIds = [
+    "themeToggle",
+    "chooseFileButton",
+    "analyzeButton",
+    "notesExportTrigger",
+    "sendSummaryToTutorBtn",
+    "sendKeyPointToTutorBtn",
+    "chooseTutorSourceBtn",
+    "clearTutorSourceBtn",
+    "sendTutorMessage",
+    "knowledgeSearchBtn",
+    "seedKnowledgeBaseButton",
+    "knowledgePreviewTutorBtn",
+    "knowledgePreviewTaskBtn",
+    "knowledgePreviewExportBtn",
+    "generateStudyPlanBtn",
+    "clearPlannerFormBtn",
+    "openGuideModalButton",
+    "guideModalGoNotes"
+  ];
+
+  const missingCore = coreIds.filter((id) => !document.getElementById(id));
+  if (missingCore.length) {
+    console.warn("[SmartStudy UI Audit] Missing current-page controls:", missingCore);
+  } else {
+    console.info("[SmartStudy UI Audit] Current-page controls are present.");
+  }
+}
+
 function initNavigation() {
   bindPageNavigation();
+}
+
+function initBrandIntro() {
+  if (!brandIntro || brandIntro.dataset.missingId) {
+    document.body.classList.add("page-reveal");
+    return;
+  }
+
+  const hasSeenIntro = sessionStorage.getItem(BRAND_INTRO_SESSION_KEY) === "true";
+  if (hasSeenIntro) {
+    brandIntro.classList.add("is-hidden");
+    document.body.classList.add("page-reveal");
+    return;
+  }
+
+  document.body.classList.add("intro-lock");
+  window.setTimeout(() => {
+    brandIntro.classList.add("is-hidden");
+    document.body.classList.remove("intro-lock");
+    document.body.classList.add("page-reveal");
+    sessionStorage.setItem(BRAND_INTRO_SESSION_KEY, "true");
+  }, 1800);
 }
 
 function updateInterfaceLanguage() {
@@ -809,6 +1074,7 @@ function setLanguage(lang) {
 
   updateInterfaceLanguage();
   updateLanguageView();
+  updateTutorModeUI();
   updatePlayButton();
   updateTutorSourceUI();
   renderHomeTasks();
@@ -1409,6 +1675,12 @@ const i18n = {
     suggestReviewLabel: "今天建議先複習",
     possibleQuestionLabel: "可能考題",
     todayTaskLabel: "今日任務",
+    homeSuggestionReviewTitle: "今天先複習核心概念與主線",
+    homeSuggestionReviewDesc: "先整理今天最重要的概念，再回頭補細節與例子。",
+    homeSuggestionQuestionTitle: "這份內容最可能怎麼被提問？",
+    homeSuggestionQuestionDesc: "想想老師會要求你解釋、比較，還是應用到情境裡。",
+    homeSuggestionTaskTitle: "完成一組小型回顧任務",
+    homeSuggestionTaskDesc: "先做短題或自我測試，再整理今天最容易忘記的地方。",
     quickStart: "快速開始",
     quickStartSubtitle: "依照你現在的需求選擇功能",
     startLearning: "開始學習",
@@ -1424,6 +1696,49 @@ const i18n = {
     quickPrepareExam: "我想準備考試",
     quickPlanner: "讀書計畫",
     quickPlannerDesc: "建立今日、本週與已完成任務看板。",
+    guideButton: "功能說明",
+    guideSectionTitle: "這個網站可以幫你做什麼？",
+    guideSectionSubtitle: "如果你第一次使用，可以先看這裡，再決定從哪個功能開始。",
+    guideTagStart: "開始用",
+    guideTagAsk: "理解內容",
+    guideTagFind: "查資料",
+    guideTagPlan: "安排進度",
+    guideNotesTitle: "筆記整理",
+    guideNotesDesc: "把原始資料變成摘要、重點、關鍵字和複習內容。",
+    guideNotesStep1: "貼上文字或上傳 PDF、DOCX、PPTX。",
+    guideNotesStep2: "選擇整理模式與輸出語言。",
+    guideNotesStep3: "按開始整理，右側會出現可展開的結果。",
+    guideTutorTitle: "AI Tutor",
+    guideTutorDesc: "像老師一樣回答你，幫你把某份筆記真正搞懂。",
+    guideTutorStep1: "先選一份筆記當作回答依據。",
+    guideTutorStep2: "點推薦問題，或直接輸入你想問的內容。",
+    guideTutorStep3: "系統會用重點、解釋和可能問法回答你。",
+    guideKnowledgeTitle: "知識庫",
+    guideKnowledgeDesc: "把整理過的內容集中起來，之後可以用關鍵字快速搜尋。",
+    guideKnowledgeStep1: "整理過的筆記會成為可搜尋的內容。",
+    guideKnowledgeStep2: "用關鍵字、科目、章節和類型縮小範圍。",
+    guideKnowledgeStep3: "找到結果後可繼續問 AI Tutor 或加入任務。",
+    guidePlannerTitle: "讀書計畫",
+    guidePlannerDesc: "把複習需求拆成今天、本週和已完成任務，減少臨時抱佛腳。",
+    guidePlannerStep1: "填入考試日期、可讀時間與範圍。",
+    guidePlannerStep2: "系統會建立可追蹤的任務卡片。",
+    guidePlannerStep3: "完成後可以移動任務，首頁也會同步更新。",
+    guideModalTitle: "SmartStudy AI 操作說明",
+    guideModalSubtitle: "第一次使用時，照著下面的順序操作會最容易上手。",
+    guideModalStep1Title: "1. 先把資料放進來",
+    guideModalStep1Desc: "到「筆記整理」上傳 PDF、DOCX、PPTX，或直接貼上文字內容。",
+    guideModalStep2Title: "2. 讓 AI 幫你整理",
+    guideModalStep2Desc: "選整理模式後按開始整理，系統會產生摘要、重點、關鍵字與複習內容。",
+    guideModalStep3Title: "3. 有看不懂的地方就問 AI Tutor",
+    guideModalStep3Desc: "把某份筆記設成目前資料後，就能像問老師一樣追問觀念、比較差異和練習題。",
+    guideModalStep4Title: "4. 想找舊內容時用知識庫",
+    guideModalStep4Desc: "如果你已經整理過很多筆記，可以到知識庫用關鍵字搜尋，再接回 Tutor 或讀書計畫。",
+    guideModalStep5Title: "5. 想安排複習時用讀書計畫",
+    guideModalStep5Desc: "把考試日期和可讀時間輸入後，系統會幫你拆成今日、本週與已完成任務。",
+    guideModalStep6Title: "6. 所有整理結果都會留在我的筆記",
+    guideModalStep6Desc: "之後你可以從「我的筆記」重新開啟、匯出或刪除整理過的內容。",
+    guidePrimaryAction: "前往筆記整理開始使用",
+    closeGuideButton: "我知道了",
     todayTodo: "今日待辦",
     todayTodoSubtitle: "把讀書計畫拆成今天可以完成的小任務",
     manageTasks: "管理任務",
@@ -1450,6 +1765,19 @@ const i18n = {
     uploadPreviewMeta: "解析完成後，這裡會顯示目前匯入的檔案與內容區塊概況。",
     pasteTextLabel: "貼上文字",
     noteModesLabel: "整理模式（可複選）",
+    strategyPresetLabel: "學習策略",
+    strategyRefinementLabel: "加強方向（可複選）",
+    strategySummaryTitle: "目前策略",
+    strategyQuickTitle: "快速整理",
+    strategyQuickDesc: "先抓大意與主線",
+    strategyExamTitle: "考前衝刺",
+    strategyExamDesc: "聚焦常考與易錯點",
+    strategyDeepTitle: "深入理解",
+    strategyDeepDesc: "強化脈絡與概念解釋",
+    strategyReportTitle: "報告架構",
+    strategyReportDesc: "整理論點與段落結構",
+    strategyKnowledgeTitle: "知識累積",
+    strategyKnowledgeDesc: "兼顧摘要與概念連結",
     outputLanguageLabel: "輸出語言",
     knowledgeAssistLabel: "知識庫輔助",
     knowledgeAssistOption: "引用最相關知識庫段落",
@@ -1465,6 +1793,15 @@ const i18n = {
     tutorSubtitle: "根據你目前選取的筆記內容回答問題，並用教學方式幫你理解觀念。",
     tutorCurrentSourceTitle: "目前使用資料",
     tutorCurrentSourceSubtitle: "AI Tutor 會優先根據這份資料回答",
+    tutorModeLabel: "Tutor 模式",
+    tutorModeQuickTitle: "快速解釋",
+    tutorModeQuickDesc: "先講核心重點",
+    tutorModeDeepTitle: "深入教學",
+    tutorModeDeepDesc: "補脈絡與例子",
+    tutorModeExamTitle: "考前問答",
+    tutorModeExamDesc: "偏考點與常見問法",
+    tutorModeDrillTitle: "作答演練",
+    tutorModeDrillDesc: "更常追問與批改",
     tutorCurrentNoteLabel: "目前筆記",
     chooseNote: "選擇筆記",
     clearSource: "清除資料",
@@ -1565,9 +1902,9 @@ const i18n = {
     modeQuiz: "題目生成",
     modeConcept: "概念連結",
     modeMistake: "易錯觀念",
-    knowledgeSearchPlaceholder: "輸入關鍵字、問題或考點，例如：FVTPL、OCI、公允價值...",
+    knowledgeSearchPlaceholder: "輸入關鍵字、問題或主題，例如：Python、設計思考、學習策略...",
     notesSourcePlaceholder: "請貼上課堂筆記、講義內容、老師上課重點或你想整理的資料...",
-    tutorInputPlaceholderSimple: "輸入你的問題，例如：FVTPL 和 FVOCI 差在哪？"
+    tutorInputPlaceholderSimple: "輸入你的問題，例如：這段內容的核心概念是什麼？"
   },
   en: {
     navHome: "Home",
@@ -1584,6 +1921,12 @@ const i18n = {
     suggestReviewLabel: "Review first",
     possibleQuestionLabel: "Possible exam question",
     todayTaskLabel: "Today's task",
+    homeSuggestionReviewTitle: "Review the core ideas first",
+    homeSuggestionReviewDesc: "Start with the main concepts, then return to details and examples.",
+    homeSuggestionQuestionTitle: "How could this topic be asked?",
+    homeSuggestionQuestionDesc: "Think about whether a teacher would ask you to explain, compare, or apply the idea.",
+    homeSuggestionTaskTitle: "Finish a small review task",
+    homeSuggestionTaskDesc: "Try a short self-check first, then organize today’s easiest-to-forget points.",
     quickStart: "Quick Start",
     quickStartSubtitle: "Choose a feature based on what you want to do",
     startLearning: "Start Learning",
@@ -1599,6 +1942,49 @@ const i18n = {
     quickPrepareExam: "I want to prepare for exams",
     quickPlanner: "Study Planner",
     quickPlannerDesc: "Create today, weekly, and completed task boards.",
+    guideButton: "How It Works",
+    guideSectionTitle: "What can this website help you do?",
+    guideSectionSubtitle: "If this is your first time here, start with this overview before choosing a feature.",
+    guideTagStart: "Get Started",
+    guideTagAsk: "Understand",
+    guideTagFind: "Find",
+    guideTagPlan: "Plan",
+    guideNotesTitle: "Notes",
+    guideNotesDesc: "Turn raw material into summaries, key points, keywords, and review-ready notes.",
+    guideNotesStep1: "Paste text or upload a PDF, DOCX, or PPTX file.",
+    guideNotesStep2: "Choose an organization mode and output language.",
+    guideNotesStep3: "Press Start and the expandable results will appear on the right.",
+    guideTutorTitle: "AI Tutor",
+    guideTutorDesc: "Ask questions like you are talking to a teacher, and make one note truly understandable.",
+    guideTutorStep1: "Select a note first so AI Tutor knows what to answer from.",
+    guideTutorStep2: "Use a recommended question or type your own.",
+    guideTutorStep3: "The reply follows a structure: key point, explanation, and possible exam question.",
+    guideKnowledgeTitle: "Knowledge Base",
+    guideKnowledgeDesc: "Collect your organized content and search it later with keywords.",
+    guideKnowledgeStep1: "Organized notes become searchable knowledge items.",
+    guideKnowledgeStep2: "Use keywords, subjects, chapters, and types to narrow the results.",
+    guideKnowledgeStep3: "Once you find something useful, continue with AI Tutor or turn it into a task.",
+    guidePlannerTitle: "Study Planner",
+    guidePlannerDesc: "Break review work into today, this week, and completed tasks so revision feels manageable.",
+    guidePlannerStep1: "Enter the exam date, available study time, and scope.",
+    guidePlannerStep2: "SmartStudy AI creates trackable task cards for you.",
+    guidePlannerStep3: "Move tasks as you complete them, and the home dashboard will update too.",
+    guideModalTitle: "SmartStudy AI Quick Guide",
+    guideModalSubtitle: "If this is your first time using the site, this is the easiest order to follow.",
+    guideModalStep1Title: "1. Bring your material in first",
+    guideModalStep1Desc: "Go to Notes and upload a PDF, DOCX, PPTX, or paste text directly.",
+    guideModalStep2Title: "2. Let AI organize it",
+    guideModalStep2Desc: "Choose a note mode and press Start. The system generates summaries, key points, keywords, and review content.",
+    guideModalStep3Title: "3. Ask AI Tutor when something is unclear",
+    guideModalStep3Desc: "Once a note is selected as the current source, you can ask follow-up questions, compare ideas, or practice with guided answers.",
+    guideModalStep4Title: "4. Use the knowledge base to find older content",
+    guideModalStep4Desc: "If you already organized many notes, search them by keyword and continue into AI Tutor or the planner.",
+    guideModalStep5Title: "5. Use Study Planner when you need revision structure",
+    guideModalStep5Desc: "Enter your exam date and available study time, and the system will split the work into today, weekly, and completed tasks.",
+    guideModalStep6Title: "6. Everything stays in My Notes",
+    guideModalStep6Desc: "You can reopen, export, or delete organized notes later from My Notes.",
+    guidePrimaryAction: "Go to Notes to get started",
+    closeGuideButton: "Got it",
     todayTodo: "Today's To-do",
     todayTodoSubtitle: "Break your study plan into tasks you can finish today",
     manageTasks: "Manage Tasks",
@@ -1625,6 +2011,19 @@ const i18n = {
     uploadPreviewMeta: "After parsing, this area shows the imported files and a quick overview of the extracted content blocks.",
     pasteTextLabel: "Paste Text",
     noteModesLabel: "Organization Modes (Multi-select)",
+    strategyPresetLabel: "Learning Strategy",
+    strategyRefinementLabel: "Focus Directions (Multi-select)",
+    strategySummaryTitle: "Current Strategy",
+    strategyQuickTitle: "Quick Capture",
+    strategyQuickDesc: "Start with the big picture",
+    strategyExamTitle: "Exam Sprint",
+    strategyExamDesc: "Focus on likely tests and pitfalls",
+    strategyDeepTitle: "Deep Understanding",
+    strategyDeepDesc: "Strengthen context and concept explanation",
+    strategyReportTitle: "Report Builder",
+    strategyReportDesc: "Organize arguments and structure",
+    strategyKnowledgeTitle: "Knowledge Builder",
+    strategyKnowledgeDesc: "Combine summary with concept links",
     outputLanguageLabel: "Output Language",
     knowledgeAssistLabel: "Knowledge Support",
     knowledgeAssistOption: "Include the most relevant knowledge-base passages",
@@ -1640,6 +2039,15 @@ const i18n = {
     tutorSubtitle: "Answer questions based on your currently selected notes and explain concepts in a teaching style.",
     tutorCurrentSourceTitle: "Current Source",
     tutorCurrentSourceSubtitle: "AI Tutor will answer based on this selected source first.",
+    tutorModeLabel: "Tutor Mode",
+    tutorModeQuickTitle: "Quick Explain",
+    tutorModeQuickDesc: "Start with the core idea",
+    tutorModeDeepTitle: "Deep Teach",
+    tutorModeDeepDesc: "Add context and examples",
+    tutorModeExamTitle: "Exam Coach",
+    tutorModeExamDesc: "Focus on likely questions",
+    tutorModeDrillTitle: "Answer Drill",
+    tutorModeDrillDesc: "Push harder on correction",
     tutorCurrentNoteLabel: "Current note",
     chooseNote: "Choose Note",
     clearSource: "Clear Source",
@@ -1740,16 +2148,18 @@ const i18n = {
     modeQuiz: "Question Generation",
     modeConcept: "Concept Links",
     modeMistake: "Common Mistakes",
-    knowledgeSearchPlaceholder: "Search keywords, questions, or exam points, such as FVTPL, OCI, or fair value...",
+    knowledgeSearchPlaceholder: "Search keywords, questions, or topics such as Python, design thinking, or study strategies...",
     notesSourcePlaceholder: "Paste your notes, lecture content, teacher highlights, or any material you want to organize...",
-    tutorInputPlaceholderSimple: "Ask a question, for example: What is the difference between FVTPL and FVOCI?"
+    tutorInputPlaceholderSimple: "Ask a question, for example: What is the core idea in this passage?"
   }
 };
 
 let currentLanguage = loadFromStorage(STORAGE_KEYS.language, "zh");
 let currentTheme = loadFromStorage(STORAGE_KEYS.theme, "light");
 let currentNoteModes = ["quick"];
+let currentTutorMode = "quickExplain";
 const NOTE_MODE_STORAGE_KEY = STORAGE_KEYS.myNotes;
+const STUDY_TASKS_STORAGE_KEY = STORAGE_KEYS.tasks;
 const noteModeToLegacyMode = {
   quick: "simple",
   deep: "report",
@@ -1811,12 +2221,85 @@ const noteModeDescriptions = {
     en: "Highlight the most confusing and error-prone ideas first to clear up blind spots."
   }
 };
+const noteStrategyPresets = {
+  quickCapture: {
+    modes: ["quick"],
+    label: { zh: "快速整理", en: "Quick Capture" },
+    description: {
+      zh: "適合先把一份新資料整理成可以快速吸收的版本，再決定要不要往下深挖。",
+      en: "Best for turning fresh material into a fast, readable version before deciding whether to go deeper."
+    }
+  },
+  examSprint: {
+    modes: ["exam", "mistake"],
+    label: { zh: "考前衝刺", en: "Exam Sprint" },
+    description: {
+      zh: "把常考重點和最容易混淆的地方一起拉出來，適合考前短時間複習。",
+      en: "Pull likely exam points and confusing areas together for short, focused review before a test."
+    }
+  },
+  deepFocus: {
+    modes: ["deep"],
+    label: { zh: "深入理解", en: "Deep Understanding" },
+    description: {
+      zh: "更重視觀念解釋、前後脈絡與細節補充，適合課後真正把內容弄懂。",
+      en: "Prioritizes explanations, context, and detail so you can truly understand the material after class."
+    }
+  },
+  reportBuild: {
+    modes: ["deep", "concept"],
+    label: { zh: "報告架構", en: "Report Builder" },
+    description: {
+      zh: "把內容整理成可延伸成段落與論點的骨架，適合報告、作業或口頭發表前打底。",
+      en: "Shapes the material into a structure of arguments and sections for reports, assignments, or presentations."
+    }
+  },
+  knowledgeBuild: {
+    modes: ["quick", "concept"],
+    label: { zh: "知識累積", en: "Knowledge Builder" },
+    description: {
+      zh: "同時保留摘要效率與觀念關聯，適合想把內容穩定收進自己的知識庫。",
+      en: "Keeps summary speed while building concept connections, ideal for steadily growing your knowledge base."
+    }
+  }
+};
 const legacyModeToNoteMode = {
   simple: "quick",
   report: "deep",
   exam: "exam"
 };
 const noteModeOrder = ["quick", "deep", "exam", "quiz", "concept", "mistake"];
+const noteStrategyOrder = ["quickCapture", "examSprint", "deepFocus", "reportBuild", "knowledgeBuild"];
+const tutorModeConfigs = {
+  quickExplain: {
+    label: { zh: "快速解釋", en: "Quick Explain" },
+    description: {
+      zh: "先用最短路徑講清楚核心概念，再補一個最值得追問的方向。",
+      en: "Explain the core idea in the shortest path first, then suggest one high-value follow-up."
+    }
+  },
+  deepTeach: {
+    label: { zh: "深入教學", en: "Deep Teach" },
+    description: {
+      zh: "更像老師帶你拆概念，會補前後脈絡、比較與例子。",
+      en: "Acts more like a teacher, adding context, comparisons, and examples."
+    }
+  },
+  examCoach: {
+    label: { zh: "考前問答", en: "Exam Coach" },
+    description: {
+      zh: "回答會更偏向常考重點、答題句型與老師可能怎麼問。",
+      en: "Answers lean toward likely exam points, answer framing, and probable question wording."
+    }
+  },
+  answerDrill: {
+    label: { zh: "作答演練", en: "Answer Drill" },
+    description: {
+      zh: "更適合互動練習，會更積極追問、出題與批改。",
+      en: "Best for interactive practice, with more follow-up, quizzing, and correction."
+    }
+  }
+};
 let currentTutorSource = null;
 let currentOpenedNotePayload = null;
 let currentExportContext = {
@@ -2155,24 +2638,25 @@ function buildSeedKnowledgeDocuments() {
     ? window.SMARTSTUDY_KNOWLEDGE_SEED_DOCUMENTS
     : [];
 
-  return rawSeedDocuments.map((document) => ({
-    ...document,
-    sections: Array.isArray(document.sections)
-      ? document.sections.map((section, index) => ({
-          ...section,
-          paragraphNumber: typeof section.paragraphNumber === "number"
-            ? section.paragraphNumber
-            : index + 1
-        }))
-      : []
-  }));
+  return rawSeedDocuments
+    .map((document) => ({
+      ...document,
+      sections: Array.isArray(document.sections)
+        ? document.sections.map((section, index) => ({
+            ...section,
+            paragraphNumber: typeof section.paragraphNumber === "number"
+              ? section.paragraphNumber
+              : index + 1
+          }))
+        : []
+    }));
 }
 
 function ensureSeedKnowledgeBase() {
-  const store = loadLocalKnowledgeStore();
   const seedDocuments = buildSeedKnowledgeDocuments();
   const expectedSeedFiles = seedDocuments.map((document) => document.fileName);
   const seededVersion = loadFromStorage(KNOWLEDGE_SEED_VERSION_KEY, "");
+  const store = loadLocalKnowledgeStore();
   const existingSeedFiles = new Set(
     (store.files || [])
       .filter((fileName) => String(fileName || "").startsWith("SmartStudy Seed - "))
@@ -2181,6 +2665,17 @@ function ensureSeedKnowledgeBase() {
   if (seededVersion === KNOWLEDGE_SEED_VERSION && expectedSeedFiles.every((fileName) => existingSeedFiles.has(fileName))) {
     return;
   }
+
+  const nonSeedChunks = (store.chunks || []).filter((chunk) => !String(chunk.fileName || "").startsWith("SmartStudy Seed - "));
+  const nonSeedFiles = [...new Set(nonSeedChunks.map((chunk) => chunk.fileName).filter(Boolean))];
+
+  saveLocalKnowledgeStore({
+    fileCount: nonSeedFiles.length,
+    chunkCount: nonSeedChunks.length,
+    files: nonSeedFiles,
+    chunks: nonSeedChunks,
+    updatedAt: new Date().toISOString()
+  });
 
   mergeDocumentsIntoLocalKnowledge(seedDocuments);
   saveToStorage(KNOWLEDGE_SEED_VERSION_KEY, KNOWLEDGE_SEED_VERSION);
@@ -2211,6 +2706,13 @@ function reloadSeedKnowledgeBase() {
     currentLanguage === "en"
       ? "Fresh multi-domain seed content has been loaded into the local knowledge base."
       : "已重新載入多領域示範內容到本地知識庫。"
+  );
+  showToast(
+    currentLanguage === "en" ? "Demo knowledge ready" : "示範知識庫已更新",
+    currentLanguage === "en"
+      ? "You can search it now or use it as note support."
+      : "現在可以直接搜尋，或拿來當作筆記整理的輔助內容。",
+    "success"
   );
 }
 
@@ -2557,6 +3059,7 @@ function buildTutorPrompt({ question, source }) {
   const sourceContent = source
     ? JSON.stringify(source.result || source.content || source, null, 2)
     : "目前沒有指定資料。";
+  const tutorMode = tutorModeConfigs[currentTutorMode] || tutorModeConfigs.quickExplain;
 
   return `
 你是 SmartStudy AI 的 AI Tutor 問答老師。
@@ -2571,6 +3074,10 @@ ${sourceContent}
 
 使用者問題：
 ${question}
+
+目前教學模式：
+${tutorMode.label.zh} / ${tutorMode.label.en}
+${tutorMode.description.zh}
 
 回答格式：
 1. 重點
@@ -3326,6 +3833,37 @@ function setProcessStateText(text) {
     return;
   }
   processState.textContent = currentLanguage === "en" ? (zhToEnStatusMap[text] || text) : text;
+}
+
+function showToast(title, detail = "", type = "info", duration = 2600) {
+  if (!toastStack) {
+    return;
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+
+  const titleEl = document.createElement("strong");
+  titleEl.textContent = title;
+  toast.appendChild(titleEl);
+
+  if (detail) {
+    const detailEl = document.createElement("p");
+    detailEl.textContent = detail;
+    toast.appendChild(detailEl);
+  }
+
+  toastStack.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+
+  window.setTimeout(() => {
+    toast.classList.remove("show");
+    window.setTimeout(() => {
+      toast.remove();
+    }, 220);
+  }, duration);
 }
 
 function looksLikeNoiseLine(line, sourceMeta = null) {
@@ -4152,6 +4690,60 @@ function setParseStatus(title, detail, percent = null, phaseText = null) {
   if (percent !== null) {
     setProgress(percent, phaseText || title);
   }
+  updateUploadDiagnosticsFromStatus(localizeParseText(title), localizeParseText(detail));
+}
+
+function updateUploadDiagnostics({ badge, fileCount, sectionCount, ocrStatus, message } = {}) {
+  if (badge && uploadDiagnosticsBadge) uploadDiagnosticsBadge.textContent = badge;
+  if (typeof fileCount !== "undefined" && uploadFileCount) uploadFileCount.textContent = String(fileCount);
+  if (typeof sectionCount !== "undefined" && uploadSectionCount) uploadSectionCount.textContent = String(sectionCount);
+  if (ocrStatus && uploadOcrStatus) uploadOcrStatus.textContent = ocrStatus;
+  if (message && uploadDiagnosticsMessage) uploadDiagnosticsMessage.textContent = message;
+}
+
+function updateUploadDiagnosticsFromStatus(title, detail) {
+  const normalizedTitle = String(title || "");
+  const normalizedDetail = String(detail || "");
+  const fileCount = Array.isArray(currentUploadedFiles) ? currentUploadedFiles.length : 0;
+  const sectionCount = lastSourceMeta?.sectionCount || 0;
+  let badge = currentLanguage === "en" ? "Pending" : "待上傳";
+  let ocrStatusText = currentLanguage === "en" ? "Not started" : "尚未啟動";
+
+  if (/失敗|failed/i.test(normalizedTitle)) {
+    badge = currentLanguage === "en" ? "Failed" : "失敗";
+    ocrStatusText = currentLanguage === "en" ? "Stopped" : "已中止";
+  } else if (/完成|ready|done/i.test(normalizedTitle)) {
+    badge = currentLanguage === "en" ? "Ready" : "完成";
+    ocrStatusText = lastSourceMeta?.imageCount
+      ? (currentLanguage === "en" ? `Done (${lastSourceMeta.imageCount})` : `已完成（${lastSourceMeta.imageCount}）`)
+      : (currentLanguage === "en" ? "Skipped or not needed" : "略過或不需要");
+  } else if (/辨識|ocr/i.test(normalizedTitle) || /辨識|ocr/i.test(normalizedDetail)) {
+    badge = currentLanguage === "en" ? "Processing" : "處理中";
+    ocrStatusText = currentLanguage === "en" ? "Running OCR" : "辨識中";
+  } else if (/讀取|解析|抽取|prepare|processing/i.test(normalizedTitle)) {
+    badge = currentLanguage === "en" ? "Processing" : "處理中";
+    ocrStatusText = currentLanguage === "en" ? "Waiting or optional" : "等待中或非必要";
+  }
+
+  updateUploadDiagnostics({
+    badge,
+    fileCount,
+    sectionCount,
+    ocrStatus: ocrStatusText,
+    message: normalizedDetail || (currentLanguage === "en" ? "Waiting for file upload." : "等待上傳檔案。")
+  });
+}
+
+function resetUploadDiagnostics() {
+  updateUploadDiagnostics({
+    badge: currentLanguage === "en" ? "Pending" : "待上傳",
+    fileCount: 0,
+    sectionCount: 0,
+    ocrStatus: currentLanguage === "en" ? "Not started" : "尚未啟動",
+    message: currentLanguage === "en"
+      ? "Choose files to see parsing status, extracted sections, and OCR behavior."
+      : "選擇檔案後，這裡會顯示解析狀態、抽取到的內容區塊與 OCR 情況。"
+  });
 }
 
 function setBusyState(isBusy) {
@@ -4163,12 +4755,16 @@ function setBusyState(isBusy) {
   useKnowledgeBaseCheckbox.disabled = isBusy;
   pdfPageStartInput.disabled = isBusy;
   pdfPageEndInput.disabled = isBusy;
+  if (uploadDropzone && !uploadDropzone.dataset.missingId) {
+    uploadDropzone.classList.toggle("is-disabled", isBusy);
+  }
 }
 
 function restoreUploadHelp() {
   uploadHelp.textContent = currentLanguage === "en"
     ? "Supported: TXT, MD, CSV, JSON, HTML, XML, DOCX, PPTX, and PDF. You can upload multiple files at once, and PDF page ranges can be limited before parsing. Some scanned PDFs or image-based text require OCR attempts, and results may vary with file quality."
     : "支援：TXT、MD、CSV、JSON、HTML、XML、DOCX、PPTX、PDF。可一次上傳多份檔案，也可先限制 PDF 頁數範圍再解析。部分掃描型 PDF 或圖片文字需透過 OCR 嘗試辨識，結果可能受檔案品質影響。";
+  resetUploadDiagnostics();
   setParseStatus(
     currentLanguage === "en" ? "File parsing has not started yet" : "文件解析尚未開始",
     currentLanguage === "en"
@@ -4177,6 +4773,7 @@ function restoreUploadHelp() {
     0,
     currentLanguage === "en" ? "Waiting for upload" : "等待上傳"
   );
+  renderSelectedFiles([]);
 }
 
 function syncSourceContextUI() {
@@ -4187,6 +4784,17 @@ function syncSourceContextUI() {
     uploadHelp.textContent = currentLanguage === "en"
       ? `Extracted ${lastSourceMeta.sectionCount} content sections and ${lastSourceMeta.imageCount} OCR image text blocks.`
       : `已抽取 ${lastSourceMeta.sectionCount} 個內容區塊，並擷取 ${lastSourceMeta.imageCount} 筆圖片文字辨識內容。`;
+    updateUploadDiagnostics({
+      badge: currentLanguage === "en" ? "Ready" : "完成",
+      fileCount: Array.isArray(lastSourceMeta.files) ? lastSourceMeta.files.length : 1,
+      sectionCount: lastSourceMeta.sectionCount || 0,
+      ocrStatus: lastSourceMeta.imageCount
+        ? (currentLanguage === "en" ? `Done (${lastSourceMeta.imageCount})` : `已完成（${lastSourceMeta.imageCount}）`)
+        : (currentLanguage === "en" ? "Skipped or not needed" : "略過或不需要"),
+      message: currentLanguage === "en"
+        ? "You can review the import preview below, then generate notes or ask AI Tutor."
+        : "你可以先看下方匯入預覽，再開始整理或接著問 AI Tutor。"
+    });
     return;
   }
 
@@ -4195,6 +4803,15 @@ function syncSourceContextUI() {
     uploadHelp.textContent = currentLanguage === "en"
       ? "The demo text is loaded. You can also upload TXT, PPTX, DOCX, or PDF files."
       : "目前使用示範文字內容，你也可以改上傳 TXT、PPTX、DOCX 或 PDF。";
+    updateUploadDiagnostics({
+      badge: currentLanguage === "en" ? "Demo" : "示範",
+      fileCount: 0,
+      sectionCount: 1,
+      ocrStatus: currentLanguage === "en" ? "Not required" : "不需要",
+      message: currentLanguage === "en"
+        ? "This content comes from built-in demo text, so no file parsing or OCR is involved."
+        : "這份內容來自內建示範文字，因此沒有檔案解析或 OCR 流程。"
+    });
     return;
   }
 
@@ -4210,6 +4827,26 @@ function resetUploadPreview() {
     ? "After parsing, an overview of the imported files and sections will appear here."
     : "解析完成後，這裡會顯示目前匯入的檔案與內容區塊概況。";
   uploadPreviewList.innerHTML = "";
+}
+
+function renderSelectedFiles(files = currentUploadedFiles) {
+  if (!selectedFilesList || selectedFilesList.dataset.missingId) {
+    return;
+  }
+
+  if (!Array.isArray(files) || !files.length) {
+    selectedFilesList.innerHTML = "";
+    return;
+  }
+
+  selectedFilesList.innerHTML = files
+    .map((file) => `
+      <div class="selected-file-chip">
+        <strong>${escapeHTML(file.name || (currentLanguage === "en" ? "Untitled file" : "未命名檔案"))}</strong>
+        <span>${escapeHTML(formatFileSize(Number(file.size) || 0))}</span>
+      </div>
+    `)
+    .join("");
 }
 
 function renderUploadPreview(result) {
@@ -6483,13 +7120,36 @@ function renderRecommendedQuestions(questions) {
   recommendedQuestions.innerHTML = "";
 
   if (!questions || questions.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty-state";
-    empty.textContent = getI18nText(
+    const wrapper = document.createElement("div");
+    wrapper.className = "empty-state";
+
+    const text = document.createElement("p");
+    text.textContent = getI18nText(
       "recommendedQuestionsEmpty",
       "目前尚未選擇資料，請先選擇一份筆記後再產生推薦問題。"
     );
-    recommendedQuestions.appendChild(empty);
+    wrapper.appendChild(text);
+
+    const actions = document.createElement("div");
+    actions.className = "empty-action-row";
+
+    const chooseButton = document.createElement("button");
+    chooseButton.className = "secondary-btn";
+    chooseButton.type = "button";
+    chooseButton.textContent = currentLanguage === "en" ? "Choose a note" : "選擇一份筆記";
+    chooseButton.addEventListener("click", chooseLatestNoteAsTutorSource);
+
+    const notesButton = document.createElement("button");
+    notesButton.className = "secondary-btn";
+    notesButton.type = "button";
+    notesButton.textContent = currentLanguage === "en" ? "Go to My Notes" : "前往我的筆記";
+    notesButton.addEventListener("click", () => {
+      switchPage("myNotes");
+    });
+
+    actions.append(chooseButton, notesButton);
+    wrapper.appendChild(actions);
+    recommendedQuestions.appendChild(wrapper);
     return;
   }
 
@@ -6525,6 +7185,11 @@ function updateTutorSourceUI() {
     currentTutorSourceMeta.textContent = currentLanguage === "en"
       ? "Please choose one source from My Notes or the Knowledge Base first."
       : fallbackTutorSourceMessage.meta;
+    if (tutorContextHelperText) {
+      tutorContextHelperText.textContent = currentLanguage === "en"
+        ? "Start from the summary or the strongest key point so the Tutor can answer more precisely."
+        : "先從摘要或最重要重點開始追問，Tutor 的回答會更聚焦。";
+    }
     renderRecommendedQuestions([]);
     return;
   }
@@ -6538,7 +7203,157 @@ function updateTutorSourceUI() {
   currentTutorSourceMeta.textContent = currentLanguage === "en"
     ? `Subject: ${subject} | Study modes: ${mode}`
     : `科目：${subject}｜整理類型：${mode}`;
+  if (tutorContextHelperText) {
+    tutorContextHelperText.textContent = currentLanguage === "en"
+      ? `Ask about "${currentTutorSource.title || "this note"}" from the summary, key points, or one confusing term.`
+      : `建議先從「${currentTutorSource.title || "這份筆記"}」的摘要、重點或最混淆的名詞開始追問。`;
+  }
   generateAndRenderRecommendedQuestions();
+}
+
+function updateHomeActivity() {
+  const notes = loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [];
+  const latestNote = notes[0] || null;
+  const todayTasks = loadJsonStorage(STUDY_TASKS_STORAGE_KEY) || [];
+  const pendingToday = todayTasks.filter((task) => task.status === "today");
+
+  if (homeLatestNoteTitle) {
+    homeLatestNoteTitle.textContent = latestNote?.title || (currentLanguage === "en" ? "No note yet" : "尚未建立筆記");
+  }
+  if (homeLatestNoteMeta) {
+    homeLatestNoteMeta.textContent = latestNote
+      ? (currentLanguage === "en"
+        ? `Latest subject: ${latestNote.subject || "General"} · ${formatDateTime(latestNote.savedAt || latestNote.createdAt || new Date().toISOString())}`
+        : `最近科目：${latestNote.subject || "未分類"}｜${formatDateTime(latestNote.savedAt || latestNote.createdAt || new Date().toISOString())}`)
+      : (currentLanguage === "en"
+        ? "Create your first organized note to unlock Tutor, export, and study planning."
+        : "先整理第一份筆記，之後就能直接接 Tutor、匯出與讀書計畫。");
+  }
+  if (homeNextActionTitle) {
+    homeNextActionTitle.textContent = pendingToday.length
+      ? (currentLanguage === "en" ? `Today's focus: ${pendingToday[0].title || "Review task"}` : `今天先做：${pendingToday[0].title || "複習任務"}`)
+      : (latestNote ? (currentLanguage === "en" ? "Take the next step with AI Tutor" : "下一步：拿這份筆記去問 AI Tutor") : (currentLanguage === "en" ? "Start your first organization" : "開始第一次整理"));
+  }
+  if (homeNextActionMeta) {
+    homeNextActionMeta.textContent = pendingToday.length
+      ? (currentLanguage === "en"
+        ? `You currently have ${pendingToday.length} task(s) waiting in Today's column.`
+        : `目前「今日任務」欄位有 ${pendingToday.length} 個待完成項目。`)
+      : (latestNote
+        ? (currentLanguage === "en"
+          ? "Open AI Tutor, ask from the summary, then add the answer back into your review plan."
+          : "先用 AI Tutor 針對摘要追問，再把回答補進你的複習流程。")
+        : (currentLanguage === "en"
+          ? "Upload PDF, DOCX, PPTX, or paste text to generate your first study note."
+          : "上傳 PDF、DOCX、PPTX 或直接貼上文字，先產生第一份學習筆記。"));
+  }
+}
+
+function updatePageInsights() {
+  const notes = getMyNotes();
+  const tasks = getStudyTasks();
+  const knowledgeItems = getKnowledgeItems();
+  const todayTasks = tasks.filter((task) => task.status === "today");
+  const weekTasks = tasks.filter((task) => task.status === "week");
+  const doneTasks = tasks.filter((task) => task.status === "done");
+  const latestNote = notes[0] || null;
+  const uniqueSubjects = [...new Set(notes.map((note) => normalizeText(note.subject)).filter(Boolean))];
+
+  animateNumericText(homeSnapshotNotes, notes.length);
+  animateNumericText(homeSnapshotTasks, todayTasks.length);
+  animateNumericText(homeSnapshotKnowledge, knowledgeItems.length);
+  if (homeSnapshotFocus) {
+    homeSnapshotFocus.textContent = todayTasks.length
+      ? (currentLanguage === "en"
+        ? `Start with "${todayTasks[0].title || "today's task"}" before opening new material.`
+        : `先完成「${todayTasks[0].title || "今日任務"}」，再開新的內容。`)
+      : (latestNote
+        ? (currentLanguage === "en"
+          ? `Review "${latestNote.title || "your latest note"}" with AI Tutor to deepen understanding.`
+          : `先拿「${latestNote.title || "最近筆記"}」去問 AI Tutor，把理解再往下推。`)
+        : (currentLanguage === "en"
+          ? "Create your first study note to unlock the full workflow."
+          : "先建立第一份學習筆記，整個工作流才會開始動起來。"));
+  }
+
+  if (knowledgeInsightTitle) {
+    knowledgeInsightTitle.textContent = knowledgeItems.length
+      ? (currentLanguage === "en"
+        ? `The library now holds ${knowledgeItems.length} searchable knowledge item(s).`
+        : `目前知識庫已有 ${knowledgeItems.length} 筆可搜尋內容。`)
+      : (currentLanguage === "en"
+        ? "The knowledge library is still empty. Start by organizing one note."
+        : "知識庫還是空的，先從第一份筆記開始累積。");
+  }
+
+  if (knowledgeInsightMeta) {
+    const topKnowledgeSubject = knowledgeItems[0]?.subject || "";
+    knowledgeInsightMeta.textContent = knowledgeItems.length
+      ? (currentLanguage === "en"
+        ? `Search by keyword, subject, or chapter${topKnowledgeSubject ? `, especially around ${topKnowledgeSubject}` : ""}.`
+        : `可以用關鍵字、科目或章節搜尋${topKnowledgeSubject ? `，目前最容易延伸的是 ${topKnowledgeSubject}` : ""}。`)
+      : (currentLanguage === "en"
+        ? "Organized notes and knowledge chunks will be collected here for faster reuse later."
+        : "整理過的筆記與知識片段會集中在這裡，之後可以用關鍵字快速找回。");
+  }
+
+  if (plannerInsightToday) {
+    plannerInsightToday.textContent = currentLanguage === "en"
+      ? `${todayTasks.length} task(s) for today`
+      : `${todayTasks.length} 個今日任務`;
+  }
+
+  if (plannerInsightWeek) {
+    plannerInsightWeek.textContent = currentLanguage === "en"
+      ? `${weekTasks.length} task(s) this week`
+      : `${weekTasks.length} 個本週任務`;
+  }
+
+  if (plannerInsightDone) {
+    plannerInsightDone.textContent = currentLanguage === "en"
+      ? `${doneTasks.length} completed`
+      : `${doneTasks.length} 個已完成任務`;
+  }
+
+  if (plannerInsightFocus) {
+    plannerInsightFocus.textContent = todayTasks.length
+      ? (currentLanguage === "en"
+        ? `Your next move is to finish "${todayTasks[0].title || "today's first task"}".`
+        : `下一步先完成「${todayTasks[0].title || "今天第一個任務"}」。`)
+      : (weekTasks.length
+        ? (currentLanguage === "en"
+          ? "Move one weekly task into Today so the plan becomes actionable."
+          : "先把一個本週任務移到今日，計畫才會真正可執行。")
+        : (currentLanguage === "en"
+          ? "Create a few small tasks first, then refine the schedule later."
+          : "先建立幾個小任務，再慢慢把時程細化。"));
+  }
+
+  if (myNotesInsightTitle) {
+    myNotesInsightTitle.textContent = latestNote
+      ? (currentLanguage === "en"
+        ? `Latest focus: ${latestNote.title || "Untitled note"}`
+        : `最近最值得回看的筆記：${latestNote.title || "未命名筆記"}`)
+      : (currentLanguage === "en"
+        ? "There is no note in your library yet."
+        : "目前還沒有筆記庫內容。");
+  }
+
+  if (myNotesInsightMeta) {
+    myNotesInsightMeta.textContent = latestNote
+      ? (currentLanguage === "en"
+        ? `Subject: ${latestNote.subject || "General"} · You can reopen it, export it, or continue with AI Tutor.`
+        : `科目：${latestNote.subject || "未分類"}｜你可以重新開啟、匯出，或直接接著問 AI Tutor。`)
+      : (currentLanguage === "en"
+        ? "After you finish the first organization, this page will become your reusable study library."
+        : "完成第一份整理後，這裡就會慢慢變成你可重複使用的複習資料庫。");
+  }
+
+  if (myNotesInsightSubjects) {
+    myNotesInsightSubjects.textContent = currentLanguage === "en"
+      ? `${uniqueSubjects.length} subject area(s)`
+      : `${uniqueSubjects.length} 個主題領域`;
+  }
 }
 
 function chooseLatestNoteAsTutorSource() {
@@ -6546,13 +7361,24 @@ function chooseLatestNoteAsTutorSource() {
 
   if (!notes.length) {
     setTutorSource(null);
-    alert(currentLanguage === "en"
-      ? "There are no available notes yet. Please generate one from the Notes page first."
-      : "目前沒有可用筆記。請先到「筆記整理」產生一份筆記。");
+    showToast(
+      currentLanguage === "en" ? "No note available yet" : "目前還沒有可用筆記",
+      currentLanguage === "en"
+        ? "Please generate a note from the Notes page first."
+        : "請先到筆記整理頁產生一份筆記，再回來使用 AI Tutor。",
+      "info"
+    );
     return;
   }
 
   setTutorSource(notes[0]);
+  showToast(
+    currentLanguage === "en" ? "Source selected for AI Tutor" : "已選擇 AI Tutor 目前資料",
+    currentLanguage === "en"
+      ? "You can now ask questions based on the selected note."
+      : "現在可以根據這份筆記開始提問。",
+    "success"
+  );
 }
 
 function appendChatMessage(role, content) {
@@ -6714,18 +7540,66 @@ function setTutorSource(note) {
 }
 
 function askTutorWithSource(noteOrKnowledgeItem, question = "") {
-  currentTutorSource = noteOrKnowledgeItem || null;
-  updateTutorSourceUI();
+  setTutorSource(noteOrKnowledgeItem || null);
   switchPage("tutor");
 
   if (tutorInput && question) {
     tutorInput.value = question;
+    tutorInput.focus();
   }
 }
 
+function buildTutorSourceFromCurrentWorkspace() {
+  if (currentOpenedNotePayload?.result) {
+    return currentOpenedNotePayload;
+  }
+
+  if (!currentAnalysisResult) {
+    return null;
+  }
+
+  const normalized = normalizeNoteResult(currentAnalysisResult);
+  const inferredTitle = lastSourceMeta?.fileName || inferNoteTitle(normalized) || (currentLanguage === "en" ? "Current workspace" : "目前整理內容");
+  const inferredMeta = inferNoteSubjectAndChapter(normalized, sourceText?.value || "", inferredTitle);
+
+  return {
+    id: `workspace_${Date.now()}`,
+    title: inferredTitle,
+    subject: inferredMeta.subject,
+    chapter: inferredMeta.chapter,
+    mode: getPrimaryNoteMode(),
+    modes: getSelectedNoteModes(),
+    createdAt: new Date().toISOString(),
+    result: normalized
+  };
+}
+
+async function sendOverviewToTutor(type = "summary") {
+  const source = buildTutorSourceFromCurrentWorkspace() || (loadJsonStorage(NOTE_MODE_STORAGE_KEY) || [])[0] || null;
+  if (!source) {
+    showToast(
+      currentLanguage === "en" ? "No note available yet" : "目前還沒有可用筆記",
+      currentLanguage === "en"
+        ? "Please organize one note first, then send it to AI Tutor."
+        : "請先整理出至少一份筆記，再把它送進 AI Tutor。",
+      "info"
+    );
+    return;
+  }
+
+  const overview = source.result?.overview || normalizeNoteResult(source.result).overview || {};
+  const question = type === "keyPoint"
+    ? (overview.tutorQuestion || overview.keyPoint || (currentLanguage === "en" ? "Please explain the most important key point from this note." : "請解釋這份筆記最重要的重點。"))
+    : (currentLanguage === "en"
+      ? `Please explain this summary in a clearer study-friendly way:\n${overview.summary || ""}`.trim()
+      : `請把這段摘要用更好懂、更適合複習的方式解釋：\n${overview.summary || ""}`.trim());
+
+  askTutorWithSource(source, question);
+  await handleSendTutorMessage();
+}
+
 function openNoteInTutor(note) {
-  currentTutorSource = note || null;
-  updateTutorSourceUI();
+  setTutorSource(note || null);
   switchPage("tutor");
 }
 
@@ -6984,6 +7858,7 @@ function getStudyTasks() {
 
 function saveStudyTasks(tasks) {
   saveJsonStorage(STORAGE_KEYS.tasks, tasks);
+  updateHomeActivity();
 }
 
 function getMyNotes() {
@@ -6998,17 +7873,20 @@ function refreshAfterNotesChanged() {
   if (typeof renderMyNotes === "function") renderMyNotes();
   if (typeof updateKnowledgeResults === "function") updateKnowledgeResults();
   if (typeof populatePlannerNoteSelect === "function") populatePlannerNoteSelect();
+  updateHomeActivity();
 }
 
 function refreshAfterTasksChanged() {
   if (typeof renderStudyPlanner === "function") renderStudyPlanner();
   if (typeof renderHomeTasks === "function") renderHomeTasks();
+  updateHomeActivity();
 }
 
 function refreshAfterNoteDeleted() {
   if (typeof renderMyNotes === "function") renderMyNotes();
   if (typeof updateKnowledgeResults === "function") updateKnowledgeResults();
   if (typeof populatePlannerNoteSelect === "function") populatePlannerNoteSelect();
+  updateHomeActivity();
 }
 
 function updateTaskCount(id, count) {
@@ -7096,6 +7974,7 @@ function renderStudyPlanner() {
   updateTaskCount("todayTaskCount", todayTasks.length);
   updateTaskCount("weekTaskCount", weekTasks.length);
   updateTaskCount("doneTaskCount", doneTasks.length);
+  updatePageInsights();
 }
 
 function renderHomeTasks() {
@@ -7114,6 +7993,7 @@ function renderHomeTasks() {
         <p>${currentLanguage === "en" ? "Create tasks from the Study Planner page." : "可以到讀書計畫頁建立任務。"}</p>
       </div>
     `;
+    updatePageInsights();
     return;
   }
 
@@ -7124,6 +8004,7 @@ function renderHomeTasks() {
       <p>${escapeHTML(task.detail || "")}</p>
     </div>
   `).join("");
+  updatePageInsights();
 }
 
 function formatNoteDate(dateString) {
@@ -7221,6 +8102,8 @@ function updateMyNotesStats(allNotes, filteredNotes) {
     const latest = [...allNotes].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0];
     myNotesLatestDate.textContent = formatNoteDate(latest.createdAt);
   }
+
+  updatePageInsights();
 }
 
 function buildExportPayloadAsAnalysisResult(note) {
@@ -7443,6 +8326,13 @@ function addKnowledgeItemToTodayTasks(item) {
   saveJsonStorage(STORAGE_KEYS.tasks, tasks);
   refreshAfterTasksChanged();
   setProcessStateText(currentLanguage === "en" ? "Added to today's tasks" : "已加入今日待辦");
+  showToast(
+    currentLanguage === "en" ? "Added to today's tasks" : "已加入今日待辦",
+    currentLanguage === "en"
+      ? `You can review "${item.title}" from the home dashboard or planner.`
+      : `你可以在首頁或讀書計畫頁看到「${item.title}」這項任務。`,
+    "success"
+  );
 }
 
 function openKnowledgeDetail(item) {
@@ -7485,16 +8375,149 @@ async function copyKnowledgeItem(item) {
   try {
     await navigator.clipboard.writeText(text);
     setProcessStateText(currentLanguage === "en" ? "Content copied" : "已複製內容");
+    showToast(
+      currentLanguage === "en" ? "Copied" : "已複製內容",
+      currentLanguage === "en"
+        ? "You can paste it into your notes or documents now."
+        : "現在可以直接貼到你的筆記或文件中。",
+      "success"
+    );
   } catch (error) {
     console.error(error);
     alert(currentLanguage === "en" ? "Copy failed. Please select the content manually." : "複製失敗，請手動選取內容。");
   }
 }
 
+function getKnowledgeSearchQuery() {
+  return normalizeText(knowledgeSearchInput?.value || "");
+}
+
+function highlightSearchMarkup(text, query = getKnowledgeSearchQuery()) {
+  const source = String(text || "");
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) {
+    return escapeHTML(source);
+  }
+
+  const terms = [...new Set(normalizedQuery.split(/\s+/).map((part) => part.trim()).filter((part) => part.length >= 2))];
+  if (!terms.length) {
+    return escapeHTML(source);
+  }
+
+  const pattern = terms.map((term) => escapeRegExp(term)).join("|");
+  return escapeHTML(source).replace(new RegExp(`(${pattern})`, "gi"), '<mark class="search-highlight">$1</mark>');
+}
+
+function extractKnowledgeMatchLine(item, query = getKnowledgeSearchQuery()) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) {
+    return currentLanguage === "en"
+      ? "Use a keyword search to see why this result matches."
+      : "輸入關鍵字後，這裡會顯示這筆結果為什麼被找到。";
+  }
+
+  const candidates = [
+    stripHtmlTags(item.result?.summary?.detail || ""),
+    stripHtmlTags(item.result?.keyPoints?.detail || ""),
+    stripHtmlTags(item.result?.mistakes?.detail || ""),
+    stripHtmlTags(item.summaryText || "")
+  ].filter(Boolean);
+
+  const terms = normalizedQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const matchedLine = candidates
+    .flatMap((text) => normalizeText(text).split(/\n+/))
+    .find((line) => {
+      const normalizedLine = line.toLowerCase();
+      return terms.some((term) => normalizedLine.includes(term));
+    });
+
+  return matchedLine || candidates[0] || (currentLanguage === "en" ? "This result currently has no extra preview line." : "這筆結果目前沒有額外預覽句。");
+}
+
+function setKnowledgePreview(item = null) {
+  const query = getKnowledgeSearchQuery();
+
+  if (!item) {
+    currentKnowledgePreviewId = "";
+    if (knowledgePreviewType) knowledgePreviewType.textContent = "Preview";
+    if (knowledgePreviewSubject) knowledgePreviewSubject.textContent = currentLanguage === "en" ? "No result selected" : "尚未選擇結果";
+    if (knowledgePreviewTitle) knowledgePreviewTitle.textContent = currentLanguage === "en" ? "Choose one result from the left." : "先從左側選一筆搜尋結果。";
+    if (knowledgePreviewMeta) knowledgePreviewMeta.textContent = currentLanguage === "en"
+      ? "Subject, chapter, study mode, and the most relevant content will appear here."
+      : "這裡會顯示科目、章節、整理類型與最相關內容，讓你不用一直切換頁面。";
+    if (knowledgePreviewTags) knowledgePreviewTags.innerHTML = "";
+    if (knowledgePreviewSummary) knowledgePreviewSummary.textContent = currentLanguage === "en" ? "The summary preview will appear here." : "整理過的摘要會出現在這裡。";
+    if (knowledgePreviewKeyPoints) knowledgePreviewKeyPoints.textContent = currentLanguage === "en" ? "Key points or matched content will appear here." : "重點、易考觀念或你搜尋到的片段會在這裡預覽。";
+    if (knowledgePreviewQuestion) knowledgePreviewQuestion.textContent = currentLanguage === "en" ? "A Tutor-ready follow-up question will appear here." : "選取結果後，這裡會顯示最適合丟給 Tutor 的問題。";
+    if (knowledgePreviewTutorBtn) {
+      knowledgePreviewTutorBtn.disabled = true;
+      knowledgePreviewTutorBtn.title = currentLanguage === "en" ? "Select one search result first." : "請先選擇一筆搜尋結果。";
+    }
+    if (knowledgePreviewTaskBtn) {
+      knowledgePreviewTaskBtn.disabled = true;
+      knowledgePreviewTaskBtn.title = currentLanguage === "en" ? "Select one search result first." : "請先選擇一筆搜尋結果。";
+    }
+    if (knowledgePreviewExportBtn) {
+      knowledgePreviewExportBtn.disabled = true;
+      knowledgePreviewExportBtn.title = currentLanguage === "en" ? "Select one search result first." : "請先選擇一筆搜尋結果。";
+    }
+    return;
+  }
+
+  currentKnowledgePreviewId = item.id;
+  const previewSummary = stripHtmlTags(item.result?.summary?.preview || item.result?.summary?.detail || "");
+  const previewKeyPoint = stripHtmlTags(item.result?.keyPoints?.preview || item.result?.keyPoints?.detail || extractKnowledgeMatchLine(item, query));
+  const previewQuestion = item.result?.overview?.tutorQuestion
+    || stripHtmlTags(item.result?.quiz?.preview || item.result?.quiz?.detail || "")
+    || (currentLanguage === "en" ? `Please explain the key idea of "${item.title}".` : `請解釋「${item.title}」的重點。`);
+  const typeLabel = getMyNoteModeLabel(item.mode || item.sourceNote?.mode || "quick");
+  const metaParts = [
+    item.subject || (currentLanguage === "en" ? "General" : "未分類"),
+    item.chapter || (currentLanguage === "en" ? "No chapter" : "未指定章節"),
+    typeLabel
+  ].filter(Boolean);
+
+  if (knowledgePreviewType) knowledgePreviewType.textContent = typeLabel;
+  if (knowledgePreviewSubject) knowledgePreviewSubject.textContent = item.subject || (currentLanguage === "en" ? "Knowledge Item" : "知識條目");
+  if (knowledgePreviewTitle) knowledgePreviewTitle.innerHTML = highlightSearchMarkup(item.title, query);
+  if (knowledgePreviewMeta) knowledgePreviewMeta.textContent = metaParts.join(currentLanguage === "en" ? " · " : "｜");
+  if (knowledgePreviewTags) {
+    knowledgePreviewTags.innerHTML = buildKnowledgeTags(item)
+      .map((tag) => `<span class="soft-badge">${escapeHTML(tag)}</span>`)
+      .join("");
+  }
+  if (knowledgePreviewSummary) knowledgePreviewSummary.innerHTML = highlightSearchMarkup(previewSummary, query);
+  if (knowledgePreviewKeyPoints) knowledgePreviewKeyPoints.innerHTML = highlightSearchMarkup(previewKeyPoint, query);
+  if (knowledgePreviewQuestion) knowledgePreviewQuestion.textContent = previewQuestion;
+  if (knowledgePreviewTutorBtn) {
+    knowledgePreviewTutorBtn.disabled = false;
+    knowledgePreviewTutorBtn.title = "";
+  }
+  if (knowledgePreviewTaskBtn) {
+    knowledgePreviewTaskBtn.disabled = false;
+    knowledgePreviewTaskBtn.title = "";
+  }
+  if (knowledgePreviewExportBtn) {
+    knowledgePreviewExportBtn.disabled = false;
+    knowledgePreviewExportBtn.title = "";
+  }
+}
+
+function getCurrentKnowledgePreviewItem() {
+  return getKnowledgeItems().find((item) => item.id === currentKnowledgePreviewId) || null;
+}
+
 function renderKnowledgeResults(items) {
   if (!knowledgeResults) return;
 
   knowledgeResults.innerHTML = "";
+  const currentQuery = getKnowledgeSearchQuery();
+
+  if (knowledgeActiveQuery) {
+    knowledgeActiveQuery.textContent = currentQuery
+      ? (currentLanguage === "en" ? `Query: ${currentQuery}` : `關鍵字：${currentQuery}`)
+      : (currentLanguage === "en" ? "No keyword yet" : "尚未輸入關鍵字");
+  }
 
   if (knowledgeResultCount) {
     knowledgeResultCount.textContent = currentLanguage === "en"
@@ -7503,34 +8526,64 @@ function renderKnowledgeResults(items) {
   }
 
   if (!items.length) {
-    knowledgeResults.innerHTML = `
-      <div class="app-card empty-state-card">
-        <h2>${currentLanguage === "en" ? "No results found" : "尚無搜尋結果"}</h2>
-        <p>${currentLanguage === "en"
-          ? "Try a different keyword, or generate a note from the Notes page first."
-          : "請嘗試更換關鍵字，或先到「筆記整理」產生一份筆記。"}</p>
-      </div>
-    `;
+    setKnowledgePreview(null);
+    const emptyCard = document.createElement("div");
+    emptyCard.className = "app-card empty-state-card";
+
+    const title = document.createElement("h2");
+    title.textContent = currentLanguage === "en" ? "No results found" : "尚無搜尋結果";
+
+    const detail = document.createElement("p");
+    detail.textContent = currentLanguage === "en"
+      ? "Try a different keyword, build the demo knowledge base, or generate a note from the Notes page first."
+      : "可以先換關鍵字、載入示範知識庫，或先到筆記整理頁產生一份筆記。";
+
+    const actions = document.createElement("div");
+    actions.className = "empty-action-row";
+
+    const notesButton = document.createElement("button");
+    notesButton.className = "secondary-btn";
+    notesButton.type = "button";
+    notesButton.textContent = currentLanguage === "en" ? "Go to Notes" : "前往筆記整理";
+    notesButton.addEventListener("click", () => {
+      switchPage("notes");
+    });
+
+    const seedButton = document.createElement("button");
+    seedButton.className = "secondary-btn";
+    seedButton.type = "button";
+    seedButton.textContent = getI18nText("loadDemoKnowledge", "載入 / 重建示範知識庫");
+    seedButton.addEventListener("click", reloadSeedKnowledgeBase);
+
+    actions.append(notesButton, seedButton);
+    emptyCard.append(title, detail, actions);
+    knowledgeResults.appendChild(emptyCard);
     return;
   }
 
   const fragment = document.createDocumentFragment();
+  const previewCandidate = items.find((entry) => entry.id === currentKnowledgePreviewId) || items[0];
+
   items.forEach((item) => {
     const card = document.createElement("article");
-    card.className = "app-card knowledge-result-card";
+    card.className = `app-card knowledge-result-card${previewCandidate?.id === item.id ? " active" : ""}`;
 
     const keyPointPreview =
       item.result?.keyPoints?.preview ||
       item.result?.summary?.preview ||
       (currentLanguage === "en" ? "This item does not have a preview yet." : "這筆資料尚無摘要預覽。");
-
+    const matchLine = extractKnowledgeMatchLine(item, currentQuery);
     const tags = buildKnowledgeTags(item);
 
     card.innerHTML = `
-      <h2>${escapeHTML(item.title)}</h2>
+      <h2>${highlightSearchMarkup(item.title, currentQuery)}</h2>
 
       <p class="result-summary">
-        ${escapeHTML(stripHtmlTags(keyPointPreview))}
+        ${highlightSearchMarkup(stripHtmlTags(keyPointPreview), currentQuery)}
+      </p>
+
+      <p class="knowledge-match-line">
+        ${highlightSearchMarkup(matchLine, currentQuery)}
       </p>
 
       <div class="meta-row">
@@ -7558,6 +8611,13 @@ function renderKnowledgeResults(items) {
       </div>
     `;
 
+    card.addEventListener("click", (event) => {
+      const interactiveElement = event.target.closest("button, a, input, select, textarea");
+      if (interactiveElement) return;
+      setKnowledgePreview(item);
+      renderKnowledgeResults(items);
+    });
+
     card.querySelector(".ask-tutor-btn")?.addEventListener("click", () => {
       askTutorWithSource(
         item.sourceNote,
@@ -7572,7 +8632,8 @@ function renderKnowledgeResults(items) {
     });
 
     card.querySelector(".view-detail-btn")?.addEventListener("click", () => {
-      openKnowledgeDetail(item);
+      setKnowledgePreview(item);
+      renderKnowledgeResults(items);
     });
 
     card.querySelector(".copy-result-btn")?.addEventListener("click", () => {
@@ -7593,6 +8654,7 @@ function renderKnowledgeResults(items) {
   });
 
   knowledgeResults.appendChild(fragment);
+  setKnowledgePreview(previewCandidate);
 }
 
 function updateKnowledgeResults() {
@@ -7725,6 +8787,13 @@ function handleGenerateStudyPlan() {
   saveStudyTasks([...newTasks, ...tasks]);
   refreshAfterTasksChanged();
   setProcessStateText(currentLanguage === "en" ? "Study plan tasks created" : "已產生讀書計畫任務");
+  showToast(
+    currentLanguage === "en" ? "Study plan created" : "已建立讀書計畫",
+    currentLanguage === "en"
+      ? "Your new tasks are now in Today, This Week, and Completed."
+      : "新的任務已加入今日、本週與已完成看板。",
+    "success"
+  );
 }
 
 function setAccordionContent(section, preview, detailHtml) {
@@ -7777,6 +8846,11 @@ function normalizeNoteResult(rawResult) {
   ].filter(Boolean);
 
   return {
+    overview: {
+      summary: extractPreviewText(summaryText, "整理完成後，這裡會先顯示最核心的一句總結。"),
+      keyPoint: extractPreviewText(getDisplayItemText(keyPointItems[0]), "整理完成後，這裡會顯示第一個重點。"),
+      tutorQuestion: extractPreviewText(quizItems[0]?.question || getDisplayItemText(keyPointItems[0]), "整理完成後，這裡會顯示最適合丟給 Tutor 的問題。")
+    },
     summary: {
       preview: extractPreviewText(summaryText, "整理完成後，這裡會顯示本次內容的核心摘要。"),
       detail: buildParagraphHtml(summaryText, "尚無詳細摘要。")
@@ -7804,7 +8878,20 @@ function normalizeNoteResult(rawResult) {
   };
 }
 
+function renderResultOverview(overview = {}) {
+  if (resultOverviewSummary) {
+    resultOverviewSummary.textContent = overview.summary || "整理完成後，這裡會先顯示最核心的一句總結。";
+  }
+  if (resultOverviewKeyPoint) {
+    resultOverviewKeyPoint.textContent = overview.keyPoint || "整理完成後，這裡會顯示第一個重點。";
+  }
+  if (resultOverviewQuestion) {
+    resultOverviewQuestion.textContent = overview.tutorQuestion || "整理完成後，這裡會顯示最適合丟給 Tutor 的問題。";
+  }
+}
+
 function renderNotesResult(result) {
+  renderResultOverview(result.overview);
   setAccordionContent("summary", result.summary?.preview, result.summary?.detail);
   setAccordionContent("keyPoints", result.keyPoints?.preview, result.keyPoints?.detail);
   setAccordionContent("quiz", result.quiz?.preview, result.quiz?.detail);
@@ -7819,8 +8906,15 @@ function syncNotesAccordionResult(result = null) {
   }
 
   if (!result) {
-    notesResultStatus.textContent = "目前尚未產生整理結果。請先在左側放入筆記並按下「開始整理」。";
+    notesResultStatus.textContent = currentLanguage === "en"
+      ? "The note workspace is currently empty. Paste text, upload files, or open an older note from the left side to begin."
+      : "目前筆記整理區是空白狀態。請先在左側貼上文字、上傳檔案，或手動開啟舊筆記後再開始整理。";
     renderNotesResult({
+      overview: {
+        summary: "整理完成後，這裡會先顯示最核心的一句總結。",
+        keyPoint: "整理完成後，這裡會顯示第一個重點。",
+        tutorQuestion: "整理完成後，這裡會顯示最適合丟給 Tutor 的問題。"
+      },
       summary: {
         preview: "整理完成後，這裡會顯示本次內容的核心摘要。",
         detail: "<p>詳細摘要會放在這裡。</p>"
@@ -7899,6 +8993,73 @@ function getLegacyModeFromSelectedNoteModes(selectedModes = getSelectedNoteModes
   return noteModeToLegacyMode[getPrimaryNoteMode(selectedModes)] || "simple";
 }
 
+function areModeSetsEqual(left = [], right = []) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const normalizedLeft = [...left].sort();
+  const normalizedRight = [...right].sort();
+  return normalizedLeft.every((value, index) => value === normalizedRight[index]);
+}
+
+function getActiveStrategyKey(selectedModes = getSelectedNoteModes()) {
+  return noteStrategyOrder.find((key) => {
+    const preset = noteStrategyPresets[key];
+    return preset && areModeSetsEqual(selectedModes, preset.modes);
+  }) || "custom";
+}
+
+function updateStrategySummary(selectedModes = getSelectedNoteModes()) {
+  const strategyKey = getActiveStrategyKey(selectedModes);
+  const strategy = noteStrategyPresets[strategyKey];
+  const focusLabels = selectedModes.map((mode) => getMyNoteModeLabel(mode)).filter(Boolean);
+
+  if (strategyBadge) {
+    strategyBadge.textContent = strategy
+      ? (strategy.label[currentLanguage] || strategy.label.zh)
+      : (currentLanguage === "en" ? "Custom Mix" : "自訂組合");
+  }
+
+  if (strategyDescription) {
+    strategyDescription.textContent = strategy
+      ? (strategy.description[currentLanguage] || strategy.description.zh)
+      : (currentLanguage === "en"
+        ? "You are combining multiple directions manually. SmartStudy AI will keep one compatible primary mode underneath and merge the rest into the final result."
+        : "你目前是手動混合多個方向。SmartStudy AI 會保留一個相容的主模式，並把其餘方向整合進最終結果。");
+  }
+
+  if (strategyFocus) {
+    strategyFocus.innerHTML = focusLabels
+      .map((label) => `<span class="strategy-focus-chip">${escapeHTML(label)}</span>`)
+      .join("");
+  }
+
+  document.querySelectorAll(".strategy-btn").forEach((button) => {
+    const isActive = button.dataset.strategy === strategyKey;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function updateTutorModeUI() {
+  const config = tutorModeConfigs[currentTutorMode] || tutorModeConfigs.quickExplain;
+
+  if (tutorModeBadge) {
+    tutorModeBadge.textContent = config.label[currentLanguage] || config.label.zh;
+  }
+
+  if (tutorModeDescription) {
+    tutorModeDescription.textContent = config.description[currentLanguage] || config.description.zh;
+  }
+
+  document.querySelectorAll(".tutor-mode-btn").forEach((button) => {
+    const isActive = button.dataset.tutorMode === currentTutorMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
 function updateNoteModeSummary() {
   const selectedModes = getSelectedNoteModes();
   const labels = selectedModes
@@ -7921,6 +9082,8 @@ function updateNoteModeSummary() {
         : `已選擇 ${selectedModes.length} 種整理模式。SmartStudy AI 會在同一次整理中整合這些方向，底層仍保留相容的主模式來維持原本分析流程。`;
     }
   }
+
+  updateStrategySummary(selectedModes);
 }
 
 function saveGeneratedNote(result) {
@@ -7977,6 +9140,28 @@ function setNoteMode(mode, options = {}) {
   });
 
   if (!options.skipLegacySync && modeSelect) {
+    modeSelect.value = getLegacyModeFromSelectedNoteModes(currentNoteModes);
+  }
+
+  updateModeUI();
+  updateNoteModeSummary();
+}
+
+function applyNoteStrategy(strategyKey) {
+  const strategy = noteStrategyPresets[strategyKey];
+  if (!strategy) {
+    return;
+  }
+
+  currentNoteModes = [...strategy.modes];
+
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    const isActive = currentNoteModes.includes(btn.dataset.mode);
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  if (modeSelect) {
     modeSelect.value = getLegacyModeFromSelectedNoteModes(currentNoteModes);
   }
 
@@ -8127,6 +9312,23 @@ function updateExportPreview() {
   exportPreviewText.textContent = currentLanguage === "en"
     ? `This will export as ${formatLabel}, using ${templateLabel}, and include ${sections.length} content section(s).`
     : `將匯出為 ${formatLabel}，使用 ${templateLabel}，包含 ${sections.length} 個內容區塊。`;
+
+  if (exportTemplateHint) {
+    exportTemplateHint.textContent = ({
+      studyNote: currentLanguage === "en"
+        ? "Study Note keeps summary, key points, and review-ready content for later revision."
+        : "讀書筆記模板會保留摘要、重點與複習內容，適合之後重新複習。",
+      formalReport: currentLanguage === "en"
+        ? "Formal Report emphasizes intro, structured sections, and conclusion for assignments."
+        : "正式報告模板會更偏向前言、段落結構與結論，適合報告草稿。",
+      examReview: currentLanguage === "en"
+        ? "Exam Review compresses the output toward likely test points and review order."
+        : "考前複習模板會更聚焦於可能考點、易錯觀念與複習順序。",
+      autoPresentation: currentLanguage === "en"
+        ? "Auto Presentation is designed for slide-like export and speaking structure."
+        : "自動報告簡報模板會更偏向投影片架構與口頭報告節奏。"
+    })[template] || "";
+  }
 }
 
 function openExportModal(context = {}) {
@@ -8142,6 +9344,14 @@ function openExportModal(context = {}) {
 
 function closeExportModal() {
   exportModal.classList.add("hidden");
+}
+
+function openGuideModal() {
+  guideModal.classList.remove("hidden");
+}
+
+function closeGuideModal() {
+  guideModal.classList.add("hidden");
 }
 
 function bindExportTriggers() {
@@ -8261,6 +9471,13 @@ function exportMarkdown(payload, template, sections) {
   const content = buildExportContent(payload, template, sections);
   const filename = `${sanitizeFilename(payload?.title || payload?.sourceNote?.title || "smartstudy-note")}.md`;
   downloadTextFile(filename, content, "text/markdown;charset=utf-8");
+  showToast(
+    currentLanguage === "en" ? "Markdown exported" : "已匯出 Markdown",
+    currentLanguage === "en"
+      ? `Downloaded ${filename}.`
+      : `已下載 ${filename}。`,
+    "success"
+  );
 }
 
 function exportWord(payload, template, sections) {
@@ -8280,6 +9497,13 @@ function exportWord(payload, template, sections) {
 
   const filename = `${sanitizeFilename(payload?.title || payload?.sourceNote?.title || "smartstudy-note")}.doc`;
   downloadTextFile(filename, wordHTML, "application/msword;charset=utf-8");
+  showToast(
+    currentLanguage === "en" ? "Word file exported" : "已匯出 Word 文件",
+    currentLanguage === "en"
+      ? `Downloaded ${filename}.`
+      : `已下載 ${filename}。`,
+    "success"
+  );
 }
 
 function exportPDF(payload, template, sections) {
@@ -8320,6 +9544,13 @@ function exportPDF(payload, template, sections) {
   printWindow.document.close();
   printWindow.focus();
   printWindow.print();
+  showToast(
+    currentLanguage === "en" ? "PDF print view opened" : "已開啟 PDF 列印視窗",
+    currentLanguage === "en"
+      ? "Use your browser print dialog to save or print the PDF."
+      : "請透過瀏覽器列印視窗另存或列印 PDF。",
+    "success"
+  );
 }
 
 function exportPowerPoint(payload, template, sections) {
@@ -8358,9 +9589,14 @@ function exportPowerPoint(payload, template, sections) {
 
   const filename = `${sanitizeFilename(title)}-presentation-outline.md`;
   downloadTextFile(filename, outline, "text/markdown;charset=utf-8");
-  alert(currentLanguage === "en"
-    ? "A PowerPoint outline was exported for now. You can switch to real .pptx later if pptxgenjs is added."
-    : "目前已先匯出 PowerPoint 簡報大綱。若專案之後支援 pptxgenjs，可再改成真正 .pptx。");
+  showToast(
+    currentLanguage === "en" ? "Presentation outline exported" : "已匯出簡報大綱",
+    currentLanguage === "en"
+      ? "This is currently a Markdown outline. A real .pptx export can be added later."
+      : "目前先輸出為 Markdown 簡報大綱；之後可再升級成真正的 .pptx。",
+    "info",
+    3200
+  );
 }
 
 function startExport() {
@@ -8519,6 +9755,29 @@ function formatHtmlExport(result) {
   const generatedAt = escapeHtml(formatDateTime(result.analyzedAt));
   const modeLabel = escapeHtml(isEnglish ? localizeModeLabel(result.modeLabel) : result.modeLabel);
   const sourceLabel = escapeHtml(result.sourceMeta?.fileName || (isEnglish ? "Manual input or demo text" : "手動輸入或示範文字"));
+  const highlightHtml = formatList(displayResult.highlights, (item) => {
+    const text = safeExportLine(item?.text || getHighlightDisplayText(item));
+    if (!text) return "";
+    return `<li>${escapeHtml(text)}</li>`;
+  });
+  const sourceMetaLine = result.sourceMeta
+    ? escapeHtml(
+        isEnglish
+          ? `${result.sourceMeta.extension.toUpperCase()} · ${result.sourceMeta.sectionCount} sections · ${result.cleanedText?.length || 0} cleaned chars`
+          : `${result.sourceMeta.extension.toUpperCase()} · ${result.sourceMeta.sectionCount} 個章節 · 清洗後 ${result.cleanedText?.length || 0} 字`
+      )
+    : escapeHtml(isEnglish ? "Manual input source" : "手動輸入來源");
+  const sectionBlock = (eyebrow, title, content, listType = "ul", extraClass = "") => `
+    <section class="story-section ${extraClass}">
+      <div class="story-head">
+        <span class="story-eyebrow">${escapeHtml(eyebrow)}</span>
+        <h2>${escapeHtml(title)}</h2>
+      </div>
+      ${listType === "div"
+        ? `<div class="story-copy">${content}</div>`
+        : `<${listType} class="story-list ${listType === "ol" ? "story-list-numbered" : ""}">${content}</${listType}>`}
+    </section>
+  `;
 
   return `<!DOCTYPE html>
 <html lang="${isEnglish ? "en" : "zh-Hant"}">
@@ -8529,102 +9788,343 @@ function formatHtmlExport(result) {
   <style>
     :root {
       color-scheme: light;
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --ink: #152136;
-      --muted: #62738a;
-      --accent: #1368ce;
-      --line: rgba(21, 33, 54, 0.08);
-      --shadow: 0 20px 44px rgba(21, 33, 54, 0.08);
+      --bg: #f5efe5;
+      --panel: rgba(255, 250, 244, 0.9);
+      --panel-strong: #fffdf9;
+      --ink: #1f2933;
+      --muted: #6c6a68;
+      --accent: #b55d3d;
+      --accent-deep: #7e3b26;
+      --accent-soft: #f2d9c8;
+      --line: rgba(31, 41, 51, 0.1);
+      --shadow: 0 30px 80px rgba(73, 46, 29, 0.12);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 28px;
-      font-family: "IBM Plex Sans", "Avenir Next", "PingFang TC", "Noto Sans TC", sans-serif;
+      padding: 24px;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Times New Roman", "Noto Serif TC", serif;
       color: var(--ink);
-      background: linear-gradient(145deg, #f9fbff 0%, var(--bg) 100%);
+      background:
+        radial-gradient(circle at top left, rgba(181, 93, 61, 0.18), transparent 28%),
+        radial-gradient(circle at 85% 10%, rgba(229, 181, 134, 0.28), transparent 22%),
+        linear-gradient(180deg, #fbf7f1 0%, var(--bg) 100%);
     }
     .sheet {
-      max-width: 960px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 32px;
-      border-radius: 24px;
-      background: var(--panel);
+      padding: 28px;
+      border-radius: 32px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.95));
       box-shadow: var(--shadow);
+      border: 1px solid rgba(126, 59, 38, 0.08);
     }
-    h1, h2 { margin: 0; }
-    h1 { font-size: clamp(2rem, 4vw, 3rem); }
-    h2 {
-      margin-top: 28px;
-      font-size: 1.15rem;
-      color: var(--accent);
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 8px;
+    h1, h2, h3, p { margin: 0; }
+    p, li { line-height: 1.85; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(126, 59, 38, 0.95), rgba(181, 93, 61, 0.82) 46%, rgba(244, 222, 205, 0.9) 100%);
+      color: #fffaf5;
     }
-    p, li { line-height: 1.8; }
-    .meta {
-      margin-top: 14px;
-      color: var(--muted);
-      display: grid;
-      gap: 6px;
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      top: -60px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 248, 238, 0.12);
+      border: 1px solid rgba(255, 248, 238, 0.18);
     }
-    ul, ol { padding-left: 22px; }
-    li + li { margin-top: 8px; }
-    .summary {
-      margin-top: 16px;
-      padding: 16px 18px;
-      border-radius: 16px;
-      background: #f3f8ff;
-      border: 1px solid rgba(19, 104, 206, 0.1);
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 250, 244, 0.12);
+      border: 1px solid rgba(255, 250, 244, 0.2);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .hero-kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffe0c8;
+      box-shadow: 0 0 0 6px rgba(255, 224, 200, 0.18);
+    }
+    .hero h1 {
+      margin-top: 22px;
+      font-size: clamp(2.6rem, 5vw, 4.6rem);
+      line-height: 0.98;
+      max-width: 8.5em;
+    }
+    .hero-intro {
+      margin-top: 18px;
+      max-width: 44rem;
+      font-size: 1.05rem;
+      color: rgba(255, 248, 241, 0.92);
       white-space: pre-wrap;
     }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .hero-chip {
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 252, 247, 0.14);
+      border: 1px solid rgba(255, 252, 247, 0.18);
+      backdrop-filter: blur(10px);
+      font-size: 0.92rem;
+    }
+    .hero-chip strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 243, 232, 0.78);
+    }
+    .flow {
+      margin-top: 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .summary-panel,
+    .story-section,
+    .closing-panel {
+      padding: 28px 30px;
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid rgba(126, 59, 38, 0.08);
+      box-shadow: 0 14px 30px rgba(73, 46, 29, 0.05);
+    }
+    .summary-panel {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 248, 241, 0.92)),
+        linear-gradient(90deg, rgba(242, 217, 200, 0.2), transparent);
+    }
+    .panel-label,
+    .story-eyebrow {
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--accent-deep);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .summary-panel h2,
+    .story-head h2,
+    .closing-panel h2 {
+      font-size: 1.55rem;
+      line-height: 1.15;
+      color: #2c201c;
+    }
+    .summary-text {
+      margin-top: 14px;
+      font-size: 1.04rem;
+      white-space: pre-wrap;
+    }
+    .highlight-ribbon {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 0;
+      list-style: none;
+    }
+    .highlight-ribbon li {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(181, 93, 61, 0.14);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    .story-section {
+      position: relative;
+    }
+    .story-section::before {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 26px;
+      bottom: 26px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(181, 93, 61, 0.34), rgba(181, 93, 61, 0.02));
+    }
+    .story-head,
+    .story-copy,
+    .story-list {
+      margin-left: 26px;
+    }
+    .story-copy {
+      margin-top: 14px;
+      white-space: pre-wrap;
+    }
+    .story-list {
+      margin-top: 16px;
+      padding-left: 22px;
+    }
+    .story-list li + li {
+      margin-top: 12px;
+    }
+    .story-list li::marker {
+      color: var(--accent);
+    }
+    .story-list li p + p {
+      margin-top: 6px;
+    }
+    .closing-panel {
+      background: linear-gradient(135deg, rgba(255, 248, 241, 0.96), rgba(250, 237, 227, 0.96));
+    }
+    .closing-panel p {
+      color: var(--muted);
+      margin-top: 12px;
+    }
     @media (max-width: 640px) {
-      body { padding: 16px; }
-      .sheet { padding: 22px; }
+      body { padding: 14px; }
+      .sheet { padding: 16px; border-radius: 24px; }
+      .hero,
+      .summary-panel,
+      .story-section,
+      .closing-panel {
+        padding: 22px 20px;
+      }
+      .hero h1 {
+        font-size: 2.3rem;
+      }
+      .story-section::before {
+        left: 9px;
+      }
+      .story-head,
+      .story-copy,
+      .story-list {
+        margin-left: 18px;
+      }
     }
   </style>
 </head>
 <body>
   <main class="sheet">
-    <h1>SmartStudy-AI</h1>
-    <div class="meta">
-      <div>${escapeHtml(isEnglish ? "Mode" : "整理模式")}：${modeLabel}</div>
-      <div>${escapeHtml(isEnglish ? "Generated at" : "整理時間")}：${generatedAt}</div>
-      <div>${escapeHtml(isEnglish ? "Source" : "來源")}：${sourceLabel}</div>
+    <section class="hero">
+      <span class="hero-kicker">${escapeHtml(isEnglish ? "Curated Study Narrative" : "設計版學習敘事")}</span>
+      <h1>SmartStudy AI</h1>
+      <p class="hero-intro">${escapeHtml(summary)}</p>
+      <div class="hero-meta">
+        <div class="hero-chip">
+          <strong>${escapeHtml(isEnglish ? "Mode" : "整理模式")}</strong>
+          <span>${modeLabel}</span>
+        </div>
+        <div class="hero-chip">
+          <strong>${escapeHtml(isEnglish ? "Generated" : "整理時間")}</strong>
+          <span>${generatedAt}</span>
+        </div>
+        <div class="hero-chip">
+          <strong>${escapeHtml(isEnglish ? "Source" : "來源")}</strong>
+          <span>${sourceLabel}</span>
+        </div>
+        <div class="hero-chip">
+          <strong>${escapeHtml(isEnglish ? "Material Snapshot" : "資料快照")}</strong>
+          <span>${sourceMetaLine}</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="flow">
+      <section class="summary-panel">
+        <span class="panel-label">${escapeHtml(isEnglish ? "Executive Focus" : "核心導讀")}</span>
+        <h2>${escapeHtml(isEnglish ? "What to understand first" : "先抓住什麼最重要")}</h2>
+        <p class="summary-text">${escapeHtml(summary)}</p>
+        ${highlightHtml ? `<ul class="highlight-ribbon">${highlightHtml}</ul>` : ""}
+      </section>
+
+      ${sectionBlock(
+        isEnglish ? "Framework" : "架構",
+        isEnglish ? "Key Structure / Framework" : "關鍵結構 / 架構",
+        formulasHtml || `<li>${escapeHtml(getUiText("emptyFormulas"))}</li>`,
+        "ul"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Signals" : "訊號",
+        isEnglish ? "Important Sentences" : "重要句子",
+        importantHtml || `<li>${escapeHtml(getUiText("emptyImportantSentences"))}</li>`,
+        "ol"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Why It Matters" : "為什麼重要",
+        isEnglish ? "Why They Matter" : "重要度原因",
+        reasonHtml || `<li>${escapeHtml(getUiText("emptyImportanceReasons"))}</li>`,
+        "ul"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Interpretation" : "解讀",
+        isEnglish ? "General Notes" : "一般整理",
+        generalHtml || `<li>${escapeHtml(getUiText("emptyGeneralNotes"))}</li>`,
+        "ol"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Exam Focus" : "考點",
+        isEnglish ? "Possible Key Points" : "可能重點",
+        examHtml || `<li>${escapeHtml(getUiText("emptyPossibleExamPoints"))}</li>`,
+        "ol"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Concept Bank" : "概念庫",
+        isEnglish ? "Key Terms / Important Concepts" : "關鍵詞 / 重要概念",
+        termsHtml || `<li>${escapeHtml(getUiText("emptyAccountingTerms"))}</li>`,
+        "ul"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Translation Layer" : "翻譯層",
+        isEnglish ? "Original Sentence Explanation" : "原文句子解釋",
+        explainHtml || `<li>${escapeHtml(getUiText("emptyEnglishExplain"))}</li>`,
+        "ul"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Dialogue" : "問答",
+        isEnglish ? "Understanding Questions" : "理解問題",
+        questionHtml || `<li>${escapeHtml(getUiText("emptyQuestions"))}</li>`,
+        "ol"
+      )}
+      ${sectionBlock(
+        isEnglish ? "Practice" : "練習",
+        isEnglish ? "Extended Practice" : "延伸練習",
+        mockHtml || `<li>${escapeHtml(getUiText("emptyMockExam"))}</li>`,
+        "ol"
+      )}
+      ${journalHtml
+        ? sectionBlock(
+            isEnglish ? "Advanced" : "進階",
+            isEnglish ? "Specialized Questions" : "專門題型",
+            journalHtml,
+            "ol"
+          )
+        : ""}
+
+      <section class="closing-panel">
+        <span class="panel-label">${escapeHtml(isEnglish ? "Closing Note" : "收尾備註")}</span>
+        <h2>${escapeHtml(isEnglish ? "How to use this sheet well" : "這份版型怎麼用最有效")}</h2>
+        <p>${escapeHtml(
+          isEnglish
+            ? "Read the summary first, then move through the story sections in order. This layout is designed to feel like a guided walkthrough instead of a rigid grid of cards."
+            : "建議先看封面摘要，再依序往下讀各段內容。這份模板刻意做成像導讀長頁，而不是一格一格的卡片牆。"
+        )}</p>
+      </section>
     </div>
-
-    <h2>${escapeHtml(isEnglish ? "Smart Summary" : "智慧摘要")}</h2>
-    <div class="summary">${escapeHtml(summary)}</div>
-
-    <h2>${escapeHtml(isEnglish ? "Key Structure / Framework" : "關鍵結構 / 架構")}</h2>
-    <ul>${formulasHtml || `<li>${escapeHtml(getUiText("emptyFormulas"))}</li>`}</ul>
-
-    <h2>${escapeHtml(isEnglish ? "Important Sentences" : "重要句子")}</h2>
-    <ol>${importantHtml || `<li>${escapeHtml(getUiText("emptyImportantSentences"))}</li>`}</ol>
-
-    <h2>${escapeHtml(isEnglish ? "Why They Matter" : "重要度原因")}</h2>
-    <ul>${reasonHtml || `<li>${escapeHtml(getUiText("emptyImportanceReasons"))}</li>`}</ul>
-
-    <h2>${escapeHtml(isEnglish ? "General Notes" : "一般整理")}</h2>
-    <ol>${generalHtml || `<li>${escapeHtml(getUiText("emptyGeneralNotes"))}</li>`}</ol>
-
-    <h2>${escapeHtml(isEnglish ? "Possible Key Points" : "可能重點")}</h2>
-    <ol>${examHtml || `<li>${escapeHtml(getUiText("emptyPossibleExamPoints"))}</li>`}</ol>
-
-    <h2>${escapeHtml(isEnglish ? "Key Terms / Important Concepts" : "關鍵詞 / 重要概念")}</h2>
-    <ul>${termsHtml || `<li>${escapeHtml(getUiText("emptyAccountingTerms"))}</li>`}</ul>
-
-    <h2>${escapeHtml(isEnglish ? "Original Sentence Explanation" : "原文句子解釋")}</h2>
-    <ul>${explainHtml || `<li>${escapeHtml(getUiText("emptyEnglishExplain"))}</li>`}</ul>
-
-    <h2>${escapeHtml(isEnglish ? "Understanding Questions" : "理解問題")}</h2>
-    <ol>${questionHtml || `<li>${escapeHtml(getUiText("emptyQuestions"))}</li>`}</ol>
-
-    <h2>${escapeHtml(isEnglish ? "Extended Practice" : "延伸練習")}</h2>
-    <ol>${mockHtml || `<li>${escapeHtml(getUiText("emptyMockExam"))}</li>`}</ol>
-
-    ${journalHtml ? `<h2>${escapeHtml(isEnglish ? "Specialized Questions" : "專門題型")}</h2><ol>${journalHtml}</ol>` : ""}
   </main>
 </body>
 </html>`;
@@ -8925,7 +10425,7 @@ function resetResultsView() {
   setHTML("importanceReasonsResult", `<li class="empty-state">${getUiText("emptyImportanceReasons")}</li>`);
   setHTML("generalNotesResult", `<li class="empty-state">${getUiText("emptyGeneralNotes")}</li>`);
   setHTML("possibleExamPointsResult", `<li class="empty-state">${getUiText("emptyPossibleExamPoints")}</li>`);
-  setHTML("accountingTermsResult", `<li class="empty-state">${getUiText("emptyAccountingTerms")}</li>`);
+  setHTML("keyTermsResult", `<li class="empty-state">${getUiText("emptyAccountingTerms")}</li>`);
   setHTML("englishExplainResult", `<li class="empty-state">${getUiText("emptyEnglishExplain")}</li>`);
   setHTML("questionsResult", `<p class="empty-state">${getUiText("emptyQuestions")}</p>`);
   setHTML("mockExamResult", `<p class="empty-state">${getUiText("emptyMockExam")}</p>`);
@@ -9096,20 +10596,36 @@ function buildLocalTutorReply(action, userInput = "") {
   const summary = normalizeText(currentAnalysisResult.chinese?.summary || "");
   const important = (currentAnalysisResult.chinese?.importantSentences || []).map((item) => item.text || item).filter(Boolean);
   const possiblePoints = (currentAnalysisResult.chinese?.possibleExamPoints || []).map((item) => item.text || item).filter(Boolean);
+  const mode = currentTutorMode;
 
   if (action === "ask") {
     const matches = rankTutorSources(userInput, currentAnalysisResult, 3);
     const answerParts = [];
     if (summary) {
-      answerParts.push(`先用一句話整理：${summary}`);
+      answerParts.push(mode === "deepTeach"
+        ? `先抓主線：${summary}\n\n如果把它拆開來看，這份內容主要在說明概念本身、它的用途，以及和其他重點的關聯。`
+        : `先用一句話整理：${summary}`);
     }
     if (matches.length) {
-      answerParts.push(`根據目前筆記，最相關的內容有：${matches.map((item) => item.text.slice(0, 120)).join("；")}`);
+      answerParts.push(mode === "examCoach"
+        ? `從考前角度看，最值得先記的內容是：${matches.map((item) => item.text.slice(0, 120)).join("；")}`
+        : `根據目前筆記，最相關的內容有：${matches.map((item) => item.text.slice(0, 120)).join("；")}`);
     } else {
       answerParts.push("目前筆記裡沒有足夠直接對應的段落，我先根據摘要和重點幫你整理。");
     }
 
-    const followUpQuestion = possiblePoints[0]
+    if (mode === "deepTeach" && important[0]) {
+      answerParts.push(`如果你要真的聽懂，可以再特別看這句：${important[0]}`);
+    }
+    if (mode === "examCoach" && possiblePoints[0]) {
+      answerParts.push(`如果老師要考，常見問法會圍繞：${possiblePoints[0]}`);
+    }
+
+    const followUpQuestion = mode === "answerDrill"
+      ? (possiblePoints[0]
+        ? `不要只背結論，請直接用 2 句話回答：「${possiblePoints[0]}」`
+        : (important[0] ? `請直接用自己的話重述這句重點：「${important[0]}」` : "請用兩句話說明這份內容最核心的概念。"))
+      : possiblePoints[0]
       ? `請用自己的話說明：「${possiblePoints[0]}」為什麼重要？`
       : (important[0] ? `你可以試著解釋這句話的意思嗎？「${important[0]}」` : "");
 
@@ -9123,8 +10639,14 @@ function buildLocalTutorReply(action, userInput = "") {
   if (action === "quiz") {
     const target = possiblePoints[0] || important[0] || summary;
     return {
-      reply: "這題想練習你是否真的理解剛剛整理出的核心概念，請盡量用自己的話回答。",
-      followUpQuestion: target ? `請說明以下重點的意思與用途：${target}` : "請說明這份筆記最核心的概念是什麼？",
+      reply: mode === "examCoach"
+        ? "我會用比較像考前口試或申論題的方式來問你，請盡量答得完整一點。"
+        : "這題想練習你是否真的理解剛剛整理出的核心概念，請盡量用自己的話回答。",
+      followUpQuestion: target
+        ? (mode === "deepTeach"
+          ? `請先定義，再補一個例子，說明以下重點：${target}`
+          : `請說明以下重點的意思與用途：${target}`)
+        : "請說明這份筆記最核心的概念是什麼？",
       expectedAnswer: target || summary
     };
   }
@@ -9141,9 +10663,13 @@ function buildLocalTutorReply(action, userInput = "") {
     return {
       answerCorrect,
       reply: answerCorrect
-        ? "你的回答有抓到主要概念，方向是對的。建議再補一個例子，會更完整。"
+        ? (mode === "answerDrill"
+          ? "你的回答有抓到主軸，方向是對的。若在考場上，再補一個用途或例子會更完整。"
+          : "你的回答有抓到主要概念，方向是對的。建議再補一個例子，會更完整。")
         : `這次答案還不夠貼近筆記重點。比較接近的整理內容是：${expectedAnswer || summary || "請回頭看一下整理摘要與重要句子。"}`,
-      mistakeHint: answerCorrect ? "" : "少了核心關鍵詞，或沒有說明這個概念的作用與重點。",
+      mistakeHint: answerCorrect ? "" : (mode === "answerDrill"
+        ? "你少了老師最會聽的關鍵詞，或沒有交代這個概念的作用與差異。"
+        : "少了核心關鍵詞，或沒有說明這個概念的作用與重點。"),
       followUpQuestion: (possiblePoints[1] || important[1])
         ? `再試一題：請進一步說明「${possiblePoints[1] || important[1]}」`
         : "",
@@ -9351,6 +10877,7 @@ async function requestTutorAction(action, userInput = "") {
         body: JSON.stringify({
           action,
           userInput,
+          tutorMode: currentTutorMode,
           language: currentLanguage,
           languageInstruction: getLanguageInstruction(),
           prompt: buildTutorPrompt({ question: userInput, source: currentTutorSource }),
@@ -10132,6 +11659,13 @@ async function askFrontendKnowledgeBase() {
         ? `Retrieved ${payload.ranked?.length || 0} cited local chunk(s).`
         : `本次共引用 ${payload.ranked?.length || 0} 個本地來源片段。`
     );
+    showToast(
+      currentLanguage === "en" ? "Knowledge answer ready" : "知識庫回答已完成",
+      currentLanguage === "en"
+        ? `Found ${payload.ranked?.length || 0} local source passage(s).`
+        : `本次找到 ${payload.ranked?.length || 0} 個本地來源片段。`,
+      "success"
+    );
   } catch (error) {
     currentRagAnswerPayload = null;
     ragAnswerResult.textContent = error.message || (currentLanguage === "en" ? "Knowledge-base query failed." : "知識庫查詢失敗。");
@@ -10181,6 +11715,13 @@ async function askAdvancedKnowledgeBase() {
       ragAnswerMeta.textContent = `進階模式｜找到 ${(payload.sources || []).length} 個來源片段`;
     }
     setKnowledgeStatus("進階知識庫回答完成", `本次共引用 ${(payload.sources || []).length} 個後端檢索來源。`);
+    showToast(
+      currentLanguage === "en" ? "Advanced knowledge answer ready" : "進階知識庫回答已完成",
+      currentLanguage === "en"
+        ? `Found ${(payload.sources || []).length} retrieved source passage(s).`
+        : `本次找到 ${(payload.sources || []).length} 個後端檢索來源。`,
+      "success"
+    );
   } finally {
     setKnowledgeQueryBusyState(false);
   }
@@ -10328,6 +11869,8 @@ function refreshKnowledgeStats() {
 
     knowledgeStructureList.appendChild(fragment);
   }
+
+  updatePageInsights();
 }
 
 function clearFrontendKnowledgeBase() {
@@ -10834,6 +12377,30 @@ function restoreLatestWorkspaceFromHistory() {
   syncVisibleNoteModeFromLegacyMode();
 }
 
+function resetNotesPageStateOnLoad() {
+  sourceText.value = "";
+  fileInput.value = "";
+  currentUploadedFiles = [];
+  currentOpenedNotePayload = null;
+  currentAnalysisResult = null;
+  lastSourceMeta = null;
+  lastSourceSections = [];
+
+  if (fileStatus) {
+    fileStatus.textContent = currentLanguage === "en" ? "No file selected" : "尚未選擇檔案";
+  }
+
+  restoreUploadHelp();
+  resetUploadPreview();
+  renderCurrentResult();
+  resetStudyPlanView();
+  setStudyAgentStatus(getUiText("studyAgentStatusTitle"), getUiText("studyAgentStatusDetail"));
+  setProcessStateText(currentLanguage === "en" ? "Pending" : "待處理");
+  updateCounts();
+  updateModeUI();
+  refreshKnowledgeAssistPreviewFromCurrentInput();
+}
+
 function buildHistoryPreview(result) {
   const firstHighlight = result.chinese?.highlights?.[0];
   return firstHighlight ? (firstHighlight.text || getHighlightDisplayText(firstHighlight)) : "這次整理沒有擷取到可顯示的重點。";
@@ -10942,6 +12509,8 @@ function updateLanguageView() {
   applyInterfaceLanguage();
   updateModeUI();
   updateTutorSourceUI();
+  updateHomeActivity();
+  updatePageInsights();
   updateKnowledgeResults();
   renderMyNotes();
   renderStudyPlanner();
@@ -11028,8 +12597,8 @@ function applyInterfaceLanguage() {
   generalNotesCardMeta.textContent = getUiText("generalNotesCardMeta");
   possibleExamPointsCardTitle.textContent = getUiText("possibleExamPointsCardTitle");
   possibleExamPointsCardMeta.textContent = getUiText("possibleExamPointsCardMeta");
-  accountingTermsCardTitle.textContent = getUiText("accountingTermsCardTitle");
-  accountingTermsCardMeta.textContent = getUiText("accountingTermsCardMeta");
+  keyTermsCardTitle.textContent = getUiText("keyTermsCardTitle");
+  keyTermsCardMeta.textContent = getUiText("keyTermsCardMeta");
   englishExplainCardTitle.textContent = getUiText("englishExplainCardTitle");
   englishExplainCardMeta.textContent = getUiText("englishExplainCardMeta");
   questionsCardTitle.textContent = getUiText("questionsCardTitle");
@@ -11423,6 +12992,26 @@ async function extractImageText(imageSource, label) {
   };
 }
 
+async function extractImageTextSafely(imageSource, label, options = {}) {
+  try {
+    return await extractImageText(imageSource, label);
+  } catch (error) {
+    console.warn(`OCR failed for ${label}:`, error);
+    if (options.onErrorMessage) {
+      setParseStatus(
+        options.onErrorTitle || "圖片文字辨識略過",
+        options.onErrorMessage,
+        options.onErrorPercent ?? null,
+        options.onErrorPhase || "圖片文字辨識"
+      );
+    }
+    return {
+      label,
+      text: ""
+    };
+  }
+}
+
 async function readFileAsText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -11521,7 +13110,12 @@ async function extractPptxText(file) {
       const ocrBase = 55 + (((index + imageIndex / Math.max(imageTargets.length, 1)) / Math.max(slideNames.length, 1)) * 30);
       setParseStatus("PPTX 圖片文字辨識中", `第 ${index + 1} 張投影片的第 ${imageIndex + 1} 張圖片辨識中`, ocrBase, "圖片文字辨識");
       const blob = await imageFile.async("blob");
-      const ocrText = await extractImageText(await blobToDataUrl(blob), `第 ${index + 1} 張投影片附加圖片文字`);
+      const ocrText = await extractImageTextSafely(await blobToDataUrl(blob), `第 ${index + 1} 張投影片附加圖片文字`, {
+        onErrorTitle: "PPTX 圖片文字辨識略過",
+        onErrorMessage: "圖片 OCR 暫時不可用，已保留投影片原本文字並略過該圖片辨識。",
+        onErrorPercent: ocrBase,
+        onErrorPhase: "圖片文字辨識"
+      });
       if (ocrText.text) {
         imageTexts.push(ocrText);
       }
@@ -11567,7 +13161,12 @@ async function extractDocxText(file) {
     const percent = 58 + ((index / Math.max(mediaFiles.length, 1)) * 26);
     setParseStatus("DOCX 圖片文字辨識中", `第 ${index + 1} 張圖片辨識中`, percent, "圖片文字辨識");
     const blob = await zip.file(mediaFiles[index]).async("blob");
-    const ocrText = await extractImageText(await blobToDataUrl(blob), `文件附加圖片 ${index + 1} 文字`);
+    const ocrText = await extractImageTextSafely(await blobToDataUrl(blob), `文件附加圖片 ${index + 1} 文字`, {
+      onErrorTitle: "DOCX 圖片文字辨識略過",
+      onErrorMessage: "圖片 OCR 暫時不可用，已保留文件原本文字並略過該圖片辨識。",
+      onErrorPercent: percent,
+      onErrorPhase: "圖片文字辨識"
+    });
     if (ocrText.text) {
       imageTexts.push(ocrText);
     }
@@ -11592,6 +13191,9 @@ async function renderPdfPageToCanvas(page, scale = 1.4) {
   const viewport = page.getViewport({ scale });
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("無法建立 PDF 頁面畫布");
+  }
   canvas.width = viewport.width;
   canvas.height = viewport.height;
   await page.render({ canvasContext: context, viewport }).promise;
@@ -11604,7 +13206,10 @@ async function extractPdfText(file, options = {}) {
   }
   setParseStatus("解析 PDF 中", "正在讀取每一頁的文字層", 10, "讀取 PDF");
   const typedArray = new Uint8Array(await fileToArrayBuffer(file));
-  const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+  const pdf = await pdfjsLib.getDocument({
+    data: typedArray,
+    disableWorker: true
+  }).promise;
   const sections = [];
   const imageTexts = [];
   const requestedStart = options.startPage || 1;
@@ -11617,25 +13222,49 @@ async function extractPdfText(file, options = {}) {
     const pageOffset = pageNumber - startPage;
     const totalPages = Math.max(endPage - startPage + 1, 1);
     const textPercent = 15 + (pageOffset / totalPages) * 25;
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items.map((item) => item.str).join(" ");
+    let pageText = "";
+    try {
+      const textContent = await page.getTextContent();
+      pageText = textContent.items
+        .map((item) => (typeof item?.str === "string" ? item.str : ""))
+        .join(" ");
+    } catch (error) {
+      console.warn(`PDF text-layer extraction failed on page ${pageNumber}:`, error);
+    }
+    const normalizedPageText = normalizeText(pageText);
     sections.push({
       title: `PDF 第 ${pageNumber} 頁`,
-      text: normalizeText(pageText),
+      text: normalizedPageText,
       pageNumber
     });
 
     setParseStatus("PDF 文字抽取中", `已完成第 ${pageNumber} 頁文字層讀取`, textPercent, "抽取頁面文字");
-    const ocrPercent = 48 + (pageOffset / totalPages) * 34;
-    setParseStatus("PDF 圖片文字辨識中", `正在辨識第 ${pageNumber} 頁影像中的文字`, ocrPercent, "圖片文字辨識");
-    const canvas = await renderPdfPageToCanvas(page);
-    const ocrText = await extractImageText(canvas, `PDF 第 ${pageNumber} 頁附加圖片文字`);
-    if (ocrText.text) {
-      imageTexts.push(ocrText);
+    const shouldAttemptOcr = normalizedPageText.length < 20;
+    if (shouldAttemptOcr) {
+      const ocrPercent = 48 + (pageOffset / totalPages) * 34;
+      setParseStatus("PDF 圖片文字辨識中", `正在辨識第 ${pageNumber} 頁影像中的文字`, ocrPercent, "圖片文字辨識");
+      try {
+        const canvas = await renderPdfPageToCanvas(page);
+        const ocrText = await extractImageTextSafely(canvas, `PDF 第 ${pageNumber} 頁附加圖片文字`, {
+          onErrorTitle: "PDF 圖片文字辨識略過",
+          onErrorMessage: `第 ${pageNumber} 頁 OCR 暫時不可用，已保留該頁原本文字層內容。`,
+          onErrorPercent: ocrPercent,
+          onErrorPhase: "圖片文字辨識"
+        });
+        if (ocrText.text) {
+          imageTexts.push(ocrText);
+        }
+      } catch (error) {
+        console.warn(`PDF page render failed on page ${pageNumber}:`, error);
+      }
     }
   }
 
   const dedupedImageTexts = dedupeImageTexts(imageTexts);
+  const hasMeaningfulText = sections.some((section) => normalizeText(section.text || "").length > 0) || dedupedImageTexts.length > 0;
+  if (!hasMeaningfulText) {
+    throw new Error("PDF 已載入，但暫時無法抽取文字內容。若這是掃描型 PDF，請稍後再試，或改用可選取文字的 PDF。");
+  }
   setParseStatus("PDF 解析完成", "已完成各頁文字與圖片文字辨識內容匯整", 94, "整合內容");
   return {
     rawText: mergeSections(sections, dedupedImageTexts),
@@ -11719,6 +13348,17 @@ function setStructuredTextResult(result) {
     100,
     "完成"
   );
+  updateUploadDiagnostics({
+    badge: currentLanguage === "en" ? "Ready" : "完成",
+    fileCount,
+    sectionCount: result.sourceMeta.sectionCount || 0,
+    ocrStatus: result.sourceMeta.imageCount
+      ? (currentLanguage === "en" ? `Done (${result.sourceMeta.imageCount})` : `已完成（${result.sourceMeta.imageCount}）`)
+      : (currentLanguage === "en" ? "Skipped or not needed" : "略過或不需要"),
+    message: currentLanguage === "en"
+      ? "Parsing finished. Review the imported sections below before generating your study note."
+      : "解析完成。開始整理前，可以先查看下方匯入的內容區塊。"
+  });
   setProcessStateText("已完成文件匯入");
   renderUploadPreview(result);
   refreshKnowledgeAssistPreviewFromCurrentInput();
@@ -11736,6 +13376,16 @@ async function handleFileUpload(files) {
     name: file.name,
     size: file.size
   }));
+  renderSelectedFiles(currentUploadedFiles);
+  updateUploadDiagnostics({
+    badge: currentLanguage === "en" ? "Queued" : "已加入",
+    fileCount: fileList.length,
+    sectionCount: 0,
+    ocrStatus: currentLanguage === "en" ? "Waiting" : "等待中",
+    message: currentLanguage === "en"
+      ? "Files have been selected. SmartStudy AI is preparing parsing and OCR when needed."
+      : "檔案已加入，SmartStudy AI 正在準備解析，必要時會啟動 OCR。"
+  });
   fileStatus.textContent = currentLanguage === "en"
     ? `Processing ${fileList.length} file(s)...`
     : `正在處理 ${fileList.length} 份檔案…`;
@@ -11768,11 +13418,21 @@ async function handleFileUpload(files) {
     currentUploadedFiles = [];
     const firstFile = fileList[0];
     const extension = getFileExtension(firstFile?.name || "");
+    const detail = extension === "pdf" && /PDF 解析器尚未載入|setting up fake worker failed|Failed to fetch dynamically imported module|worker/i.test(String(error?.message || ""))
+      ? "PDF 解析器載入失敗。若你是直接用 file:// 開啟頁面，請改用本機伺服器開啟，或重新整理後再試一次。"
+      : error.message;
     fileStatus.textContent = currentLanguage === "en"
       ? `Unable to parse ${firstFile?.name || "selected file"}`
       : `無法解析：${firstFile?.name || "已選檔案"}`;
-    uploadHelp.textContent = error.message;
-    setParseStatus("解析失敗", error.message, 100, "失敗");
+    uploadHelp.textContent = detail;
+    setParseStatus("解析失敗", detail, 100, "失敗");
+    updateUploadDiagnostics({
+      badge: currentLanguage === "en" ? "Failed" : "失敗",
+      fileCount: fileList.length,
+      sectionCount: 0,
+      ocrStatus: currentLanguage === "en" ? "Stopped" : "已中止",
+      message: detail
+    });
     setProcessStateText(legacyExtensions.has(extension) ? "舊格式需轉檔" : "解析失敗");
     resetUploadPreview();
   } finally {
@@ -11813,6 +13473,13 @@ async function handleGenerateNotes() {
   const normalizedResult = normalizeNoteResult(result);
   renderNotesResult(normalizedResult);
   saveGeneratedNote(normalizedResult);
+  showToast(
+    selectedLanguage === "en" ? "Notes organized" : "筆記整理完成",
+    selectedLanguage === "en"
+      ? "You can review the result on the right, ask AI Tutor, or save it for later."
+      : "你現在可以查看右側結果、拿去問 AI Tutor，或之後到我的筆記重新開啟。",
+    "success"
+  );
   return result;
 }
 
@@ -11981,21 +13648,67 @@ function toggleResultLanguage() {
 
 chooseFileButton.addEventListener("click", (event) => {
   event.preventDefault();
-  if (!isParsingFile) {
-    fileInput.value = "";
-    if (typeof fileInput.showPicker === "function") {
-      fileInput.showPicker();
-      return;
-    }
-    fileInput.click();
-  }
+  openFilePicker();
 });
+
+function openFilePicker() {
+  if (isParsingFile) {
+    return;
+  }
+  fileInput.value = "";
+  if (typeof fileInput.showPicker === "function") {
+    fileInput.showPicker();
+    return;
+  }
+  fileInput.click();
+}
 
 fileInput.addEventListener("change", () => {
   const files = [...(fileInput.files || [])];
   if (!files.length) {
     fileStatus.textContent = currentLanguage === "en" ? "No file selected" : "尚未選擇檔案";
     restoreUploadHelp();
+    return;
+  }
+  handleFileUpload(files);
+});
+
+uploadDropzone?.addEventListener("click", (event) => {
+  if (event.target instanceof HTMLElement && event.target.closest("button")) {
+    return;
+  }
+  openFilePicker();
+});
+
+uploadDropzone?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    openFilePicker();
+  }
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  uploadDropzone?.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    if (!isParsingFile) {
+      uploadDropzone.classList.add("is-drag-over");
+    }
+  });
+});
+
+["dragleave", "dragend", "drop"].forEach((eventName) => {
+  uploadDropzone?.addEventListener(eventName, () => {
+    uploadDropzone.classList.remove("is-drag-over");
+  });
+});
+
+uploadDropzone?.addEventListener("drop", (event) => {
+  event.preventDefault();
+  if (isParsingFile) {
+    return;
+  }
+  const files = [...(event.dataTransfer?.files || [])];
+  if (!files.length) {
     return;
   }
   handleFileUpload(files);
@@ -12142,6 +13855,12 @@ chooseTutorSourceBtn?.addEventListener("click", () => {
 clearTutorSourceBtn?.addEventListener("click", () => {
   setTutorSource(null);
 });
+sendSummaryToTutorBtn?.addEventListener("click", () => {
+  sendOverviewToTutor("summary");
+});
+sendKeyPointToTutorBtn?.addEventListener("click", () => {
+  sendOverviewToTutor("keyPoint");
+});
 refreshQuestionsBtn?.addEventListener("click", () => {
   if (!currentTutorSource) {
     renderRecommendedQuestions([]);
@@ -12168,6 +13887,29 @@ resetKnowledgeFiltersBtn?.addEventListener("click", () => {
   if (knowledgeTypeFilter) knowledgeTypeFilter.value = "all";
   updateKnowledgeResults();
 });
+knowledgePreviewTutorBtn?.addEventListener("click", () => {
+  const item = getCurrentKnowledgePreviewItem();
+  if (!item) return;
+  askTutorWithSource(
+    item.sourceNote,
+    currentLanguage === "en"
+      ? `Please explain the key idea of "${item.title}".`
+      : `請解釋「${item.title}」的重點`
+  );
+});
+knowledgePreviewTaskBtn?.addEventListener("click", () => {
+  const item = getCurrentKnowledgePreviewItem();
+  if (!item) return;
+  addKnowledgeItemToTodayTasks(item);
+});
+knowledgePreviewExportBtn?.addEventListener("click", () => {
+  const item = getCurrentKnowledgePreviewItem();
+  if (!item) return;
+  openExportModal({
+    source: "knowledge",
+    payload: item
+  });
+});
 generateStudyPlanBtn?.addEventListener("click", handleGenerateStudyPlan);
 clearPlannerFormBtn?.addEventListener("click", clearPlannerForm);
 buildKnowledgeBaseButton?.addEventListener("click", buildKnowledgeBase);
@@ -12191,6 +13933,11 @@ generateStudyPlanButton?.addEventListener("click", generateStudyPlan);
 closeExportModalButton?.addEventListener("click", closeExportModal);
 cancelExportBtn?.addEventListener("click", closeExportModal);
 exportModalBackdrop?.addEventListener("click", closeExportModal);
+openGuideModalButton?.addEventListener("click", openGuideModal);
+closeGuideModalButton?.addEventListener("click", closeGuideModal);
+guideModalCloseAction?.addEventListener("click", closeGuideModal);
+guideModalBackdrop?.addEventListener("click", closeGuideModal);
+guideModalGoNotes?.addEventListener("click", closeGuideModal);
 startExportBtn?.addEventListener("click", startExport);
 exportFormat?.addEventListener("change", () => {
   if (exportFormat.value === "pptx" && exportTemplate) {
@@ -12232,9 +13979,23 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !exportModal.classList.contains("hidden")) {
     closeExportModal();
   }
+  if (event.key === "Escape" && !guideModal.classList.contains("hidden")) {
+    closeGuideModal();
+  }
 });
 
 function initNotesPage() {
+  document.querySelectorAll(".strategy-btn").forEach((btn) => {
+    if (btn.dataset.strategyBound === "true") {
+      return;
+    }
+    btn.dataset.strategyBound = "true";
+    btn.addEventListener("click", () => {
+      applyNoteStrategy(btn.dataset.strategy);
+      setProcessStateText(currentLanguage === "en" ? "Learning strategy switched" : "學習策略已切換");
+    });
+  });
+
   document.querySelectorAll(".mode-btn").forEach((btn) => {
     if (btn.dataset.modeBound === "true") {
       return;
@@ -12269,6 +14030,20 @@ function initNotesPage() {
 }
 
 function initTutorWorkspace() {
+  document.querySelectorAll(".tutor-mode-btn").forEach((button) => {
+    if (button.dataset.tutorModeBound === "true") {
+      return;
+    }
+    button.dataset.tutorModeBound = "true";
+    button.addEventListener("click", () => {
+      currentTutorMode = tutorModeConfigs[button.dataset.tutorMode] ? button.dataset.tutorMode : "quickExplain";
+      updateTutorModeUI();
+      setProcessStateText(currentLanguage === "en" ? "Tutor mode switched" : "Tutor 模式已切換");
+    });
+  });
+
+  updateTutorModeUI();
+
   if (!currentTutorSource) {
     currentTutorSource = loadFromStorage(STORAGE_KEYS.tutorSource, null);
   }
@@ -12296,18 +14071,23 @@ function initExportModal() {
   updateExportPreview();
 }
 
+function initHomeGuide() {
+  if (guideModalCloseAction?.dataset.page) {
+    guideModalCloseAction.removeAttribute("data-page");
+  }
+}
+
 function initApp() {
   ensureSeedKnowledgeBase();
   restoreEnhancementPreference();
-  restoreLatestWorkspaceFromHistory();
-  updateCounts();
-  restoreUploadHelp();
+  resetNotesPageStateOnLoad();
   updateKnowledgeSelectionUI();
   setKnowledgeBusyState(false);
   renderRagSources([]);
   refreshKnowledgeBaseStatus();
   resetStudyPlanView();
   setStudyAgentBusyState(false);
+  initBrandIntro();
 
   initThemeToggle();
   initLanguageToggle();
@@ -12318,6 +14098,7 @@ function initApp() {
   initPlannerWorkspace();
   initMyNotesWorkspace();
   initExportModal();
+  initHomeGuide();
   initFocusMusicPlayer();
 
   renderCurrentResult();
@@ -12391,5 +14172,7 @@ clearHistoryButton.addEventListener("click", () => {
   setProcessStateText("歷史紀錄已清空");
 });
 document.addEventListener("DOMContentLoaded", () => {
+  reportMissingUiElements();
+  reportCoreUiReadiness();
   initApp();
 });

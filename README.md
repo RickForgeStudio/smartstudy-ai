@@ -1,6 +1,6 @@
 # SmartStudy-AI
 
-SmartStudy-AI 是一個文件整理與學習輔助工具。你可以貼上文字，或上傳 `TXT / MD / CSV / JSON / HTML / XML / DOCX / PPTX / PDF` 等檔案，系統會先抽取內容，再整理成摘要、重點、關鍵名詞與練習題。
+SmartStudy-AI 是一個通用型文件整理與學習輔助工具。你可以貼上文字，或上傳 `TXT / MD / CSV / JSON / HTML / XML / DOCX / PPTX / PDF` 等檔案，系統會先抽取內容，再整理成摘要、重點、關鍵詞 / 重要概念與練習題。
 
 目前支援兩種分析模式：
 
@@ -17,10 +17,14 @@ smartstudy-ai/
 ├── style.css
 ├── app.js
 ├── finance-knowledge.js
+├── knowledge-seed.js
 ├── server.js
+├── ui-smoke.js
+├── generate_focus_audio.py
 ├── package.json
 ├── .env.example
-└── README.md
+├── README.md
+└── audio/
 ```
 
 ## 功能
@@ -28,7 +32,7 @@ smartstudy-ai/
 - 貼上文字或上傳文件後自動整理內容
 - 產生智慧摘要
 - 擷取重要句子
-- 整理關鍵名詞
+- 整理關鍵詞 / 重要概念
 - 推測可能考點
 - 產生理解問題
 - 產生延伸練習
@@ -97,7 +101,7 @@ POST /api/analyze
 
 - 智慧摘要
 - 重要句子
-- 關鍵名詞
+- 關鍵詞 / 重要概念
 - 可能考點
 - 理解問題
 - 延伸練習
@@ -118,6 +122,17 @@ RAG AI 知識庫目前提供兩種模式：
 此模式可直接部署在 GitHub Pages，不需要後端與 OpenAI API Key。  
 系統會在前端抽取文件文字、切成段落 chunks，並使用關鍵字比對找出相關內容。  
 適合課堂展示、作業發表與快速 Demo。
+
+## GitHub 上傳建議
+
+如果你是要把專案直接上傳到 GitHub：
+
+- 上傳根目錄檔案
+- 保留 `audio/` 資料夾
+- 不要上傳 `node_modules/`
+- 不要上傳 `.env`
+
+目前專案已經盡量扁平化，除了音訊素材需要放在 `audio/` 之外，主要程式都放在根目錄。
 
 ### 2. 進階模式：OpenAI Embedding RAG
 
@@ -174,7 +189,7 @@ Request body:
     "summary": "目前摘要",
     "importantSentences": ["重要句子 1"],
     "possibleExamPoints": ["可能重點 1"],
-    "accountingTerms": ["關鍵名詞"]
+    "keyTerms": ["關鍵詞 / 重要概念"]
   },
   "messages": [
     {
@@ -247,9 +262,9 @@ Response:
         "reasons": ["原因一", "原因二"]
       }
     ],
-    "accountingTerms": [
+    "keyTerms": [
       {
-        "label": "關鍵名詞",
+        "label": "關鍵詞 / 重要概念",
         "description": "名詞說明"
       }
     ],
@@ -260,7 +275,7 @@ Response:
         "answer": "答案"
       }
     ],
-    "mockExamQuestions": [
+    "practiceQuestions": [
       {
         "question": "延伸練習",
         "answer": "答案"
@@ -320,4 +335,4 @@ npm run check
 - 加入模型切換選單
 - 加入分析 token / 成本提示
 - 加入登入與雲端歷史紀錄
-- 加入更通用的非會計知識庫
+- 加入更多多領域知識庫示範內容

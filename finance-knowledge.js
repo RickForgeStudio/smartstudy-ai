@@ -1,3 +1,5 @@
+// Specialized finance/accounting reference data.
+// It should only influence output when the input content clearly belongs to finance or accounting.
 globalThis.financeKnowledgeBase = [
   {
     term: "分錄",
