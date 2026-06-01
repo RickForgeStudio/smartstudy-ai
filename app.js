@@ -417,7 +417,7 @@ const homeNextActionMeta = getElementByIdSafe("homeNextActionMeta");
 
 const pdfjsLib = globalThis.pdfjsLib;
 if (pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 }
 
 const demoText = "人工智慧是透過演算法與資料，讓電腦模擬人類學習、推理與判斷能力的技術。近年來，人工智慧已經被應用在教育、醫療、交通與金融等領域。在教育方面，人工智慧可以分析學生的學習狀況，提供個人化學習建議，也能協助教師整理教材與設計評量。雖然人工智慧提升了效率，但也帶來資料隱私、錯誤判斷與倫理責任等問題。因此，在使用人工智慧時，除了重視便利性，也必須思考安全性、公平性與人類監督的重要性。";
